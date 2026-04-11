@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Product configuration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      /* Basic layout styles — comments in English */
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      body {
+        background: #f5f7fa;
+        color: #222;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+
+      .app {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+        max-width: 960px;
+        width: 100%;
+        padding: 24px 28px 28px;
+      }
+
+      .app-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .title-group h1 {
+        font-size: 22px;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 4px;
+      }
+
+      .title-group p {
+        font-size: 13px;
+        color: #6b7280;
+      }
+
+      .status-badge {
+        font-size: 12px;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        border: 1px solid #dbeafe;
+        white-space: nowrap;
+      }
+
+      .status-badge.role-admin {
+        background: #dcfce7;
+        color: #166534;
+        border-color: #86efac;
+      }
+
+      .status-badge.role-user {
+        background: #dbeafe;
+        color: #1d4ed8;
+        border-color: #93c5fd;
+      }
+
+      .status-badge.role-guest {
+        background: #fef3c7;
+        color: #92400e;
+        border-color: #fcd34d;
+      }
+
+      .status-badge.role-anonymous {
+        background: #f3f4f6;
+        color: #6b7280;
+        border-color: #e5e7eb;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 2fr 1.5fr;
+        gap: 20px;
+      }
+
+      @media (max-width: 800px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .card {
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        background: #f9fafb;
+        padding: 14px 16px 16px;
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .card-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #111827;
+      }
+
+      .card-subtitle {
+        font-size: 12px;
+        color: #6b7280;
+        margin-top: 2px;
+      }
+
+      .badge {
+        font-size: 11px;
+        padding: 2px 6px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #4f46e5;
+      }
+
+      .products-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 260px;
+        overflow-y: auto;
+        padding-right: 4px;
+      }
+
+      .product-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 8px 9px;
+        border-radius: 8px;
+        background: #ffffff;
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition: background 0.12s ease, border-color 0.12s ease,
+          box-shadow 0.12s ease;
+      }
+
+      .product-item:hover {
+        border-color: #dbeafe;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+      }
+
+      .product-item.selected {
+        border-color: #2563eb;
+        background: #eff6ff;
+      }
+
+      .product-checkbox {
+        margin-top: 3px;
+      }
+
+      .product-main {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .product-name {
+        font-size: 13px;
+        font-weight: 500;
+        color: #111827;
+      }
+
+      .product-desc {
+        font-size: 12px;
+        color: #6b7280;
+      }
+
+      .product-meta {
+        font-size: 11px;
+        color: #9ca3af;
+        margin-top: 3px;
+      }
+
+      .card-body {
+        font-size: 13px;
+        color: #374151;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .field-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: #4b5563;
+      }
+
+      .field-description {
+        font-size: 11px;
+        color: #9ca3af;
+      }
+
+      .field-input {
+        margin-top: 2px;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+
+      input[type="number"] {
+        width: 90px;
+        padding: 4px 6px;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        font-size: 13px;
+      }
+
+      input[type="number"]:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.4);
+      }
+
+      input[type="text"],
+      input[type="email"],
+      input[type="password"] {
+        width: 220px;
+        padding: 4px 6px;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        font-size: 13px;
+      }
+
+      .pill-selected {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .pill {
+        font-size: 11px;
+        padding: 3px 7px;
+        border-radius: 999px;
+        background: #e5e7eb;
+        color: #374151;
+      }
+
+      .pill.removable {
+        background: #fee2e2;
+        color: #b91c1c;
+        cursor: pointer;
+      }
+
+      .pill.removable:hover {
+        background: #fecaca;
+      }
+
+      .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .primary-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 7px 12px;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(135deg, #2563eb, #4f46e5);
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
+        transition: transform 0.1s ease, box-shadow 0.1s ease,
+          opacity 0.1s ease;
+      }
+
+      .primary-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 22px rgba(37, 99, 235, 0.45);
+      }
+
+      .primary-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 6px 14px rgba(37, 99, 235, 0.3);
+      }
+
+      .primary-btn:disabled {
+        opacity: 0.6;
+        cursor: default;
+        box-shadow: none;
+      }
+
+      .btn-caption {
+        font-size: 11px;
+        color: #6b7280;
+      }
+
+      .status-area {
+        font-size: 12px;
+        margin-top: 4px;
+        min-height: 18px;
+      }
+
+      .status-text {
+        padding: 5px 8px;
+        border-radius: 8px;
+      }
+
+      .status-text.info {
+        background: #eff6ff;
+        color: #1d4ed8;
+        border: 1px solid #dbeafe;
+      }
+
+      .status-text.success {
+        background: #ecfdf3;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+      }
+
+      .status-text.error {
+        background: #fef2f2;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+      }
+
+      .small-label {
+        font-size: 11px;
+        color: #9ca3af;
+      }
+
+      .small-value {
+        font-size: 12px;
+        color: #374151;
+      }
+
+      .divider {
+        height: 1px;
+        background: #e5e7eb;
+        margin: 6px 0;
+      }
+
+      .scroll-hint {
+        font-size: 11px;
+        color: #9ca3af;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="app">
+      <header class="app-header">
+        <div class="title-group">
+          <h1>Product configuration</h1>
+          <p>
+            Прототип: выбор продуктов и отправка конфигурации в backend без
+            авторизации.
+          </p>
+        </div>
+        <div class="status-badge role-anonymous" id="role-badge">
+          Anonymous
+        </div>
+      </header>
+
+      <div class="layout">
+        <section class="card" id="products-section">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Products</div>
+              <div class="card-subtitle">
+                Выберите один или несколько продуктов для конфигурации.
+              </div>
+            </div>
+            <span class="badge" id="products-counter">0 selected</span>
+          </div>
+          <div class="card-body">
+            <div class="field-group">
+              <div class="field-label">Источник списка</div>
+              <div class="field-description" id="products-source">
+                Mock список (локальные данные)
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <ul class="products-list" id="products-list"></ul>
+            <div class="scroll-hint">
+              Если продуктов станет много — блок можно прокручивать.
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Configuration</div>
+              <div class="card-subtitle">
+                Параметры запроса `POST /configurations`.
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="field-group">
+              <div class="field-label">Authorization (JWT prototype)</div>
+              <div class="field-description">
+                Optional. If logged in, frontend will attach
+                <code>Authorization: Bearer ...</code> to requests.
+              </div>
+
+              <div class="field-input">
+                <input
+                  type="email"
+                  id="login-email-input"
+                  placeholder="email (e.g. admin@example.com)"
+                />
+              </div>
+
+              <div class="field-input">
+                <input
+                  type="password"
+                  id="login-password-input"
+                  placeholder="password (mock)"
+                />
+              </div>
+
+              <div class="actions" style="margin-top: 0;">
+                <button class="primary-btn" id="login-btn">
+                  <span>Login</span>
+                </button>
+                <button class="primary-btn" id="clear-token-btn" disabled>
+                  <span>Logout</span>
+                </button>
+              </div>
+
+              <div class="status-area" id="auth-status-area"></div>
+            </div>
+
+            <div class="field-group">
+              <div class="field-label">User ID</div>
+              <div class="field-description">
+                Упрощённо, просто число. Для прототипа можно оставить 1.
+              </div>
+              <div class="field-input">
+                <input
+                  type="number"
+                  id="user-id-input"
+                  min="1"
+                  step="1"
+                  value="1"
+                />
+              </div>
+            </div>
+
+            <div class="field-group">
+              <div class="field-label">Selected items</div>
+              <div class="field-description">
+                Будут отправлены как массив `items: number[]`.
+              </div>
+              <div class="pill-selected" id="selected-items-pills"></div>
+            </div>
+
+            <div class="actions">
+              <button class="primary-btn" id="create-config-btn">
+                <span>Create configuration</span>
+              </button>
+              <div class="btn-caption">
+                Кнопка отправляет запрос `POST /configurations` в твой backend.
+              </div>
+            </div>
+
+            <div class="status-area" id="status-area"></div>
+
+            <div class="divider"></div>
+
+            <div class="field-group" id="admin-user-block" style="display: none;">
+              <div class="field-label">Admin only: Create user</div>
+              <div class="field-description">
+                Видно только для `role_id=1`. Отправляет `POST /users`.
+              </div>
+              <div class="field-input">
+                <input
+                  type="text"
+                  id="admin-create-name-input"
+                  placeholder="name (e.g. Demo User)"
+                />
+              </div>
+              <div class="field-input">
+                <input
+                  type="email"
+                  id="admin-create-email-input"
+                  placeholder="email (e.g. demo@example.com)"
+                />
+              </div>
+              <div class="field-input">
+                <input
+                  type="password"
+                  id="admin-create-password-input"
+                  placeholder="password"
+                />
+              </div>
+              <div class="actions" style="margin-top: 0;">
+                <button class="primary-btn" id="admin-create-user-btn">
+                  <span>Create user (admin)</span>
+                </button>
+              </div>
+              <div class="status-area" id="admin-status-area"></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="field-group">
+              <div class="small-label">Endpoint map</div>
+              <div class="small-value">
+                <code>GET /products</code>,
+                <code>POST /configurations</code> → <span id="api-base"></span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      // Simple frontend prototype, comments in English
+
+      // Change this if your backend runs on another port or host
+      const API_BASE = "http://localhost:8000";
+
+      const mockProducts = [
+        { id: 101, name: "Mock Product X", description: "Local mock product X" },
+        { id: 102, name: "Mock Product Y", description: "Local mock product Y" },
+        {
+          id: 103,
+          name: "Mock Product Z",
+          description: "Local mock product Z with long description",
+        },
+      ];
+
+      const elements = {
+        productsList: document.getElementById("products-list"),
+        productsCounter: document.getElementById("products-counter"),
+        productsSource: document.getElementById("products-source"),
+        selectedPills: document.getElementById("selected-items-pills"),
+        loginEmailInput: document.getElementById("login-email-input"),
+        loginPasswordInput: document.getElementById("login-password-input"),
+        loginBtn: document.getElementById("login-btn"),
+        clearTokenBtn: document.getElementById("clear-token-btn"),
+        authStatusArea: document.getElementById("auth-status-area"),
+        userIdInput: document.getElementById("user-id-input"),
+        createConfigBtn: document.getElementById("create-config-btn"),
+        adminUserBlock: document.getElementById("admin-user-block"),
+        adminCreateNameInput: document.getElementById("admin-create-name-input"),
+        adminCreateEmailInput: document.getElementById("admin-create-email-input"),
+        adminCreatePasswordInput: document.getElementById("admin-create-password-input"),
+        adminCreateUserBtn: document.getElementById("admin-create-user-btn"),
+        adminStatusArea: document.getElementById("admin-status-area"),
+        statusArea: document.getElementById("status-area"),
+        apiBase: document.getElementById("api-base"),
+        roleBadge: document.getElementById("role-badge"),
+      };
+
+      let products = [];
+      let selectedIds = new Set();
+
+      const TOKEN_STORAGE_KEY = "access_token";
+      const REFRESH_TOKEN_STORAGE_KEY = "refresh_token";
+      let accessToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+      let refreshToken = localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+
+      function setAuthStatus(message, type = "info") {
+        // type: info | success | error
+        elements.authStatusArea.innerHTML = "";
+        if (!message) return;
+
+        const div = document.createElement("div");
+        div.className = "status-text " + type;
+        div.textContent = message;
+        elements.authStatusArea.appendChild(div);
+      }
+
+      function setAdminStatus(message, type = "info") {
+        elements.adminStatusArea.innerHTML = "";
+        if (!message) return;
+        const div = document.createElement("div");
+        div.className = "status-text " + type;
+        div.textContent = message;
+        elements.adminStatusArea.appendChild(div);
+      }
+
+      function parseJwt(token) {
+        // Parse JWT payload for UI convenience (no verification).
+        try {
+          const parts = token.split(".");
+          if (parts.length !== 3) return null;
+          const payload = parts[1]
+            .replace(/-/g, "+")
+            .replace(/_/g, "/");
+          const decoded = atob(payload);
+          return JSON.parse(decoded);
+        } catch {
+          return null;
+        }
+      }
+
+      function getCurrentRoleId() {
+        if (!accessToken) return null;
+        const data = parseJwt(accessToken);
+        const roleId = data && data.role_id != null ? Number(data.role_id) : null;
+        if (!roleId || roleId <= 0) return null;
+        return roleId;
+      }
+
+      function updateRoleBadge(roleId) {
+        if (roleId === 1) {
+          elements.roleBadge.className = "status-badge role-admin";
+          elements.roleBadge.textContent = "Admin";
+          return;
+        }
+        if (roleId === 2) {
+          elements.roleBadge.className = "status-badge role-user";
+          elements.roleBadge.textContent = "User";
+          return;
+        }
+        if (roleId === 3) {
+          elements.roleBadge.className = "status-badge role-guest";
+          elements.roleBadge.textContent = "Guest";
+          return;
+        }
+        elements.roleBadge.className = "status-badge role-anonymous";
+        elements.roleBadge.textContent = "Anonymous";
+      }
+
+      function syncAuthUI() {
+        if (!accessToken) {
+          elements.clearTokenBtn.disabled = true;
+          elements.createConfigBtn.disabled = true;
+          elements.adminUserBlock.style.display = "none";
+          updateRoleBadge(null);
+          setAdminStatus("", "info");
+          setAuthStatus(
+            "Not logged in. Create configuration is disabled until login.",
+            "info"
+          );
+          return;
+        }
+
+        const data = parseJwt(accessToken);
+        const sub = data && data.sub ? Number(data.sub) : null;
+        const email = data && data.email ? String(data.email) : "?";
+        const roleId = data && data.role_id != null ? String(data.role_id) : "?";
+        const roleIdNumber = data && data.role_id != null ? Number(data.role_id) : null;
+
+        elements.clearTokenBtn.disabled = false;
+        elements.createConfigBtn.disabled = false;
+        elements.adminUserBlock.style.display =
+          Number(roleId) === 1 ? "block" : "none";
+        updateRoleBadge(roleIdNumber);
+        if (Number(roleId) !== 1) {
+          setAdminStatus("", "info");
+        }
+        setAuthStatus(
+          "Logged in. user_id=" +
+            (sub ?? "?") +
+            ", email=" +
+            email +
+            ", role_id=" +
+            roleId,
+          "success"
+        );
+
+        if (sub && sub > 0) {
+          elements.userIdInput.value = String(sub);
+        }
+      }
+
+      function clearStoredTokens() {
+        accessToken = null;
+        refreshToken = null;
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
+        localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+      }
+
+      async function refreshAccessToken() {
+        if (!refreshToken) return false;
+        try {
+          const response = await fetch(API_BASE + "/auth/refresh", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh_token: refreshToken }),
+          });
+
+          const json = await response.json().catch(() => null);
+          if (!response.ok || !json || !json.access_token || !json.refresh_token) {
+            clearStoredTokens();
+            syncAuthUI();
+            return false;
+          }
+
+          accessToken = json.access_token;
+          refreshToken = json.refresh_token;
+          localStorage.setItem(TOKEN_STORAGE_KEY, accessToken);
+          localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, refreshToken);
+          syncAuthUI();
+          return true;
+        } catch (error) {
+          console.error("Refresh token request failed:", error);
+          clearStoredTokens();
+          syncAuthUI();
+          return false;
+        }
+      }
+
+      async function apiFetch(path, init = {}, retryAfterRefresh = true) {
+        const headers = new Headers(init.headers || {});
+        if (accessToken) {
+          headers.set("Authorization", "Bearer " + accessToken);
+        }
+
+        const response = await fetch(API_BASE + path, {
+          ...init,
+          headers,
+        });
+
+        if (response.status === 401 && retryAfterRefresh && refreshToken) {
+          const refreshed = await refreshAccessToken();
+          if (refreshed) {
+            return apiFetch(path, init, false);
+          }
+        }
+        return response;
+      }
+
+      function setStatus(message, type = "info") {
+        // type: info | success | error
+        elements.statusArea.innerHTML = "";
+        if (!message) return;
+
+        const div = document.createElement("div");
+        div.className = "status-text " + type;
+        div.textContent = message;
+        elements.statusArea.appendChild(div);
+      }
+
+      function renderProducts() {
+        elements.productsList.innerHTML = "";
+        products.forEach((p) => {
+          const li = document.createElement("li");
+          li.className =
+            "product-item" + (selectedIds.has(p.id) ? " selected" : "");
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.className = "product-checkbox";
+          checkbox.checked = selectedIds.has(p.id);
+
+          const main = document.createElement("div");
+          main.className = "product-main";
+
+          const name = document.createElement("div");
+          name.className = "product-name";
+          name.textContent = p.name;
+
+          const desc = document.createElement("div");
+          desc.className = "product-desc";
+          desc.textContent = p.description ?? "";
+
+          const meta = document.createElement("div");
+          meta.className = "product-meta";
+          meta.textContent = "ID: " + p.id;
+
+          main.appendChild(name);
+          main.appendChild(desc);
+          main.appendChild(meta);
+
+          li.appendChild(checkbox);
+          li.appendChild(main);
+
+          const toggle = () => {
+            if (selectedIds.has(p.id)) {
+              selectedIds.delete(p.id);
+            } else {
+              selectedIds.add(p.id);
+            }
+            renderSelectedPills();
+            renderProducts();
+            updateCounter();
+          };
+
+          li.addEventListener("click", (e) => {
+            if (e.target === checkbox) {
+              toggle();
+            } else {
+              checkbox.checked = !checkbox.checked;
+              toggle();
+            }
+          });
+
+          elements.productsList.appendChild(li);
+        });
+      }
+
+      function renderSelectedPills() {
+        elements.selectedPills.innerHTML = "";
+        products
+          .filter((p) => selectedIds.has(p.id))
+          .forEach((p) => {
+            const pill = document.createElement("span");
+            pill.className = "pill removable";
+            pill.textContent = p.name + " (id=" + p.id + ")";
+            pill.title = "Click to remove from selection";
+            pill.addEventListener("click", () => {
+              selectedIds.delete(p.id);
+              renderSelectedPills();
+              renderProducts();
+              updateCounter();
+            });
+            elements.selectedPills.appendChild(pill);
+          });
+      }
+
+      function updateCounter() {
+        const count = selectedIds.size;
+        elements.productsCounter.textContent =
+          count + (count === 1 ? " selected" : " selected");
+      }
+
+      async function loadProducts() {
+        // Try to fetch from backend first, then fallback to mock
+        setStatus("Загружаем продукты из backend...", "info");
+        elements.productsSource.textContent =
+          "GET /products (пробуем запрос к backend)";
+
+        try {
+          const response = await apiFetch("/products", {
+            method: "GET",
+          });
+
+          if (!response.ok) {
+            throw new Error("GET /products failed with status " + response.status);
+          }
+
+          const data = await response.json();
+
+          // Expecting array of products with id, name, description
+          products = Array.isArray(data) ? data : [];
+          if (products.length === 0) {
+            throw new Error("Empty products array from backend");
+          }
+
+          elements.productsSource.textContent =
+            "GET /products (данные из backend)";
+          setStatus("Продукты успешно загружены из backend.", "success");
+        } catch (error) {
+          console.error("Failed to load products from backend:", error);
+          // Fallback to local mock
+          products = mockProducts.slice();
+          elements.productsSource.textContent =
+            "Mock список (backend недоступен, используем локальные данные)";
+          setStatus(
+            "Не удалось получить список продуктов из backend. Используем mock‑данные.",
+            "error"
+          );
+        }
+
+        selectedIds = new Set();
+        renderProducts();
+        renderSelectedPills();
+        updateCounter();
+      }
+
+      async function createConfiguration() {
+        if (!accessToken) {
+          setStatus(
+            "Сначала выполни login. Без токена backend не принимает POST /configurations.",
+            "error"
+          );
+          return;
+        }
+
+        let userId = Number(elements.userIdInput.value || "0");
+        if (!userId || userId <= 0) {
+          setStatus("Укажи корректный user_id (целое число).", "error");
+          return;
+        }
+
+        const items = Array.from(selectedIds);
+        if (items.length === 0) {
+          setStatus("Выбери хотя бы один продукт для конфигурации.", "error");
+          return;
+        }
+
+        // If token is present, prefer token user_id to avoid RBAC mismatches.
+        if (accessToken) {
+          const tokenData = parseJwt(accessToken);
+          const tokenUserId = tokenData && tokenData.sub ? Number(tokenData.sub) : null;
+          if (tokenUserId && tokenUserId > 0) {
+            userId = tokenUserId;
+          }
+        }
+
+        const payload = {
+          user_id: userId,
+          items: items,
+        };
+
+        elements.createConfigBtn.disabled = true;
+        setStatus("Отправляем POST /configurations...", "info");
+
+        try {
+          const response = await apiFetch("/configurations", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          const text = await response.text();
+          let json = null;
+          try {
+            json = JSON.parse(text);
+          } catch {
+            // keep raw text
+          }
+
+          if (!response.ok) {
+            let message = "Ошибка при создании конфигурации.";
+            if (json && json.detail) {
+              message += " " + json.detail;
+            }
+            setStatus(message, "error");
+            return;
+          }
+
+          let message = "Конфигурация успешно создана на backend.";
+          if (json && json.configuration_id != null) {
+            message += " ID: " + json.configuration_id;
+          }
+          setStatus(message, "success");
+        } catch (error) {
+          console.error("Failed to create configuration:", error);
+          setStatus(
+            "Не удалось отправить запрос к backend. Проверь, что backend запущен.",
+            "error"
+          );
+        } finally {
+          elements.createConfigBtn.disabled = false;
+        }
+      }
+
+      async function createUserAsAdmin() {
+        const roleId = getCurrentRoleId();
+        if (roleId !== 1) {
+          setAdminStatus("Only admin can create users.", "error");
+          return;
+        }
+
+        const name = (elements.adminCreateNameInput.value || "").trim();
+        const email = (elements.adminCreateEmailInput.value || "").trim();
+        const password = elements.adminCreatePasswordInput.value || "";
+        if (!name || !email || !password) {
+          setAdminStatus("Fill name, email and password.", "error");
+          return;
+        }
+
+        elements.adminCreateUserBtn.disabled = true;
+        setAdminStatus("Creating user...", "info");
+        try {
+          const response = await apiFetch("/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name,
+              email,
+              password,
+              role_id: 2,
+              company_id: 1,
+            }),
+          });
+          const json = await response.json().catch(() => null);
+          if (!response.ok) {
+            const detail = json && json.detail ? String(json.detail) : "Create user failed";
+            setAdminStatus(detail, "error");
+            return;
+          }
+
+          setAdminStatus("User created. id=" + (json.id ?? "?"), "success");
+          elements.adminCreateNameInput.value = "";
+          elements.adminCreateEmailInput.value = "";
+          elements.adminCreatePasswordInput.value = "";
+        } catch (error) {
+          console.error("Create user failed:", error);
+          setAdminStatus("Network error while creating user.", "error");
+        } finally {
+          elements.adminCreateUserBtn.disabled = false;
+        }
+      }
+
+      function init() {
+        elements.apiBase.textContent = API_BASE;
+
+        elements.loginBtn.addEventListener("click", async () => {
+          const email = (elements.loginEmailInput.value || "").trim();
+          const password = elements.loginPasswordInput.value || "";
+
+          if (!email) {
+            setAuthStatus("Please enter email.", "error");
+            return;
+          }
+
+          elements.loginBtn.disabled = true;
+          setAuthStatus("Logging in...", "info");
+
+          try {
+            const response = await fetch(API_BASE + "/auth/login", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, password }),
+            });
+
+            const json = await response.json().catch(() => null);
+            if (!response.ok) {
+              const detail = json && json.detail ? json.detail : "Login failed";
+              setAuthStatus(String(detail), "error");
+              return;
+            }
+
+            accessToken = json && json.access_token ? json.access_token : null;
+            refreshToken = json && json.refresh_token ? json.refresh_token : null;
+            if (!accessToken || !refreshToken) {
+              setAuthStatus("Login succeeded but token payload is incomplete.", "error");
+              return;
+            }
+
+            localStorage.setItem(TOKEN_STORAGE_KEY, accessToken);
+            localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, refreshToken);
+            syncAuthUI();
+            setAuthStatus("Login OK. Token attached to requests.", "success");
+          } catch (e) {
+            console.error("Login error:", e);
+            setAuthStatus("Network error during login.", "error");
+          } finally {
+            elements.loginBtn.disabled = false;
+          }
+        });
+
+        elements.clearTokenBtn.addEventListener("click", async () => {
+          const tokenToRevoke = refreshToken;
+          if (tokenToRevoke) {
+            try {
+              await fetch(API_BASE + "/auth/logout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ refresh_token: tokenToRevoke }),
+              });
+            } catch (error) {
+              console.error("Logout request failed:", error);
+            }
+          }
+
+          clearStoredTokens();
+          elements.userIdInput.value = "1";
+          syncAuthUI();
+          setAuthStatus("Logged out.", "info");
+        });
+
+        syncAuthUI();
+
+        elements.createConfigBtn.addEventListener("click", () => {
+          createConfiguration();
+        });
+        elements.adminCreateUserBtn.addEventListener("click", () => {
+          createUserAsAdmin();
+        });
+
+        loadProducts();
+      }
+
+      document.addEventListener("DOMContentLoaded", init);
+    </script>
+  </body>
+</html>
+

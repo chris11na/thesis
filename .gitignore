@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# Local DB (regenerated / dev)
+*.db
+backend/app.db
+
+# Node / Playwright
+node_modules/
+frontend/node_modules/
+frontend/playwright-report/
+frontend/test-results/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Env secrets
+.env
+.env.local
+
+# Logs
+*.log
+backend/backend.log

@@ -1,0 +1,56 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - "**"
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint / import check (formal)
+        working-directory: ./backend
+        run: |
+          python -m compileall app
+
+      - name: Run migrations
+        working-directory: ./backend
+        run: |
+          rm -f app.db
+          alembic upgrade head
+
+      - name: Run tests
+        working-directory: ./backend
+        run: |
+          pytest -q
+
+      - name: Build backend Docker image
+        working-directory: ./backend
+        run: |
+          docker build -t thesis-backend-ci .
+
+      - name: Build frontend Docker image
+        working-directory: ./frontend
+        run: |
+          docker build -t thesis-frontend-ci .
+
