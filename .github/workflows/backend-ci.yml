@@ -12,16 +12,13 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    # Silence GitHub deprecation: JS actions move from Node 20 to 24 (see GitHub changelog 2025-09-19).
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
