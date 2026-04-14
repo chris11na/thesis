@@ -25,6 +25,25 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 oauth = OAuth()
 logger = logging.getLogger(__name__)
 
+_OAUTH_CALLBACK_PATHS = {
+    "google_callback": "/auth/google/callback",
+    "microsoft_callback": "/auth/microsoft/callback",
+}
+
+
+def _oauth_redirect_uri(request: Request, route_name: str) -> str:
+    """
+    Google/Microsoft require redirect_uri to match the registered URL exactly (https on prod).
+    Behind Render, request.url_for may see http unless proxy headers are trusted; PUBLIC_BASE_URL fixes that.
+    """
+    base = (settings.public_base_url or "").strip().rstrip("/")
+    if base:
+        suffix = _OAUTH_CALLBACK_PATHS.get(route_name)
+        if not suffix:
+            raise ValueError(f"Unknown OAuth route name: {route_name}")
+        return base + suffix
+    return str(request.url_for(route_name))
+
 if settings.google_client_id and settings.google_client_secret:
     oauth.register(
         name="google",
@@ -379,7 +398,7 @@ async def google_login(request: Request):
     client = oauth.create_client("google")
     if not client:
         return _oauth_error_redirect("Google OAuth is not configured (set GOOGLE_CLIENT_ID/SECRET in .env).")
-    redirect_uri = request.url_for("google_callback")
+    redirect_uri = _oauth_redirect_uri(request, "google_callback")
     return await client.authorize_redirect(request, redirect_uri)
 
 
@@ -418,7 +437,7 @@ async def microsoft_login(request: Request):
         return _oauth_error_redirect(
             "Microsoft OAuth is not configured (set MICROSOFT_CLIENT_ID/SECRET in .env)."
         )
-    redirect_uri = request.url_for("microsoft_callback")
+    redirect_uri = _oauth_redirect_uri(request, "microsoft_callback")
     return await client.authorize_redirect(request, redirect_uri)
 
 

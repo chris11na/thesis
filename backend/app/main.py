@@ -6,9 +6,10 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.sessions import SessionMiddleware
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from app.api.routes import router
 from app.db.session import SessionLocal
-from app.models import User
+from app.models.product import Product
 from app.db.seed import seed_initial_data
 from app.core.config import settings
 from app.admin import setup_admin
@@ -48,6 +49,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add last so it runs early (outside Session): trust X-Forwarded-Proto on Render for OAuth redirect_uri.
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 
 @app.middleware("http")
@@ -128,6 +132,11 @@ def seed_on_startup() -> None:
     db = SessionLocal()
     try:
         seed_initial_data(db)
+        n_products = db.query(Product).count()
+        logger.info("startup seed finished products_count=%s", n_products)
+    except Exception:
+        logger.exception("startup seed failed")
+        raise
     finally:
         db.close()
 

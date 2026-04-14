@@ -357,6 +357,37 @@
         background: #fffbeb;
       }
 
+      .global-loading-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 99990;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(248, 250, 252, 0.72);
+        backdrop-filter: blur(3px);
+        transition: opacity 0.15s ease;
+      }
+
+      .global-loading-overlay[hidden] {
+        display: none !important;
+      }
+
+      .global-loading-spinner {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        border: 3px solid #e2e8f0;
+        border-top-color: #2563eb;
+        animation: global-loading-spin 0.72s linear infinite;
+      }
+
+      @keyframes global-loading-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
       .admin-product-catalog-editor input.admin-catalog-field-dirty[type="text"],
       .admin-product-catalog-editor input.admin-catalog-field-dirty[type="number"] {
         border-color: #dc2626 !important;
@@ -1351,6 +1382,15 @@
   </head>
 
   <body>
+    <div
+      id="global-loading-overlay"
+      class="global-loading-overlay"
+      hidden
+      aria-live="polite"
+      aria-busy="false"
+    >
+      <div class="global-loading-spinner" role="status" aria-label="Loading"></div>
+    </div>
     <div class="app">
       <header class="app-header">
         <div class="title-group">
@@ -1747,6 +1787,25 @@
       // Change this if your backend runs on another port or host
       const API_BASE = "https://thesis-zqvx.onrender.com";
       const UI_LANG_STORAGE_KEY = "ui_lang";
+
+      let globalLoadingCount = 0;
+
+      function setGlobalLoadingOverlay(visible) {
+        const el = document.getElementById("global-loading-overlay");
+        if (!el) return;
+        if (visible) {
+          el.hidden = false;
+          el.setAttribute("aria-busy", "true");
+        } else {
+          el.hidden = true;
+          el.setAttribute("aria-busy", "false");
+        }
+      }
+
+      function bumpGlobalLoading(delta) {
+        globalLoadingCount = Math.max(0, globalLoadingCount + delta);
+        setGlobalLoadingOverlay(globalLoadingCount > 0);
+      }
 
       // Fallback when GET /products fails: same demo ids as backend seed (501/502).
       const elements = {
@@ -4430,6 +4489,7 @@
 
       async function refreshAccessToken() {
         if (!refreshToken) return false;
+        bumpGlobalLoading(1);
         try {
           const response = await fetch(API_BASE + "/auth/refresh", {
             method: "POST",
@@ -4455,27 +4515,34 @@
           clearStoredTokens();
           redirectToLogin();
           return false;
+        } finally {
+          bumpGlobalLoading(-1);
         }
       }
 
       async function apiFetch(path, init = {}, retryAfterRefresh = true) {
-        const headers = new Headers(init.headers || {});
-        if (accessToken) {
-          headers.set("Authorization", "Bearer " + accessToken);
-        }
-
-        const response = await fetch(API_BASE + path, {
-          ...init,
-          headers,
-        });
-
-        if (response.status === 401 && retryAfterRefresh && refreshToken) {
-          const refreshed = await refreshAccessToken();
-          if (refreshed) {
-            return apiFetch(path, init, false);
+        bumpGlobalLoading(1);
+        try {
+          const headers = new Headers(init.headers || {});
+          if (accessToken) {
+            headers.set("Authorization", "Bearer " + accessToken);
           }
+
+          const response = await fetch(API_BASE + path, {
+            ...init,
+            headers,
+          });
+
+          if (response.status === 401 && retryAfterRefresh && refreshToken) {
+            const refreshed = await refreshAccessToken();
+            if (refreshed) {
+              return await apiFetch(path, init, false);
+            }
+          }
+          return response;
+        } finally {
+          bumpGlobalLoading(-1);
         }
-        return response;
       }
 
       function setProductsStatus(message, type = "info") {
@@ -5006,6 +5073,7 @@
         elements.clearTokenBtn.addEventListener("click", async () => {
           const tokenToRevoke = refreshToken;
           if (tokenToRevoke) {
+            bumpGlobalLoading(1);
             try {
               await fetch(API_BASE + "/auth/logout", {
                 method: "POST",
@@ -5014,6 +5082,8 @@
               });
             } catch (error) {
               console.error("Logout request failed:", error);
+            } finally {
+              bumpGlobalLoading(-1);
             }
           }
 

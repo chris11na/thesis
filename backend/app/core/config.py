@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     access_token_exp_minutes: int = 60
     refresh_token_exp_minutes: int = 60 * 24 * 7
     frontend_url: str = "http://127.0.0.1:5500"
+    # Public API origin (https, no trailing slash). Set on Render so OAuth redirect_uri matches Google/Azure.
+    public_base_url: str | None = None
 
     google_client_id: str | None = None
     google_client_secret: str | None = None

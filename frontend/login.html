@@ -201,6 +201,32 @@
         background: #f9fafb;
         border-color: #9ca3af;
       }
+
+      .oauth-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 8px 0;
+        color: #6b7280;
+        font-size: 13px;
+      }
+
+      .oauth-spinner {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 2px solid #e5e7eb;
+        border-top-color: #2563eb;
+        animation: oauth-spin 0.72s linear infinite;
+        flex-shrink: 0;
+      }
+
+      @keyframes oauth-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
     </style>
   </head>
   <body>
@@ -287,12 +313,16 @@
         <code>admin@example.com</code> / <code>admin123</code> или
         <code>user@example.com</code> / <code>user123</code>.
         <br /><br />
-        <strong>OAuth:</strong> кнопки появляются, если в backend заданы
-        <code>GOOGLE_CLIENT_*</code> / <code>MICROSOFT_CLIENT_*</code> в
-        <code>.env</code>. Домен почты Google/Microsoft должен совпадать с
-        организацией в базе (как при регистрации). Redirect URI в консоли
-        провайдера: <code>http://127.0.0.1:8000/auth/google/callback</code> (и
-        аналогично для Microsoft), тот же хост/порт, с которого открыт API.
+        <strong>OAuth:</strong> кнопки появляются, если на backend в переменных
+        окружения заданы <code>GOOGLE_CLIENT_ID</code> /
+        <code>GOOGLE_CLIENT_SECRET</code> (и/или Microsoft). Домен почты из
+        Google/Microsoft должен совпадать с компанией в базе. В консоли провайдера
+        добавь точный redirect URI: для продакшена —
+        <code>https://&lt;твой-api&gt;.onrender.com/auth/google/callback</code>;
+        локально — <code>http://127.0.0.1:8000/auth/google/callback</code>. На
+        Render также задай <code>PUBLIC_BASE_URL</code> (тот же https-URL API) и
+        <code>FRONTEND_URL</code> (URL статического сайта с
+        <code>login.html</code>).
       </p>
     </div>
 
@@ -367,7 +397,8 @@
         document.getElementById("login-email-label").textContent = t.email;
         document.getElementById("login-password-label").textContent = t.password;
         loginBtn.textContent = t.loginBtn;
-        document.getElementById("oauth-divider").textContent = t.or;
+        const oauthDiv = document.getElementById("oauth-divider");
+        if (oauthDiv) oauthDiv.textContent = t.or;
         document.getElementById("register-name-label").textContent = t.name;
         document.getElementById("register-email-label").textContent = t.corpEmail;
         document.getElementById("register-password-label").textContent = t.registerPass;
@@ -469,34 +500,54 @@
       async function loadOAuthButtons() {
         const row = document.getElementById("oauth-row");
         if (!row) return;
+        const divider = document.querySelector("#panel-login .oauth-divider");
+        row.innerHTML = "";
+        row.style.display = "flex";
+        const loadingWrap = document.createElement("div");
+        loadingWrap.className = "oauth-loading";
+        const spin = document.createElement("div");
+        spin.className = "oauth-spinner";
+        spin.setAttribute("aria-hidden", "true");
+        const loadingLabel = document.createElement("span");
+        loadingLabel.textContent =
+          document.documentElement.lang === "en"
+            ? "Checking sign-in options…"
+            : "Проверяем способы входа…";
+        loadingWrap.appendChild(spin);
+        loadingWrap.appendChild(loadingLabel);
+        row.appendChild(loadingWrap);
         try {
           const r = await fetch(API_BASE + "/auth/oauth/providers");
           const j = await r.json().catch(() => ({}));
+          row.innerHTML = "";
           if (!j.google && !j.microsoft) {
             row.remove();
-            const div = document.querySelector("#panel-login .oauth-divider");
-            if (div) div.remove();
+            if (divider) divider.remove();
             return;
           }
-          row.style.display = "flex";
           if (j.google) {
             const a = document.createElement("a");
             a.className = "oauth-btn";
             a.href = API_BASE + "/auth/google/login";
-            a.textContent = "Войти через Google";
+            a.textContent =
+              document.documentElement.lang === "en"
+                ? "Sign in with Google"
+                : "Войти через Google";
             row.appendChild(a);
           }
           if (j.microsoft) {
             const a = document.createElement("a");
             a.className = "oauth-btn";
             a.href = API_BASE + "/auth/microsoft/login";
-            a.textContent = "Войти через Microsoft";
+            a.textContent =
+              document.documentElement.lang === "en"
+                ? "Sign in with Microsoft"
+                : "Войти через Microsoft";
             row.appendChild(a);
           }
         } catch (_) {
           row.remove();
-          const div = document.querySelector("#panel-login .oauth-divider");
-          if (div) div.remove();
+          if (divider) divider.remove();
         }
       }
 
@@ -587,8 +638,8 @@
         }
       });
 
-      boot();
       applyLanguage(currentLang);
+      boot();
       if (langToggleBtn) {
         langToggleBtn.addEventListener("click", () => {
           applyLanguage(currentLang === "ru" ? "en" : "ru");
