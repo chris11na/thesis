@@ -1489,7 +1489,9 @@
               <div class="field-group">
                 <div class="field-label field-label-with-meta">
                   <span>
-                    <span class="product-only">Выбранные позиции</span>
+                    <span class="product-only" id="selected-items-heading"
+                      >Выбранные позиции</span
+                    >
                     <span class="debug-only"
                       >Selected items <span class="debug-tag">debug</span></span
                     >
@@ -1858,6 +1860,11 @@
 
       let uiLang = localStorage.getItem(UI_LANG_STORAGE_KEY) || "ru";
 
+      /** User catalog UI: translate chrome only; product name/description/specs stay as from API. */
+      function catT(ruText, enText) {
+        return uiLang === "en" ? enText : ruText;
+      }
+
       function applyUiLanguage(lang) {
         uiLang = lang === "en" ? "en" : "ru";
         localStorage.setItem(UI_LANG_STORAGE_KEY, uiLang);
@@ -1874,7 +1881,7 @@
         const createLbl = document.getElementById("create-config-label");
         if (createLbl) {
           createLbl.textContent = isEn
-            ? "Submit for registration"
+            ? "Submit configuration"
             : "Отправить на регистрацию";
         }
         const projectInfoLabel = document.getElementById("project-info-label");
@@ -2044,6 +2051,15 @@
           syncAdminProductDrawer();
           refreshAdminProductUserPreview();
         }
+        const selectedHeading = document.getElementById("selected-items-heading");
+        if (selectedHeading) {
+          selectedHeading.textContent = catT("Выбранные позиции", "Selected lines");
+        }
+        if (Array.isArray(products) && products.length > 0) {
+          renderProducts();
+          renderSelectedPills();
+          updateCounter();
+        }
       }
 
       let products = [];
@@ -2153,7 +2169,13 @@
       /** Same label as in user configurator (license line). */
       function formatLicenseUserLabel(lic) {
         const pack = lic.units_per_pack != null ? lic.units_per_pack : 1;
-        return lic.name + " (" + pack + " AP / пакет)";
+        return (
+          lic.name +
+          " (" +
+          pack +
+          catT(" AP / пакет", " AP per pack") +
+          ")"
+        );
       }
 
       /** Same label as in user configurator (module line). */
@@ -2184,7 +2206,9 @@
         }
         const chunks = [];
         if (st.targetAp != null && st.targetAp > 0) {
-          chunks.push("цель " + st.targetAp + " AP");
+          chunks.push(
+            catT("цель ", "target ") + st.targetAp + " AP"
+          );
         }
         const licSeen = new Set();
         for (const lid of st.licPickOrder || []) {
@@ -2200,7 +2224,9 @@
           if (q > 0 && !licSeen.has(n)) {
             const L = licById[n];
             chunks.push(
-              (L ? formatLicenseUserLabel(L) : "лицензия " + n) + " ×" + q
+              (L ? formatLicenseUserLabel(L) : catT("лицензия ", "license ") + n) +
+                " ×" +
+                q
             );
             licSeen.add(n);
           }
@@ -2219,7 +2245,9 @@
           if (q > 0 && !modSeen.has(n)) {
             const M = modById[n];
             chunks.push(
-              (M ? formatModuleUserLabel(M) : "модуль " + n) + " ×" + q
+              (M ? formatModuleUserLabel(M) : catT("модуль ", "module ") + n) +
+                " ×" +
+                q
             );
             modSeen.add(n);
           }
@@ -2246,7 +2274,7 @@
         panel.innerHTML = "";
         const loading = document.createElement("div");
         loading.className = "status-text info";
-        loading.textContent = "Загрузка опций…";
+        loading.textContent = catT("Загрузка опций…", "Loading options…");
         panel.appendChild(loading);
 
         let data;
@@ -2261,7 +2289,10 @@
           panel.innerHTML = "";
           const errEl = document.createElement("div");
           errEl.className = "status-text error";
-          errEl.textContent = "Не удалось загрузить опции для этой позиции.";
+          errEl.textContent = catT(
+            "Не удалось загрузить опции для этой позиции.",
+            "Could not load options for this line."
+          );
           panel.appendChild(errEl);
           return;
         }
@@ -2272,30 +2303,42 @@
         if (data.built_in_license_units != null) {
           const hint = document.createElement("div");
           hint.className = "addon-hint";
-          hint.textContent =
+          hint.textContent = catT(
             "Встроенная ёмкость лицензий: " +
-            data.built_in_license_units +
-            " AP.";
+              data.built_in_license_units +
+              " AP.",
+            "Built-in licensed capacity: " +
+              data.built_in_license_units +
+              " AP."
+          );
           panel.appendChild(hint);
         }
 
         if (data.max_module_slots != null) {
           const hint = document.createElement("div");
           hint.className = "addon-hint";
-          hint.textContent =
+          hint.textContent = catT(
             "Максимум модулей — сумма количеств по всем выбранным типам трансиверов (не «на один тип»): " +
-            data.max_module_slots +
-            ".";
+              data.max_module_slots +
+              ".",
+            "Maximum modules — total quantity across all transceiver types (not per type): " +
+              data.max_module_slots +
+              "."
+          );
           panel.appendChild(hint);
         }
 
         if (data.module_speeds_supported && data.module_speeds_supported.length) {
           const hint = document.createElement("div");
           hint.className = "addon-hint";
-          hint.textContent =
+          hint.textContent = catT(
             "Допустимые скорости оптики (Гбит/с): " +
-            data.module_speeds_supported.join(", ") +
-            ".";
+              data.module_speeds_supported.join(", ") +
+              ".",
+            "Allowed optic speeds (Gbps): " +
+              data.module_speeds_supported.join(", ") +
+              "."
+          );
           panel.appendChild(hint);
         }
 
@@ -2324,7 +2367,7 @@
 
           const title = document.createElement("div");
           title.className = "addon-section-title";
-          title.textContent = "Лицензии (пакеты)";
+          title.textContent = catT("Лицензии (пакеты)", "License packs");
           panel.appendChild(title);
 
           const suggestRow = document.createElement("div");
@@ -2332,7 +2375,7 @@
           const apLabel = document.createElement("label");
           apLabel.style.fontSize = "11px";
           apLabel.style.color = "#64748b";
-          apLabel.textContent = "Целевое число AP:";
+          apLabel.textContent = catT("Целевое число AP:", "Target AP count:");
           const apInput = document.createElement("input");
           apInput.type = "number";
           apInput.min = "1";
@@ -2349,12 +2392,15 @@
           const suggestBtn = document.createElement("button");
           suggestBtn.type = "button";
           suggestBtn.className = "secondary-btn";
-          suggestBtn.textContent = "Подобрать пакеты";
+          suggestBtn.textContent = catT("Подобрать пакеты", "Suggest packs");
           suggestBtn.addEventListener("click", async (ev) => {
             ev.stopPropagation();
             if (!st.targetAp || st.targetAp < 1) {
               showImmediateLicenseFeedback(
-                "Укажите целевое число AP (целое > 0).",
+                catT(
+                  "Укажите целевое число AP (целое > 0).",
+                  "Enter target AP (integer > 0)."
+                ),
                 "error"
               );
               return;
@@ -2369,7 +2415,11 @@
               const j = await r.json().catch(() => null);
               if (!r.ok) {
                 showImmediateLicenseFeedback(
-                  (j && j.detail) || "Не удалось получить подбор пакетов.",
+                  (j && j.detail) ||
+                    catT(
+                      "Не удалось получить подбор пакетов.",
+                      "Could not get pack suggestion."
+                    ),
                   "error"
                 );
                 return;
@@ -2394,12 +2444,18 @@
 
               if (residual > 0) {
                 licenseSuggestFeedbackByProductId.set(p.id, {
-                  message:
+                  message: catT(
                     (j.note ||
                       "Дискретные пакеты не закрывают цель полностью.") +
-                    " Не хватает " +
-                    residual +
-                    " AP; подставлен только частичный набор — донастройте вручную.",
+                      " Не хватает " +
+                      residual +
+                      " AP; подставлен только частичный набор — донастройте вручную.",
+                    (j.note ||
+                      "Discrete packs do not fully meet the target.") +
+                      " Short by " +
+                      residual +
+                      " AP; partial set applied — adjust manually."
+                  ),
                   type: "error",
                 });
                 renderProducts();
@@ -2408,29 +2464,46 @@
 
               if (neededExtra === 0) {
                 licenseSuggestFeedbackByProductId.set(p.id, {
-                  message:
+                  message: catT(
                     "Дополнительные пакеты не нужны: встроенных " +
-                    (j.built_in_license_units ?? "—") +
-                    " AP уже достаточно для цели " +
-                    j.target_ap_count +
-                    " AP. Поля пакетов оставлены нулями.",
+                      (j.built_in_license_units ?? "—") +
+                      " AP уже достаточно для цели " +
+                      j.target_ap_count +
+                      " AP. Поля пакетов оставлены нулями.",
+                    "No extra packs needed: built-in " +
+                      (j.built_in_license_units ?? "—") +
+                      " AP already covers target " +
+                      j.target_ap_count +
+                      " AP. Pack fields left at zero."
+                  ),
                   type: "info",
                 });
               } else if (suggestion.length === 0) {
                 licenseSuggestFeedbackByProductId.set(p.id, {
-                  message:
+                  message: catT(
                     "Подбор не вернул пакеты — проверьте каталог лицензий или целевое число AP.",
+                    "No packs returned — check the license catalog or target AP."
+                  ),
                   type: "error",
                 });
               } else {
                 licenseSuggestFeedbackByProductId.delete(p.id);
-                showToast("Пакеты лицензий подставлены в форму.", "success");
+                showToast(
+                  catT(
+                    "Пакеты лицензий подставлены в форму.",
+                    "License packs filled in."
+                  ),
+                  "success"
+                );
               }
               renderProducts();
             } catch (e) {
               console.error(e);
               showImmediateLicenseFeedback(
-                "Ошибка запроса подбора пакетов.",
+                catT(
+                  "Ошибка запроса подбора пакетов.",
+                  "Pack suggestion request failed."
+                ),
                 "error"
               );
             }
@@ -2478,7 +2551,10 @@
         if (data.modules && data.modules.length) {
           const title = document.createElement("div");
           title.className = "addon-section-title";
-          title.textContent = "Модули / трансиверы";
+          title.textContent = catT(
+            "Модули / трансиверы",
+            "Modules / transceivers"
+          );
           panel.appendChild(title);
           const moduleSlotsWarn = document.createElement("div");
           moduleSlotsWarn.className = "addon-panel-warn-host";
@@ -4618,12 +4694,18 @@
         }
         const sum = computeModuleQtySum(st);
         if (sum > maxSlots) {
-          const msg =
+          const msg = catT(
             "Сумма количеств модулей (" +
-            sum +
-            ") превышает лимит слотов для этого продукта (" +
-            maxSlots +
-            "). Лимит считается по всем типам трансиверов вместе, не по каждому отдельно.";
+              sum +
+              ") превышает лимит слотов для этого продукта (" +
+              maxSlots +
+              "). Лимит считается по всем типам трансиверов вместе, не по каждому отдельно.",
+            "Total module quantities (" +
+              sum +
+              ") exceed the slot limit for this product (" +
+              maxSlots +
+              "). The limit applies to all transceiver types together, not per type."
+          );
           const msgHash = msg;
           if (warnEl.__moduleSlotsWarnHash !== msgHash) {
             warnEl.__moduleSlotsWarnHash = msgHash;
@@ -4648,12 +4730,18 @@
         }
         const total = built + extra;
         if (total < st.targetAp) {
-          const msg =
+          const msg = catT(
             "По выбранным пакетам и встроенной ёмкости получается " +
-            total +
-            " AP, а цель " +
-            st.targetAp +
-            " AP. Такую цель нельзя закрыть текущим набором — добавьте пакеты или снизьте цель.";
+              total +
+              " AP, а цель " +
+              st.targetAp +
+              " AP. Такую цель нельзя закрыть текущим набором — добавьте пакеты или снизьте цель.",
+            "With selected packs and built-in capacity you reach " +
+              total +
+              " AP, but the target is " +
+              st.targetAp +
+              " AP. Add packs or lower the target."
+          );
           const msgHash = msg;
           if (warnEl.__apTargetWarnHash !== msgHash) {
             warnEl.__apTargetWarnHash = msgHash;
@@ -4747,7 +4835,10 @@
             specLab.style.fontSize = "11px";
             specLab.style.color = "#64748b";
             specLab.style.marginBottom = "2px";
-            specLab.textContent = "Технические характеристики";
+            specLab.textContent = catT(
+              "Технические характеристики",
+              "Technical specifications"
+            );
             const specInner = document.createElement("div");
             specInner.className = expanded
               ? "product-text-expanded"
@@ -4777,7 +4868,7 @@
           }
 
           if (expanded && hasAnyText) {
-            appendToggleButton("Свернуть");
+            appendToggleButton(catT("Свернуть", "Show less"));
           }
 
           const meta = document.createElement("div");
@@ -4845,7 +4936,7 @@
                     specInnerEl.scrollHeight > specInnerEl.clientHeight + 1;
                 }
                 if (overflow) {
-                  appendToggleButton("Показать полностью");
+                  appendToggleButton(catT("Показать полностью", "Show full text"));
                 }
               });
             });
@@ -4864,7 +4955,7 @@
             pill.textContent = selectionPillCaption(p);
             pill.title = debugUi
               ? "Remove from configuration (id " + p.id + ")"
-              : "Убрать из выбранных";
+              : catT("Убрать из выбранных", "Remove from selection");
             pill.addEventListener("click", (e) => {
               e.stopPropagation();
               configLineState.delete(p.id);
@@ -4881,16 +4972,27 @@
       function updateCounter() {
         const count = configLineState.size;
         if (elements.productsCounter) {
-          elements.productsCounter.textContent = count + " selected";
+          elements.productsCounter.textContent =
+            count === 0
+              ? catT("0 выбрано", "0 selected")
+              : catT(count + " выбрано", count + " selected");
         }
         if (elements.selectedItemsCount) {
           if (count === 0) {
-            elements.selectedItemsCount.textContent = "Не выбрано";
+            elements.selectedItemsCount.textContent = catT(
+              "Не выбрано",
+              "None selected"
+            );
           } else if (count === 1) {
-            elements.selectedItemsCount.textContent = "Выбрана 1 позиция";
+            elements.selectedItemsCount.textContent = catT(
+              "Выбрана 1 позиция",
+              "1 line selected"
+            );
           } else {
-            elements.selectedItemsCount.textContent =
-              "Выбрано позиций: " + count;
+            elements.selectedItemsCount.textContent = catT(
+              "Выбрано позиций: " + count,
+              count + " lines selected"
+            );
           }
         }
         updateCreateConfigBtnState();
@@ -4931,7 +5033,10 @@
 
           products = Array.isArray(data) ? data : [];
           if (products.length === 0) {
-            serverDetail = "Сервер вернул пустой список продуктов.";
+            serverDetail = catT(
+              "Сервер вернул пустой список продуктов.",
+              "The server returned an empty product list."
+            );
             throw new Error("empty_list");
           }
 
@@ -4942,7 +5047,10 @@
           console.error("Failed to load products from backend:", error);
           products = [];
           const parts = [
-            "Не удалось загрузить каталог продуктов.",
+            catT(
+              "Не удалось загрузить каталог продуктов.",
+              "Could not load the product catalog."
+            ),
             httpStatus != null ? "HTTP " + httpStatus + "." : "",
             serverDetail ? serverDetail : "",
             error &&
@@ -4957,7 +5065,7 @@
             "error"
           );
           elements.productsSource.textContent =
-            "GET /products — ошибка" +
+            catT("GET /products — ошибка", "GET /products — error") +
             (httpStatus != null ? " (" + httpStatus + ")" : "");
         }
 
@@ -4979,12 +5087,24 @@
 
         let userId = Number(elements.userIdInput.value || "0");
         if (!userId || userId <= 0) {
-          setStatus("Укажи корректный user_id (целое число).", "error");
+          setStatus(
+            catT(
+              "Укажи корректный user_id (целое число).",
+              "Enter a valid user id (integer)."
+            ),
+            "error"
+          );
           return;
         }
 
         if (configLineState.size === 0) {
-          setStatus("Выбери хотя бы одну позицию для конфигурации.", "error");
+          setStatus(
+            catT(
+              "Выбери хотя бы одну позицию для конфигурации.",
+              "Select at least one line for the configuration."
+            ),
+            "error"
+          );
           return;
         }
 
@@ -5024,16 +5144,31 @@
         };
 
         if (!payload.project_name) {
-          setStatus("Укажи название проекта перед отправкой.", "error");
+          setStatus(
+            catT(
+              "Укажи название проекта перед отправкой.",
+              "Enter a project name before submitting."
+            ),
+            "error"
+          );
           return;
         }
         if (!payload.project_contact_email || !payload.project_contact_email.includes("@")) {
-          setStatus("Укажи корректный контактный email проекта.", "error");
+          setStatus(
+            catT(
+              "Укажи корректный контактный email проекта.",
+              "Enter a valid project contact email."
+            ),
+            "error"
+          );
           return;
         }
 
         elements.createConfigBtn.disabled = true;
-        setStatus("Отправляем POST /configurations…", "info");
+        setStatus(
+          catT("Отправляем конфигурацию…", "Submitting configuration…"),
+          "info"
+        );
 
         try {
           const response = await apiFetch("/configurations", {
@@ -5053,7 +5188,10 @@
           }
 
           if (!response.ok) {
-            let message = "Ошибка при создании конфигурации.";
+            let message = catT(
+              "Ошибка при создании конфигурации.",
+              "Could not create the configuration."
+            );
             if (json && json.detail) {
               message += " " + json.detail;
             }
@@ -5061,22 +5199,33 @@
             return;
           }
 
-          let message = "Конфигурация успешно создана на backend.";
+          let message = catT(
+            "Конфигурация успешно сохранена.",
+            "Configuration saved successfully."
+          );
           if (json && json.configuration_id != null) {
             message += " ID: " + json.configuration_id + ".";
           }
           if (json && json.specification && json.specification.length) {
-            message +=
-              " Строк спецификации: " + json.specification.length + ".";
+            message += catT(
+              " Строк спецификации: " + json.specification.length + ".",
+              " Specification lines: " + json.specification.length + "."
+            );
           }
           if (json && json.submitted_to_sales) {
-            message += " Заявка отправлена в отдел продаж.";
+            message += catT(
+              " Заявка отправлена в отдел продаж.",
+              " Request sent to sales."
+            );
           }
           setStatus(message, "success");
         } catch (error) {
           console.error("Failed to create configuration:", error);
           setStatus(
-            "Не удалось отправить запрос к backend. Проверь, что backend запущен.",
+            catT(
+              "Не удалось отправить запрос к backend. Проверь, что backend запущен.",
+              "Could not reach the server. Check that the backend is running."
+            ),
             "error"
           );
         } finally {
