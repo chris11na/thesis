@@ -374,6 +374,9 @@
           regPasswordPh: "Не менее 6 символов",
           registerProgress: "Создаём аккаунт…",
           loginProgress: "Входим…",
+          oauthChecking: "Проверяем способы входа…",
+          signInGoogle: "Войти через Google",
+          signInMicrosoft: "Войти через Microsoft",
         },
         en: {
           title: "Sign in or sign up",
@@ -395,8 +398,24 @@
           regEmailPh: "you@yourcompany.com",
           regPasswordPh: "At least 6 characters",
           registerProgress: "Creating your account…",
+          loginProgress: "Signing in…",
+          oauthChecking: "Checking sign-in options…",
+          signInGoogle: "Sign in with Google",
+          signInMicrosoft: "Sign in with Microsoft",
         },
       };
+
+      function refreshOAuthButtonLabels() {
+        const row = document.getElementById("oauth-row");
+        if (!row) return;
+        const t = i18n[currentLang];
+        row.querySelectorAll('a.oauth-btn[data-oauth-provider="google"]').forEach((a) => {
+          a.textContent = t.signInGoogle;
+        });
+        row.querySelectorAll('a.oauth-btn[data-oauth-provider="microsoft"]').forEach((a) => {
+          a.textContent = t.signInMicrosoft;
+        });
+      }
 
       function applyLanguage(lang) {
         currentLang = lang === "en" ? "en" : "ru";
@@ -422,6 +441,7 @@
         if (registerNameInput) registerNameInput.placeholder = t.regNamePh;
         if (registerEmailInput) registerEmailInput.placeholder = t.regEmailPh;
         if (registerPasswordInput) registerPasswordInput.placeholder = t.regPasswordPh;
+        refreshOAuthButtonLabels();
       }
 
       function setAuthStatus(message, type = "info") {
@@ -527,10 +547,7 @@
         spin.className = "oauth-spinner";
         spin.setAttribute("aria-hidden", "true");
         const loadingLabel = document.createElement("span");
-        loadingLabel.textContent =
-          document.documentElement.lang === "en"
-            ? "Checking sign-in options…"
-            : "Проверяем способы входа…";
+        loadingLabel.textContent = i18n[currentLang].oauthChecking;
         loadingWrap.appendChild(spin);
         loadingWrap.appendChild(loadingLabel);
         row.appendChild(loadingWrap);
@@ -547,20 +564,16 @@
             const a = document.createElement("a");
             a.className = "oauth-btn";
             a.href = API_BASE + "/auth/google/login";
-            a.textContent =
-              document.documentElement.lang === "en"
-                ? "Sign in with Google"
-                : "Войти через Google";
+            a.dataset.oauthProvider = "google";
+            a.textContent = i18n[currentLang].signInGoogle;
             row.appendChild(a);
           }
           if (j.microsoft) {
             const a = document.createElement("a");
             a.className = "oauth-btn";
             a.href = API_BASE + "/auth/microsoft/login";
-            a.textContent =
-              document.documentElement.lang === "en"
-                ? "Sign in with Microsoft"
-                : "Войти через Microsoft";
+            a.dataset.oauthProvider = "microsoft";
+            a.textContent = i18n[currentLang].signInMicrosoft;
             row.appendChild(a);
           }
         } catch (_) {
