@@ -357,6 +357,11 @@
         background: #fffbeb;
       }
 
+      .app-toast--info {
+        border-color: #bfdbfe;
+        background: #eff6ff;
+      }
+
       .global-loading-overlay {
         position: fixed;
         inset: 0;
@@ -483,6 +488,18 @@
         cursor: default;
       }
 
+      .equipment-addon-panel .addon-section-title-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 4px;
+      }
+
+      .equipment-addon-panel .addon-section-title-row .addon-section-title {
+        margin-top: 0;
+      }
+
       .equipment-addon-panel .addon-section-title {
         font-size: 11px;
         font-weight: 600;
@@ -490,6 +507,15 @@
         text-transform: uppercase;
         letter-spacing: 0.04em;
         margin-top: 4px;
+      }
+
+      .equipment-addon-panel .addon-module-slot-count {
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748b;
+        letter-spacing: 0;
+        text-transform: none;
+        white-space: nowrap;
       }
 
       .equipment-addon-panel .addon-hint {
@@ -1567,7 +1593,7 @@
                   Отправка: <code>POST /configurations</code> на backend.
                 </div>
               </div>
-              <div class="status-area" id="status-area" style="margin-top: 10px"></div>
+              <div class="status-area" id="status-area" hidden></div>
             </div>
           </div>
         </section>
@@ -2300,48 +2326,6 @@
         panel.innerHTML = "";
         const st = ensureLineState(p.id);
 
-        if (data.built_in_license_units != null) {
-          const hint = document.createElement("div");
-          hint.className = "addon-hint";
-          hint.textContent = catT(
-            "Встроенная ёмкость лицензий: " +
-              data.built_in_license_units +
-              " AP.",
-            "Built-in licensed capacity: " +
-              data.built_in_license_units +
-              " AP."
-          );
-          panel.appendChild(hint);
-        }
-
-        if (data.max_module_slots != null) {
-          const hint = document.createElement("div");
-          hint.className = "addon-hint";
-          hint.textContent = catT(
-            "Максимум модулей — сумма количеств по всем выбранным типам трансиверов (не «на один тип»): " +
-              data.max_module_slots +
-              ".",
-            "Maximum modules — total quantity across all transceiver types (not per type): " +
-              data.max_module_slots +
-              "."
-          );
-          panel.appendChild(hint);
-        }
-
-        if (data.module_speeds_supported && data.module_speeds_supported.length) {
-          const hint = document.createElement("div");
-          hint.className = "addon-hint";
-          hint.textContent = catT(
-            "Допустимые скорости оптики (Гбит/с): " +
-              data.module_speeds_supported.join(", ") +
-              ".",
-            "Allowed optic speeds (Gbps): " +
-              data.module_speeds_supported.join(", ") +
-              "."
-          );
-          panel.appendChild(hint);
-        }
-
         const apTargetComboWarn = document.createElement("div");
         apTargetComboWarn.className = "addon-panel-warn-host";
 
@@ -2372,10 +2356,29 @@
 
           const suggestRow = document.createElement("div");
           suggestRow.className = "suggest-row";
+          const apCol = document.createElement("div");
+          apCol.style.display = "flex";
+          apCol.style.flexDirection = "column";
+          apCol.style.gap = "4px";
+          apCol.style.alignItems = "flex-start";
           const apLabel = document.createElement("label");
           apLabel.style.fontSize = "11px";
           apLabel.style.color = "#64748b";
           apLabel.textContent = catT("Целевое число AP:", "Target AP count:");
+          apCol.appendChild(apLabel);
+          if (data.built_in_license_units != null) {
+            const builtInHint = document.createElement("div");
+            builtInHint.className = "addon-hint";
+            builtInHint.textContent = catT(
+              "Встроенная ёмкость лицензий: " +
+                data.built_in_license_units +
+                " AP.",
+              "Built-in licensed capacity: " +
+                data.built_in_license_units +
+                " AP."
+            );
+            apCol.appendChild(builtInHint);
+          }
           const apInput = document.createElement("input");
           apInput.type = "number";
           apInput.min = "1";
@@ -2508,7 +2511,7 @@
               );
             }
           });
-          suggestRow.appendChild(apLabel);
+          suggestRow.appendChild(apCol);
           suggestRow.appendChild(apInput);
           suggestRow.appendChild(suggestBtn);
           panel.appendChild(suggestRow);
@@ -2549,16 +2552,31 @@
         }
 
         if (data.modules && data.modules.length) {
+          const titleRow = document.createElement("div");
+          titleRow.className = "addon-section-title-row";
           const title = document.createElement("div");
           title.className = "addon-section-title";
           title.textContent = catT(
             "Модули / трансиверы",
             "Modules / transceivers"
           );
-          panel.appendChild(title);
+          titleRow.appendChild(title);
+          let moduleSlotCountEl = null;
+          if (data.max_module_slots != null) {
+            moduleSlotCountEl = document.createElement("span");
+            moduleSlotCountEl.className = "addon-module-slot-count";
+            titleRow.appendChild(moduleSlotCountEl);
+          }
+          panel.appendChild(titleRow);
           const moduleSlotsWarn = document.createElement("div");
           moduleSlotsWarn.className = "addon-panel-warn-host";
+          function updateModuleSlotCounter() {
+            if (!moduleSlotCountEl || data.max_module_slots == null) return;
+            moduleSlotCountEl.textContent =
+              computeModuleQtySum(st) + "/" + data.max_module_slots;
+          }
           function refreshModuleSlots() {
+            updateModuleSlotCounter();
             syncModuleSlotsWarningEl(moduleSlotsWarn, data.max_module_slots, st);
           }
           for (const m of data.modules) {
@@ -4656,18 +4674,19 @@
       }
 
       function setStatus(message, type = "info") {
-        // Configuration card only (POST /configurations, validation).
-        elements.statusArea.innerHTML = "";
-        if (!message) return;
-        if (shouldUseUserToasts() && (type === "success" || type === "error")) {
-          showToast(message, type);
-          return;
+        // Configuration feedback: toast only (no inline status-area under the button).
+        if (elements.statusArea) {
+          elements.statusArea.innerHTML = "";
+          elements.statusArea.hidden = true;
         }
-
-        const div = document.createElement("div");
-        div.className = "status-text " + type;
-        div.textContent = message;
-        elements.statusArea.appendChild(div);
+        if (!message) return;
+        const toastType =
+          type === "error"
+            ? "error"
+            : type === "success"
+              ? "success"
+              : "info";
+        showToast(message, toastType);
       }
 
       function showToast(message, type = "success") {
@@ -4678,7 +4697,8 @@
         t.textContent = message;
         host.appendChild(t);
         requestAnimationFrame(() => t.classList.add("app-toast--visible"));
-        const hideMs = type === "error" ? 5000 : 3400;
+        const hideMs =
+          type === "error" ? 5000 : type === "info" ? 3200 : 3400;
         setTimeout(() => {
           t.classList.remove("app-toast--visible");
           setTimeout(() => t.remove(), 220);
