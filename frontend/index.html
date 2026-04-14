@@ -1395,14 +1395,8 @@
       <header class="app-header">
         <div class="title-group">
           <h1 id="app-page-title">Конфигуратор</h1>
-          <p id="header-blurb-user">
-            Конфигуратор: выберите продукты и создайте конфигурацию. Вход —
-            <a href="login.html">login.html</a>.
-          </p>
-          <p id="header-blurb-admin" style="display: none">
-            Админка: организации, пользователи, каталог оборудования и поля правил на
-            продукте (опции, лимиты). Конфигурации собирают пользователи с ролью User.
-          </p>
+          <p id="header-blurb-user"></p>
+          <p id="header-blurb-admin" style="display: none"></p>
         </div>
         <div class="header-user-cluster">
           <button class="header-lang-btn" id="lang-toggle-btn" type="button">RU</button>
@@ -1420,11 +1414,7 @@
           <div class="card-header">
             <div>
               <div class="card-title" id="products-card-title">Products</div>
-              <div class="card-subtitle">
-                Выберите позицию: доступные опции и лимиты задаются правилами и связями в
-                данных, а не названием класса устройства (controller/switch и т.д. — лишь
-                метки в каталоге).
-              </div>
+              <div class="card-subtitle" id="products-card-subtitle"></div>
             </div>
             <span class="badge" id="products-counter">0 selected</span>
           </div>
@@ -1455,11 +1445,7 @@
             <div>
               <div class="card-title" id="configuration-card-title">Configuration</div>
               <div class="card-subtitle">
-                <span class="product-only"
-                  >Слева отметьте оборудование, уточните опции в панели у позиции; при
-                  необходимости задайте цель AP и подберите пакеты. Затем создайте
-                  конфигурацию — проверка ограничений на стороне сервера.</span
-                >
+                <span class="product-only" id="configuration-card-lead"></span>
                 <span class="debug-only"
                   >Тело запроса: структура <code>lines</code> (см. подсказку ниже).</span
                 >
@@ -1921,6 +1907,40 @@
             ? "Comment / note for sales team"
             : "Комментарий / примечание для отдела продаж";
         }
+        if (elements.headerBlurbUser) {
+          elements.headerBlurbUser.textContent = isEn
+            ? "Select equipment on the left. On the right set options, add project details if needed, then submit your configuration."
+            : "Слева выберите оборудование. Справа укажите опции, при необходимости данные проекта и отправьте конфигурацию.";
+        }
+        if (elements.headerBlurbAdmin) {
+          elements.headerBlurbAdmin.textContent = isEn
+            ? "Manage companies, users, and the equipment catalog. Buyers build configurations in their own configurator view."
+            : "Здесь вы управляете организациями, пользователями и каталогом. Покупатели собирают конфигурации в своём разделе конфигуратора.";
+        }
+        const productsCardSubtitle = document.getElementById("products-card-subtitle");
+        if (productsCardSubtitle) {
+          productsCardSubtitle.textContent = isEn
+            ? "Select the lines you need. Available add-ons (modules, license packs) depend on the equipment you choose."
+            : "Отметьте нужные позиции. Доступные дополнения (модули, пакеты лицензий) зависят от выбранного оборудования.";
+        }
+        const configurationCardLead = document.getElementById("configuration-card-lead");
+        if (configurationCardLead) {
+          configurationCardLead.textContent = isEn
+            ? "For each line set quantities. If required, set your target number of access points—the system suggests license packs. Then submit for validation."
+            : "Для каждой строки укажите количества. При необходимости задайте целевое число точек доступа — система подберёт пакеты лицензий. Затем отправьте конфигурацию на проверку.";
+        }
+        if (elements.adminCompanyEditName) {
+          elements.adminCompanyEditName.placeholder = isEn ? "Company name" : "Название";
+        }
+        if (elements.adminCompanyEditDomain) {
+          elements.adminCompanyEditDomain.placeholder = "example.com";
+        }
+        if (elements.adminCompanyName) {
+          elements.adminCompanyName.placeholder = isEn ? "Acme Inc" : "Название компании";
+        }
+        if (elements.adminCompanyDomain) {
+          elements.adminCompanyDomain.placeholder = "example.com";
+        }
         if (elements.clearTokenBtn) {
           elements.clearTokenBtn.textContent = isEn ? "Log out" : "Выйти";
         }
@@ -2022,6 +2042,7 @@
           renderAdminCompaniesTable();
           renderAdminProductsTable();
           syncAdminProductDrawer();
+          refreshAdminProductUserPreview();
         }
       }
 
@@ -2685,16 +2706,19 @@
         const ds = (elements.adminProductDesc && elements.adminProductDesc.value) || "";
         const nameTrim = nm.trim();
         const descTrim = ds.trim();
+        const prevEn = uiLang === "en";
         if (!nameTrim && !descTrim) {
           const ph = document.createElement("div");
           ph.className = "admin-user-product-preview-placeholder";
-          ph.textContent =
-            "Введите название и описание — здесь появится превью.";
+          ph.textContent = prevEn
+            ? "Enter a name and description to see a preview here."
+            : "Введите название и описание — здесь появится превью.";
           host.appendChild(ph);
         } else {
           const title = document.createElement("div");
           title.className = "product-name";
-          title.textContent = nameTrim || "(без названия)";
+          title.textContent =
+            nameTrim || (prevEn ? "(no name)" : "(без названия)");
           const desc = document.createElement("div");
           desc.className = "product-desc";
           desc.textContent = descTrim || "—";
@@ -2703,7 +2727,9 @@
         }
         const cap = document.createElement("div");
         cap.className = "admin-user-product-preview-caption";
-        cap.textContent = "Так карточка выглядит у пользователя в списке:";
+        cap.textContent = prevEn
+          ? "This is how the card appears in the user’s product list:"
+          : "Так карточка выглядит у пользователя в списке:";
         host.appendChild(cap);
       }
 
@@ -3055,7 +3081,9 @@
         }
 
         function syncModuleUserLabelSpan(span, inName, inSp, inFf) {
-          const nm = inName.value.trim() || "(без названия)";
+          const nm =
+            inName.value.trim() ||
+            (isEn ? "(no name)" : "(без названия)");
           span.textContent = formatModuleUserLabel({
             name: nm,
             speed_gbps: parseOptInt(inSp.value),
@@ -3064,7 +3092,9 @@
         }
 
         function syncLicenseUserLabelSpan(span, inName, inU) {
-          const nm = inName.value.trim() || "(без названия)";
+          const nm =
+            inName.value.trim() ||
+            (isEn ? "(no name)" : "(без названия)");
           const u = parseInt(inU.value, 10);
           const pack = Number.isFinite(u) && u >= 1 ? u : 1;
           span.textContent = formatLicenseUserLabel({
@@ -3160,13 +3190,13 @@
           inSp.type = "number";
           inSp.min = "0";
           inSp.step = "1";
-          inSp.placeholder = "пусто";
+          inSp.placeholder = isEn ? "optional" : "необяз.";
           if (mod.speed_gbps != null) inSp.value = String(mod.speed_gbps);
           tdSp.appendChild(inSp);
           const tdFf = document.createElement("td");
           const inFf = document.createElement("input");
           inFf.type = "text";
-          inFf.placeholder = "SFP…";
+          inFf.placeholder = isEn ? "e.g. SFP" : "напр. SFP";
           inFf.value = mod.form_factor || "";
           tdFf.appendChild(inFf);
           const syncM = () =>
@@ -3816,8 +3846,8 @@
           isEn ? "Category (label)" : "Категория (метка)",
           inpCategory,
           isEn
-            ? "For example controller, switch, router - label only."
-            : "Например controller, switch, router — только подпись в каталоге."
+            ? "Optional short label in the catalog (e.g. type of device)."
+            : "Необязательная короткая метка в каталоге (например, тип устройства)."
         );
 
         const inpBuilt = document.createElement("input");

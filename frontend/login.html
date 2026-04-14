@@ -253,7 +253,7 @@
         <input
           type="email"
           id="login-email-input"
-          placeholder="you@example.com"
+          placeholder=""
           autocomplete="username"
         />
 
@@ -261,7 +261,7 @@
         <input
           type="password"
           id="login-password-input"
-          placeholder="Пароль"
+          placeholder=""
           autocomplete="current-password"
         />
 
@@ -276,7 +276,7 @@
         <input
           type="text"
           id="register-name-input"
-          placeholder="Как к вам обращаться"
+          placeholder=""
           autocomplete="name"
         />
 
@@ -284,7 +284,7 @@
         <input
           type="email"
           id="register-email-input"
-          placeholder="you@yourcompany.com"
+          placeholder=""
           autocomplete="email"
         />
 
@@ -292,7 +292,7 @@
         <input
           type="password"
           id="register-password-input"
-          placeholder="Придумайте пароль"
+          placeholder=""
           autocomplete="new-password"
         />
 
@@ -367,12 +367,19 @@
           registerPass: "Пароль (не короче 6 символов)",
           registerBtn: "Зарегистрироваться",
           langBtn: "RU",
+          loginEmailPh: "you@example.com",
+          loginPasswordPh: "Введите пароль",
+          regNamePh: "Как к вам обращаться",
+          regEmailPh: "you@yourcompany.com",
+          regPasswordPh: "Не менее 6 символов",
+          registerProgress: "Создаём аккаунт…",
+          loginProgress: "Входим…",
         },
         en: {
           title: "Sign in and register",
-          subtitle: "Configurator opens after successful sign in or registration.",
+          subtitle: "The configurator opens after you sign in or create an account.",
           tabLogin: "Sign in",
-          tabRegister: "Register",
+          tabRegister: "Sign up",
           email: "Email",
           password: "Password",
           loginBtn: "Sign in",
@@ -380,8 +387,14 @@
           name: "Name",
           corpEmail: "Corporate email",
           registerPass: "Password (at least 6 characters)",
-          registerBtn: "Register",
+          registerBtn: "Create account",
           langBtn: "EN",
+          loginEmailPh: "you@example.com",
+          loginPasswordPh: "Your password",
+          regNamePh: "How should we address you",
+          regEmailPh: "you@yourcompany.com",
+          regPasswordPh: "At least 6 characters",
+          registerProgress: "Creating your account…",
         },
       };
 
@@ -404,6 +417,11 @@
         document.getElementById("register-password-label").textContent = t.registerPass;
         registerBtn.textContent = t.registerBtn;
         if (langToggleBtn) langToggleBtn.textContent = t.langBtn;
+        if (loginEmailInput) loginEmailInput.placeholder = t.loginEmailPh;
+        if (loginPasswordInput) loginPasswordInput.placeholder = t.loginPasswordPh;
+        if (registerNameInput) registerNameInput.placeholder = t.regNamePh;
+        if (registerEmailInput) registerEmailInput.placeholder = t.regEmailPh;
+        if (registerPasswordInput) registerPasswordInput.placeholder = t.regPasswordPh;
       }
 
       function setAuthStatus(message, type = "info") {
@@ -573,7 +591,7 @@
           return;
         }
         loginBtn.disabled = true;
-        setAuthStatus("Входим…", "info");
+        setAuthStatus(i18n[currentLang].loginProgress, "info");
         try {
           const response = await fetch(API_BASE + "/auth/login", {
             method: "POST",
@@ -614,7 +632,7 @@
           return;
         }
         registerBtn.disabled = true;
-        setAuthStatus("Регистрация…", "info");
+        setAuthStatus(i18n[currentLang].registerProgress, "info");
         try {
           const response = await fetch(API_BASE + "/auth/register", {
             method: "POST",
