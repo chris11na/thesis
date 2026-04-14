@@ -7,4 +7,5 @@ from .license import License
 from .configuration import Configuration
 from .configuration_item import ConfigurationItem
 from .compatibility_rule import CompatibilityRule
+from .product_incompatible_pair import ProductIncompatiblePair
 from .refresh_token import RefreshToken

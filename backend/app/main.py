@@ -7,8 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.sessions import SessionMiddleware
 from app.api.routes import router
-from app.db.session import engine, SessionLocal
-from app.db.base import Base
+from app.db.session import SessionLocal
 from app.models import User
 from app.db.seed import seed_initial_data
 from app.core.config import settings
@@ -113,7 +112,8 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     )
     return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
 
-Base.metadata.create_all(bind=engine)
+# Schema is applied with Alembic only (`alembic upgrade head`).
+# Do not call create_all here: it creates tables without alembic_version and breaks upgrades.
 
 app.include_router(router)
 

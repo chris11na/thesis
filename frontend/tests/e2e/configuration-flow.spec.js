@@ -1,31 +1,24 @@
 const { test, expect } = require("@playwright/test");
 
+async function loginAsUser(page) {
+  await page.goto("/login.html");
+  await page.fill("#login-email-input", "user@example.com");
+  await page.fill("#login-password-input", "user123");
+  await page.click("#login-btn");
+  await page.waitForURL(/index\.html/, { timeout: 15_000 });
+}
+
 test.describe("Frontend configuration flow", () => {
-  test("creates configuration as admin", async ({ page }) => {
-    await page.goto("/");
-    await page.fill("#login-email-input", "admin@example.com");
-    await page.fill("#login-password-input", "admin123");
-    await page.click("#login-btn");
-
-    // Select first product.
-    await page.locator("#products-list .product-item").first().click();
+  test("creates configuration as user (demo controller)", async ({ page }) => {
+    await loginAsUser(page);
+    await page
+      .locator("#products-list .product-item")
+      .filter({ hasText: "Контроллер" })
+      .first()
+      .click();
     await page.click("#create-config-btn");
-
     await expect(page.locator("#status-area")).toContainText(
       "Конфигурация успешно создана"
     );
-  });
-
-  test("shows compatibility error for forbidden item", async ({ page }) => {
-    await page.goto("/");
-    await page.fill("#login-email-input", "admin@example.com");
-    await page.fill("#login-password-input", "admin123");
-    await page.click("#login-btn");
-
-    // Select forbidden seeded product id=103.
-    await page.locator("#products-list .product-item:has-text('103')").click();
-    await page.click("#create-config-btn");
-
-    await expect(page.locator("#status-area")).toContainText("несовместим");
   });
 });

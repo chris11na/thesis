@@ -19,7 +19,7 @@ uvicorn app.main:app --reload
 
 3. Открыть frontend:
 
-- `frontend/index.html` (или через Docker `http://localhost:8080`)
+- `frontend/login.html` → после входа `index.html` (Docker: `http://localhost:8080/` открывает страницу входа)
 
 ## 2) Автотесты
 
@@ -34,7 +34,7 @@ pytest -q
 
 Примечание:
 - в текущей среде frontend e2e (Cypress/Jest/Playwright JS) не подключены, т.к. отсутствует `node/npm`;
-- добавлены frontend contract tests в `backend/tests/test_frontend_contract.py`, которые проверяют наличие критичных UI/RBAC/token-flow элементов в `frontend/index.html`.
+- добавлены frontend contract tests в `backend/tests/test_frontend_contract.py` (`login.html` + `index.html`).
 
 ### Playwright e2e (готовый каркас)
 
@@ -108,7 +108,7 @@ curl "http://127.0.0.1:8000/products"
 curl -X POST "http://127.0.0.1:8000/configurations" ^
   -H "Authorization: Bearer <ACCESS_TOKEN>" ^
   -H "Content-Type: application/json" ^
-  -d "{\"user_id\":1,\"items\":[101]}"
+  -d "{\"user_id\":1,\"items\":[501]}"
 ```
 
 Проверить: `status=ok`, есть `configuration_id`.
@@ -131,22 +131,7 @@ Seed users:
 
 `POST /configurations` с токеном user и чужим `user_id` должен вернуть `403`.
 
-## 5) Compatibility checks
-
-По текущему seed есть правило запрета для продукта `103`.
-
-Проверка:
-
-```bash
-curl -X POST "http://127.0.0.1:8000/configurations" ^
-  -H "Authorization: Bearer <ACCESS_TOKEN>" ^
-  -H "Content-Type: application/json" ^
-  -d "{\"user_id\":1,\"items\":[103]}"
-```
-
-Ожидается: `400` с сообщением о несовместимой конфигурации.
-
-## 6) Frontend checks
+## 5) Frontend checks
 
 1. Login в UI (admin/user).
 2. Проверить role badge: `Admin/User/Guest/Anonymous`.
@@ -157,7 +142,7 @@ curl -X POST "http://127.0.0.1:8000/configurations" ^
 4. Проверить авто-refresh:
    - при `401` frontend пытается сделать `POST /auth/refresh` и повторяет запрос.
 
-## 7) Postman
+## 6) Postman
 
 Импортировать:
 
@@ -167,7 +152,7 @@ curl -X POST "http://127.0.0.1:8000/configurations" ^
 
 - `baseUrl = http://127.0.0.1:8000`
 
-## 8) Шаблон отчёта об ошибках (для диплома)
+## 7) Шаблон отчёта об ошибках (для диплома)
 
 Используй такой формат:
 

@@ -119,7 +119,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\"user_id\":1,\"items\":[101]}"
+          "raw": "{\"user_id\":1,\"items\":[501]}"
         }
       }
     }

@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Вход и регистрация</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+      body {
+        background: #f5f7fa;
+        color: #222;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+        max-width: 400px;
+        width: 100%;
+        padding: 28px;
+        border: 1px solid #e5e7eb;
+      }
+      .lang-toggle-wrap {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 8px;
+      }
+      .lang-toggle-btn {
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid #d1d5db;
+        background: #f9fafb;
+        color: #374151;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      h1 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 6px;
+      }
+      .subtitle {
+        font-size: 13px;
+        color: #6b7280;
+        margin-bottom: 16px;
+      }
+      .tab-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 18px;
+      }
+      .tab-btn {
+        flex: 1;
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        background: #f9fafb;
+        font-size: 13px;
+        font-weight: 500;
+        color: #4b5563;
+        cursor: pointer;
+      }
+      .tab-btn:hover {
+        background: #f3f4f6;
+      }
+      .tab-btn.active {
+        background: #eff6ff;
+        border-color: #93c5fd;
+        color: #1d4ed8;
+        font-weight: 600;
+      }
+      .panel {
+        display: none;
+      }
+      .panel.active {
+        display: block;
+      }
+      .field-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: #4b5563;
+        margin-bottom: 4px;
+      }
+      input[type="email"],
+      input[type="password"],
+      input[type="text"] {
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        font-size: 14px;
+        margin-bottom: 14px;
+      }
+      input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+      }
+      .primary-btn {
+        width: 100%;
+        padding: 10px 14px;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(135deg, #2563eb, #4f46e5);
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        margin-top: 4px;
+      }
+      .primary-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .status-area {
+        margin-top: 0;
+        min-height: 0;
+        font-size: 13px;
+      }
+      .status-area.has-message {
+        margin-top: 14px;
+      }
+      .status-text {
+        padding: 8px 10px;
+        border-radius: 8px;
+      }
+      .status-text.info {
+        background: #eff6ff;
+        color: #1d4ed8;
+        border: 1px solid #dbeafe;
+      }
+      .status-text.success {
+        background: #ecfdf3;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+      }
+      .status-text.error {
+        background: #fef2f2;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+      }
+      .hint {
+        margin-top: 16px;
+        font-size: 11px;
+        color: #9ca3af;
+        line-height: 1.45;
+      }
+      code {
+        font-size: 11px;
+        background: #f3f4f6;
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+      .oauth-divider {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 18px 0 12px;
+        font-size: 12px;
+        color: #9ca3af;
+      }
+      .oauth-divider::before,
+      .oauth-divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: #e5e7eb;
+      }
+      .oauth-row {
+        display: none;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .oauth-btn {
+        display: block;
+        width: 100%;
+        text-align: center;
+        padding: 10px 14px;
+        border-radius: 999px;
+        border: 1px solid #d1d5db;
+        background: #ffffff;
+        color: #374151;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .oauth-btn:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="lang-toggle-wrap">
+        <button type="button" class="lang-toggle-btn" id="lang-toggle-btn">RU</button>
+      </div>
+      <h1 id="login-title">Вход и регистрация</h1>
+      <p class="subtitle" id="login-subtitle">
+        Конфигуратор откроется после успешного входа или регистрации.
+      </p>
+
+      <div class="tab-row">
+        <button type="button" class="tab-btn active" id="tab-login-btn">
+          Вход
+        </button>
+        <button type="button" class="tab-btn" id="tab-register-btn">
+          Регистрация
+        </button>
+      </div>
+
+      <div id="panel-login" class="panel active">
+        <div class="field-label" id="login-email-label">Email</div>
+        <input
+          type="email"
+          id="login-email-input"
+          placeholder="you@example.com"
+          autocomplete="username"
+        />
+
+        <div class="field-label" id="login-password-label">Пароль</div>
+        <input
+          type="password"
+          id="login-password-input"
+          placeholder="Пароль"
+          autocomplete="current-password"
+        />
+
+        <button class="primary-btn" id="login-btn" type="button">Войти</button>
+
+        <div class="oauth-divider" id="oauth-divider">или</div>
+        <div class="oauth-row" id="oauth-row" aria-label="Вход через провайдера"></div>
+      </div>
+
+      <div id="panel-register" class="panel">
+        <div class="field-label" id="register-name-label">Имя</div>
+        <input
+          type="text"
+          id="register-name-input"
+          placeholder="Как к вам обращаться"
+          autocomplete="name"
+        />
+
+        <div class="field-label" id="register-email-label">Корпоративный email</div>
+        <input
+          type="email"
+          id="register-email-input"
+          placeholder="you@yourcompany.com"
+          autocomplete="email"
+        />
+
+        <div class="field-label" id="register-password-label">Пароль (не короче 6 символов)</div>
+        <input
+          type="password"
+          id="register-password-input"
+          placeholder="Придумайте пароль"
+          autocomplete="new-password"
+        />
+
+        <button class="primary-btn" id="register-btn" type="button">
+          Зарегистрироваться
+        </button>
+      </div>
+
+      <div class="status-area" id="auth-status-area"></div>
+
+      <p class="hint" id="login-hint">
+        <strong>Регистрация:</strong> домен почты должен совпадать с организацией,
+        которую администратор добавил в систему (например, для
+        <code>name@example.com</code> в базе должна быть компания с доменом
+        <code>example.com</code>). 
+        <br /> <br />
+        Демо-вход:
+        <code>admin@example.com</code> / <code>admin123</code> или
+        <code>user@example.com</code> / <code>user123</code>.
+        <br /><br />
+        <strong>OAuth:</strong> кнопки появляются, если в backend заданы
+        <code>GOOGLE_CLIENT_*</code> / <code>MICROSOFT_CLIENT_*</code> в
+        <code>.env</code>. Домен почты Google/Microsoft должен совпадать с
+        организацией в базе (как при регистрации). Redirect URI в консоли
+        провайдера: <code>http://127.0.0.1:8000/auth/google/callback</code> (и
+        аналогично для Microsoft), тот же хост/порт, с которого открыт API.
+      </p>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:8000";
+      const TOKEN_STORAGE_KEY = "access_token";
+      const REFRESH_TOKEN_STORAGE_KEY = "refresh_token";
+      const UI_LANG_STORAGE_KEY = "ui_lang";
+
+      const tabLoginBtn = document.getElementById("tab-login-btn");
+      const tabRegisterBtn = document.getElementById("tab-register-btn");
+      const panelLogin = document.getElementById("panel-login");
+      const panelRegister = document.getElementById("panel-register");
+
+      const loginEmailInput = document.getElementById("login-email-input");
+      const loginPasswordInput = document.getElementById("login-password-input");
+      const loginBtn = document.getElementById("login-btn");
+
+      const registerNameInput = document.getElementById("register-name-input");
+      const registerEmailInput = document.getElementById("register-email-input");
+      const registerPasswordInput = document.getElementById(
+        "register-password-input"
+      );
+      const registerBtn = document.getElementById("register-btn");
+
+      const authStatusArea = document.getElementById("auth-status-area");
+      const langToggleBtn = document.getElementById("lang-toggle-btn");
+      let currentLang = localStorage.getItem(UI_LANG_STORAGE_KEY) || "ru";
+
+      const i18n = {
+        ru: {
+          title: "Вход и регистрация",
+          subtitle: "Конфигуратор откроется после успешного входа или регистрации.",
+          tabLogin: "Вход",
+          tabRegister: "Регистрация",
+          email: "Email",
+          password: "Пароль",
+          loginBtn: "Войти",
+          or: "или",
+          name: "Имя",
+          corpEmail: "Корпоративный email",
+          registerPass: "Пароль (не короче 6 символов)",
+          registerBtn: "Зарегистрироваться",
+          langBtn: "RU",
+        },
+        en: {
+          title: "Sign in and register",
+          subtitle: "Configurator opens after successful sign in or registration.",
+          tabLogin: "Sign in",
+          tabRegister: "Register",
+          email: "Email",
+          password: "Password",
+          loginBtn: "Sign in",
+          or: "or",
+          name: "Name",
+          corpEmail: "Corporate email",
+          registerPass: "Password (at least 6 characters)",
+          registerBtn: "Register",
+          langBtn: "EN",
+        },
+      };
+
+      function applyLanguage(lang) {
+        currentLang = lang === "en" ? "en" : "ru";
+        localStorage.setItem(UI_LANG_STORAGE_KEY, currentLang);
+        document.documentElement.lang = currentLang;
+        const t = i18n[currentLang];
+        document.getElementById("login-title").textContent = t.title;
+        document.getElementById("login-subtitle").textContent = t.subtitle;
+        tabLoginBtn.textContent = t.tabLogin;
+        tabRegisterBtn.textContent = t.tabRegister;
+        document.getElementById("login-email-label").textContent = t.email;
+        document.getElementById("login-password-label").textContent = t.password;
+        loginBtn.textContent = t.loginBtn;
+        document.getElementById("oauth-divider").textContent = t.or;
+        document.getElementById("register-name-label").textContent = t.name;
+        document.getElementById("register-email-label").textContent = t.corpEmail;
+        document.getElementById("register-password-label").textContent = t.registerPass;
+        registerBtn.textContent = t.registerBtn;
+        if (langToggleBtn) langToggleBtn.textContent = t.langBtn;
+      }
+
+      function setAuthStatus(message, type = "info") {
+        if (!authStatusArea) return;
+        authStatusArea.innerHTML = "";
+        authStatusArea.classList.toggle("has-message", !!message);
+        if (!message) return;
+        const div = document.createElement("div");
+        div.className = "status-text " + type;
+        div.textContent = message;
+        authStatusArea.appendChild(div);
+      }
+
+      function formatApiDetail(detail) {
+        if (detail == null) return "Ошибка";
+        if (typeof detail === "string") return detail;
+        if (Array.isArray(detail)) {
+          return detail
+            .map((e) =>
+              e && typeof e === "object" && e.msg ? e.msg : JSON.stringify(e)
+            )
+            .join(" ");
+        }
+        return String(detail);
+      }
+
+      function showPanel(which) {
+        const isLogin = which === "login";
+        panelLogin.classList.toggle("active", isLogin);
+        panelRegister.classList.toggle("active", !isLogin);
+        tabLoginBtn.classList.toggle("active", isLogin);
+        tabRegisterBtn.classList.toggle("active", !isLogin);
+        setAuthStatus("", "info");
+      }
+
+      tabLoginBtn.addEventListener("click", () => showPanel("login"));
+      tabRegisterBtn.addEventListener("click", () => showPanel("register"));
+
+      function storeTokensAndGo(json) {
+        const at = json && json.access_token ? json.access_token : null;
+        const rt = json && json.refresh_token ? json.refresh_token : null;
+        if (!at || !rt) {
+          setAuthStatus("Сервер не вернул пару токенов.", "error");
+          return false;
+        }
+        localStorage.setItem(TOKEN_STORAGE_KEY, at);
+        localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, rt);
+        setAuthStatus("Успешно. Переход…", "success");
+        window.location.href = "index.html";
+        return true;
+      }
+
+      async function tryRefresh() {
+        const refreshToken = localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+        if (!refreshToken) return false;
+        try {
+          const response = await fetch(API_BASE + "/auth/refresh", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh_token: refreshToken }),
+          });
+          const json = await response.json().catch(() => null);
+          if (!response.ok || !json || !json.access_token || !json.refresh_token) {
+            localStorage.removeItem(TOKEN_STORAGE_KEY);
+            localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+            return false;
+          }
+          localStorage.setItem(TOKEN_STORAGE_KEY, json.access_token);
+          localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, json.refresh_token);
+          return true;
+        } catch {
+          localStorage.removeItem(TOKEN_STORAGE_KEY);
+          localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+          return false;
+        }
+      }
+
+      function readOAuthErrorFromUrl() {
+        const p = new URLSearchParams(window.location.search);
+        if (p.get("oauth_error") !== "1") return;
+        const raw = p.get("detail") || "Ошибка входа через провайдера.";
+        let msg = raw;
+        try {
+          msg = decodeURIComponent(raw);
+        } catch (_) {}
+        setAuthStatus(msg, "error");
+        const u = new URL(window.location.href);
+        u.searchParams.delete("oauth_error");
+        u.searchParams.delete("detail");
+        const tail = u.search ? u.search : "";
+        window.history.replaceState({}, "", u.pathname + tail);
+      }
+
+      async function loadOAuthButtons() {
+        const row = document.getElementById("oauth-row");
+        if (!row) return;
+        try {
+          const r = await fetch(API_BASE + "/auth/oauth/providers");
+          const j = await r.json().catch(() => ({}));
+          if (!j.google && !j.microsoft) {
+            row.remove();
+            const div = document.querySelector("#panel-login .oauth-divider");
+            if (div) div.remove();
+            return;
+          }
+          row.style.display = "flex";
+          if (j.google) {
+            const a = document.createElement("a");
+            a.className = "oauth-btn";
+            a.href = API_BASE + "/auth/google/login";
+            a.textContent = "Войти через Google";
+            row.appendChild(a);
+          }
+          if (j.microsoft) {
+            const a = document.createElement("a");
+            a.className = "oauth-btn";
+            a.href = API_BASE + "/auth/microsoft/login";
+            a.textContent = "Войти через Microsoft";
+            row.appendChild(a);
+          }
+        } catch (_) {
+          row.remove();
+          const div = document.querySelector("#panel-login .oauth-divider");
+          if (div) div.remove();
+        }
+      }
+
+      async function boot() {
+        readOAuthErrorFromUrl();
+        const accessToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+        if (accessToken) {
+          window.location.href = "index.html";
+          return;
+        }
+        if (await tryRefresh()) {
+          window.location.href = "index.html";
+          return;
+        }
+        await loadOAuthButtons();
+      }
+
+      loginBtn.addEventListener("click", async () => {
+        const email = (loginEmailInput.value || "").trim().toLowerCase();
+        const password = loginPasswordInput.value || "";
+        if (!email) {
+          setAuthStatus("Введите email.", "error");
+          return;
+        }
+        loginBtn.disabled = true;
+        setAuthStatus("Входим…", "info");
+        try {
+          const response = await fetch(API_BASE + "/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+          const json = await response.json().catch(() => null);
+          if (!response.ok) {
+            setAuthStatus(
+              formatApiDetail(json && json.detail) || "Ошибка входа",
+              "error"
+            );
+            return;
+          }
+          storeTokensAndGo(json);
+        } catch (e) {
+          console.error(e);
+          setAuthStatus("Сеть: не удалось связаться с backend.", "error");
+        } finally {
+          loginBtn.disabled = false;
+        }
+      });
+
+      registerBtn.addEventListener("click", async () => {
+        const name = (registerNameInput.value || "").trim();
+        const email = (registerEmailInput.value || "").trim().toLowerCase();
+        const password = registerPasswordInput.value || "";
+        if (!name) {
+          setAuthStatus("Укажите имя.", "error");
+          return;
+        }
+        if (!email) {
+          setAuthStatus("Укажите email.", "error");
+          return;
+        }
+        if (password.length < 6) {
+          setAuthStatus("Пароль не короче 6 символов.", "error");
+          return;
+        }
+        registerBtn.disabled = true;
+        setAuthStatus("Регистрация…", "info");
+        try {
+          const response = await fetch(API_BASE + "/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, email, password }),
+          });
+          const json = await response.json().catch(() => null);
+          if (!response.ok) {
+            setAuthStatus(
+              formatApiDetail(json && json.detail) || "Ошибка регистрации",
+              "error"
+            );
+            return;
+          }
+          storeTokensAndGo(json);
+        } catch (e) {
+          console.error(e);
+          setAuthStatus("Сеть: не удалось связаться с backend.", "error");
+        } finally {
+          registerBtn.disabled = false;
+        }
+      });
+
+      boot();
+      applyLanguage(currentLang);
+      if (langToggleBtn) {
+        langToggleBtn.addEventListener("click", () => {
+          applyLanguage(currentLang === "ru" ? "en" : "ru");
+        });
+      }
+    </script>
+  </body>
+</html>

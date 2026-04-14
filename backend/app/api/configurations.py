@@ -1,23 +1,55 @@
+from datetime import datetime
+from typing import List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_user_claims, require_roles
 from app.db.session import SessionLocal
-from app.services.compatibility_service import is_configuration_compatible
+from app.models.company import Company
 from app.models.configuration import Configuration
 from app.models.configuration_item import ConfigurationItem
-from app.models.product import Product
-from app.models.module import Module
 from app.models.license import License
+from app.models.module import Module
+from app.models.product import Product
 from app.models.user import User
-from app.api.deps import get_current_user_claims
+from app.services.compatibility_service import (
+    is_configuration_compatible,
+    is_configuration_compatible_typed,
+)
+from app.services.config_validation import (
+    AddonLineData,
+    EquipmentLineData,
+    validate_structured_lines,
+)
 
 router = APIRouter(prefix="/configurations", tags=["configurations"])
 
 
+class ConfigurationAddonIn(BaseModel):
+    module_id: Optional[int] = None
+    license_id: Optional[int] = None
+    quantity: int = Field(default=1, ge=1)
+
+
+class ConfigurationLineIn(BaseModel):
+    equipment_product_id: int = Field(ge=1)
+    target_ap_count: Optional[int] = Field(default=None, ge=1)
+    addons: List[ConfigurationAddonIn] = Field(default_factory=list)
+
+
 class ConfigurationCreateRequest(BaseModel):
     user_id: int
-    items: list[int]  # ids продуктов/модулей/лицензий в упрощённом виде
+    # Legacy: flat ids (products/modules/licenses), quantity 1 each
+    items: Optional[List[int]] = None
+    # Structured: root equipment + addons with quantities
+    lines: Optional[List[ConfigurationLineIn]] = None
+    # Optional project questionnaire for sales handoff.
+    project_name: Optional[str] = None
+    project_contact_name: Optional[str] = None
+    project_contact_email: Optional[str] = None
+    project_notes: Optional[str] = None
 
 
 def get_db():
@@ -28,23 +60,126 @@ def get_db():
         db.close()
 
 
+def _addon_to_data(a: ConfigurationAddonIn) -> AddonLineData:
+    return AddonLineData(
+        module_id=a.module_id,
+        license_id=a.license_id,
+        quantity=a.quantity,
+    )
+
+
+def _lines_to_data(lines: List[ConfigurationLineIn]) -> List[EquipmentLineData]:
+    out: List[EquipmentLineData] = []
+    for ln in lines:
+        addons: List[AddonLineData] = []
+        for a in ln.addons:
+            has_m = a.module_id is not None
+            has_l = a.license_id is not None
+            if has_m == has_l:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Each addon must have exactly one of module_id or license_id",
+                )
+            addons.append(_addon_to_data(a))
+        out.append(
+            EquipmentLineData(
+                equipment_product_id=ln.equipment_product_id,
+                target_ap_count=ln.target_ap_count,
+                addons=addons,
+            )
+        )
+    return out
+
+
+def _build_specification(db: Session, line_data: List[EquipmentLineData]) -> List[dict]:
+    rows: List[dict] = []
+    for line in line_data:
+        p = db.query(Product).filter(Product.id == line.equipment_product_id).first()
+        name = p.name if p else f"product#{line.equipment_product_id}"
+        rows.append(
+            {
+                "kind": "equipment",
+                "product_id": line.equipment_product_id,
+                "name": name,
+                "quantity": 1,
+                "target_ap_count": line.target_ap_count,
+            }
+        )
+        for ad in line.addons:
+            if ad.module_id is not None:
+                m = db.query(Module).filter(Module.id == ad.module_id).first()
+                rows.append(
+                    {
+                        "kind": "module",
+                        "module_id": ad.module_id,
+                        "name": m.name if m else f"module#{ad.module_id}",
+                        "parent_product_id": line.equipment_product_id,
+                        "quantity": ad.quantity,
+                    }
+                )
+            else:
+                lic = db.query(License).filter(License.id == ad.license_id).first()
+                rows.append(
+                    {
+                        "kind": "license",
+                        "license_id": ad.license_id,
+                        "name": lic.name if lic else f"license#{ad.license_id}",
+                        "parent_product_id": line.equipment_product_id,
+                        "quantity": ad.quantity,
+                        "units_per_pack": lic.units_per_pack if lic else None,
+                    }
+                )
+    return rows
+
+
+def _clean_optional_text(value: Optional[str], max_len: int) -> Optional[str]:
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    return text[:max_len]
+
+
+def _normalized_project_payload(payload: ConfigurationCreateRequest) -> dict:
+    project_name = _clean_optional_text(payload.project_name, 200)
+    project_contact_name = _clean_optional_text(payload.project_contact_name, 200)
+    project_contact_email = _clean_optional_text(payload.project_contact_email, 255)
+    project_notes = _clean_optional_text(payload.project_notes, 4000)
+
+    if project_contact_email and "@" not in project_contact_email:
+        raise HTTPException(status_code=400, detail="project_contact_email must be a valid email")
+
+    submitted_to_sales = bool(project_name and project_contact_email)
+    submitted_at = datetime.utcnow() if submitted_to_sales else None
+
+    return {
+        "project_name": project_name,
+        "project_contact_name": project_contact_name,
+        "project_contact_email": project_contact_email,
+        "project_notes": project_notes,
+        "submitted_to_sales": submitted_to_sales,
+        "submitted_at": submitted_at,
+    }
+
+
 @router.post("")
 def create_configuration(
     payload: ConfigurationCreateRequest,
     db: Session = Depends(get_db),
     claims: dict = Depends(get_current_user_claims),
 ):
-    # Basic validation (no auth yet, but DB constraints still apply)
     if payload.user_id <= 0:
         raise HTTPException(status_code=400, detail="user_id must be a positive integer")
 
-    selected_item_ids = list(dict.fromkeys(payload.items))  # preserve order, remove duplicates
-    if not selected_item_ids:
-        raise HTTPException(status_code=400, detail="items must contain at least one id")
-
     token_user_id = int(claims.get("sub"))
     token_role_id = claims.get("role_id")
-    if token_role_id != 1 and token_user_id != payload.user_id:
+    if token_role_id == 1:
+        raise HTTPException(
+            status_code=403,
+            detail="RBAC: administrators manage the catalog only; configuration creation is for end users",
+        )
+    if token_user_id != payload.user_id:
         raise HTTPException(
             status_code=403,
             detail="RBAC: cannot create configuration for other users",
@@ -54,7 +189,136 @@ def create_configuration(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Minimal validation: accept ids from products/modules/licenses.
+    has_items = bool(payload.items)
+    has_lines = bool(payload.lines)
+    if has_items and has_lines:
+        raise HTTPException(
+            status_code=400,
+            detail="Provide either items (legacy) or lines (structured), not both",
+        )
+    if not has_items and not has_lines:
+        raise HTTPException(
+            status_code=400,
+            detail="items or lines must be non-empty",
+        )
+
+    project = _normalized_project_payload(payload)
+
+    if has_items:
+        return _create_legacy(db, payload.user_id, payload.items or [], project=project, company_id=user.company_id)
+
+    line_data = _lines_to_data(payload.lines or [])
+    ok, reason = validate_structured_lines(db, line_data)
+    if not ok:
+        raise HTTPException(status_code=400, detail=reason or "Invalid configuration")
+
+    root_product_ids: List[int] = []
+    module_ids: List[int] = []
+    for line in line_data:
+        root_product_ids.append(line.equipment_product_id)
+        for addon in line.addons:
+            if addon.module_id is not None:
+                module_ids.append(addon.module_id)
+    is_ok, compat_reason = is_configuration_compatible_typed(
+        db, root_product_ids=root_product_ids, module_ids=module_ids
+    )
+    if not is_ok:
+        raise HTTPException(status_code=400, detail=compat_reason or "Incompatible configuration")
+
+    config = Configuration(
+        user_id=payload.user_id,
+        company_id=user.company_id,
+        project_name=project["project_name"],
+        project_contact_name=project["project_contact_name"],
+        project_contact_email=project["project_contact_email"],
+        project_notes=project["project_notes"],
+        submitted_to_sales=project["submitted_to_sales"],
+        submitted_at=project["submitted_at"],
+    )
+    db.add(config)
+    db.flush()
+
+    for line in line_data:
+        db.add(
+            ConfigurationItem(
+                configuration_id=config.id,
+                product_id=line.equipment_product_id,
+                module_id=None,
+                license_id=None,
+                parent_product_id=None,
+                quantity=1,
+            )
+        )
+        for addon in line.addons:
+            if addon.module_id is not None:
+                db.add(
+                    ConfigurationItem(
+                        configuration_id=config.id,
+                        product_id=None,
+                        module_id=addon.module_id,
+                        license_id=None,
+                        parent_product_id=line.equipment_product_id,
+                        quantity=addon.quantity,
+                    )
+                )
+            else:
+                db.add(
+                    ConfigurationItem(
+                        configuration_id=config.id,
+                        product_id=None,
+                        module_id=None,
+                        license_id=addon.license_id,
+                        parent_product_id=line.equipment_product_id,
+                        quantity=addon.quantity,
+                    )
+                )
+
+    db.commit()
+    db.refresh(config)
+    spec = _build_specification(db, line_data)
+
+    return {
+        "status": "ok",
+        "configuration_id": config.id,
+        "user_id": payload.user_id,
+        "submitted_to_sales": bool(config.submitted_to_sales),
+        "submitted_at": config.submitted_at.isoformat() if config.submitted_at else None,
+        "project": {
+            "project_name": config.project_name,
+            "project_contact_name": config.project_contact_name,
+            "project_contact_email": config.project_contact_email,
+            "project_notes": config.project_notes,
+        },
+        "lines": [
+            {
+                "equipment_product_id": ln.equipment_product_id,
+                "target_ap_count": ln.target_ap_count,
+                "addons": [
+                    {
+                        "module_id": a.module_id,
+                        "license_id": a.license_id,
+                        "quantity": a.quantity,
+                    }
+                    for a in ln.addons
+                ],
+            }
+            for ln in line_data
+        ],
+        "specification": spec,
+    }
+
+
+def _create_legacy(
+    db: Session,
+    user_id: int,
+    selected_item_ids: List[int],
+    project: dict,
+    company_id: Optional[int],
+) -> dict:
+    selected_item_ids = list(dict.fromkeys(selected_item_ids))
+    if not selected_item_ids:
+        raise HTTPException(status_code=400, detail="items must contain at least one id")
+
     products = db.query(Product).filter(Product.id.in_(selected_item_ids)).all()
     modules = db.query(Module).filter(Module.id.in_(selected_item_ids)).all()
     licenses = db.query(License).filter(License.id.in_(selected_item_ids)).all()
@@ -68,48 +332,54 @@ def create_configuration(
     if unknown:
         raise HTTPException(status_code=400, detail=f"Unknown item ids: {unknown}")
 
-    # Step 1. Check compatibility through a single service
     is_ok, reason = is_configuration_compatible(db, selected_item_ids=selected_item_ids)
     if not is_ok:
-        # Incompatible configurations are blocked at backend level
         raise HTTPException(status_code=400, detail=reason or "Incompatible configuration")
 
-    # Step 2. Persist configuration + configuration items
-    config = Configuration(user_id=payload.user_id)
+    config = Configuration(
+        user_id=user_id,
+        company_id=company_id,
+        project_name=project["project_name"],
+        project_contact_name=project["project_contact_name"],
+        project_contact_email=project["project_contact_email"],
+        project_notes=project["project_notes"],
+        submitted_to_sales=project["submitted_to_sales"],
+        submitted_at=project["submitted_at"],
+    )
     db.add(config)
-    db.flush()  # obtain config.id
+    db.flush()
 
-    for product_id in selected_item_ids:
-        # Fill the correct foreign key based on what entity this id belongs to.
-        # Note: ids are plain integers, so if an id exists in multiple tables (unlikely),
-        # priority is: product -> module -> license.
-        if product_id in product_ids:
+    for item_id in selected_item_ids:
+        if item_id in product_ids:
             db.add(
                 ConfigurationItem(
                     configuration_id=config.id,
-                    product_id=product_id,
+                    product_id=item_id,
                     module_id=None,
                     license_id=None,
+                    parent_product_id=None,
                     quantity=1,
                 )
             )
-        elif product_id in module_ids:
+        elif item_id in module_ids:
             db.add(
                 ConfigurationItem(
                     configuration_id=config.id,
                     product_id=None,
-                    module_id=product_id,
+                    module_id=item_id,
                     license_id=None,
+                    parent_product_id=None,
                     quantity=1,
                 )
             )
-        elif product_id in license_ids:
+        elif item_id in license_ids:
             db.add(
                 ConfigurationItem(
                     configuration_id=config.id,
                     product_id=None,
                     module_id=None,
-                    license_id=product_id,
+                    license_id=item_id,
+                    parent_product_id=None,
                     quantity=1,
                 )
             )
@@ -120,7 +390,63 @@ def create_configuration(
     return {
         "status": "ok",
         "configuration_id": config.id,
-        "user_id": payload.user_id,
+        "user_id": user_id,
         "items": selected_item_ids,
+        "submitted_to_sales": bool(config.submitted_to_sales),
+        "submitted_at": config.submitted_at.isoformat() if config.submitted_at else None,
+        "project": {
+            "project_name": config.project_name,
+            "project_contact_name": config.project_contact_name,
+            "project_contact_email": config.project_contact_email,
+            "project_notes": config.project_notes,
+        },
     }
 
+
+@router.get("/submissions")
+def list_sales_submissions(
+    db: Session = Depends(get_db),
+    _: dict = Depends(require_roles(1)),
+):
+    rows = (
+        db.query(Configuration, User, Company)
+        .join(User, User.id == Configuration.user_id)
+        .join(Company, Company.id == User.company_id)
+        .filter(Configuration.submitted_to_sales == True)  # noqa: E712
+        .order_by(Configuration.submitted_at.desc(), Configuration.id.desc())
+        .all()
+    )
+
+    out = []
+    for conf, user, company in rows:
+        items_count = (
+            db.query(ConfigurationItem)
+            .filter(ConfigurationItem.configuration_id == conf.id)
+            .count()
+        )
+        out.append(
+            {
+                "configuration_id": conf.id,
+                "submitted_at": conf.submitted_at.isoformat() if conf.submitted_at else None,
+                "created_at": conf.created_at.isoformat() if conf.created_at else None,
+                "user": {
+                    "id": user.id,
+                    "name": user.name,
+                    "email": user.email,
+                },
+                "company": {
+                    "id": company.id,
+                    "name": company.name,
+                    "domain": company.domain,
+                },
+                "project": {
+                    "project_name": conf.project_name,
+                    "project_contact_name": conf.project_contact_name,
+                    "project_contact_email": conf.project_contact_email,
+                    "project_notes": conf.project_notes,
+                },
+                "items_count": items_count,
+            }
+        )
+
+    return out

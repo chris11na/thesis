@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Product configuration</title>
+    <title>Конфигуратор</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       /* Basic layout styles — comments in English */
@@ -18,8 +18,9 @@
         background: #f5f7fa;
         color: #222;
         min-height: 100vh;
+        min-height: 100dvh;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
         padding: 24px;
       }
@@ -28,17 +29,114 @@
         background: #ffffff;
         border-radius: 12px;
         box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
-        max-width: 960px;
+        max-width: 1040px;
         width: 100%;
         padding: 24px 28px 28px;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        max-height: calc(100vh - 48px);
+        max-height: calc(100dvh - 48px);
+        overflow: hidden;
       }
 
       .app-header {
         display: flex;
-        align-items: baseline;
+        align-items: center;
         justify-content: space-between;
         gap: 12px;
         margin-bottom: 20px;
+        flex-shrink: 0;
+      }
+
+      .header-user-cluster {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+
+      .header-logout-btn {
+        padding: 5px 14px;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(135deg, #2563eb, #4f46e5);
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        transition: transform 0.1s ease, box-shadow 0.1s ease;
+        white-space: nowrap;
+      }
+
+      .header-logout-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(37, 99, 235, 0.4);
+      }
+
+      .header-logout-btn:active {
+        transform: translateY(0);
+      }
+
+      .header-lang-btn {
+        padding: 5px 10px;
+        border-radius: 999px;
+        border: 1px solid #d1d5db;
+        background: #f9fafb;
+        color: #4b5563;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      .header-debug-toggle {
+        padding: 5px 12px;
+        border-radius: 999px;
+        border: 1px solid #d1d5db;
+        background: #ffffff;
+        color: #4b5563;
+        font-size: 11px;
+        font-weight: 500;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.12s ease, border-color 0.12s ease;
+      }
+
+      .header-debug-toggle:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+      }
+
+      body.debug-ui-on .header-debug-toggle {
+        background: #fef3c7;
+        border-color: #fcd34d;
+        color: #92400e;
+      }
+
+      /* Debug panels: visible only when body.debug-ui-on */
+      body:not(.debug-ui-on) .debug-only {
+        display: none !important;
+      }
+
+      /* Product copy: hidden when debug UI is on (technical subtitle etc.) */
+      body.debug-ui-on .product-only {
+        display: none !important;
+      }
+
+      .debug-tag {
+        display: inline-block;
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fcd34d;
+        vertical-align: middle;
       }
 
       .title-group h1 {
@@ -90,12 +188,18 @@
       .layout {
         display: grid;
         grid-template-columns: 2fr 1.5fr;
+        grid-template-rows: minmax(0, 1fr);
         gap: 20px;
+        align-items: stretch;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
       }
 
       @media (max-width: 800px) {
         .layout {
           grid-template-columns: 1fr;
+          grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
         }
       }
 
@@ -104,6 +208,180 @@
         border: 1px solid #e5e7eb;
         background: #f9fafb;
         padding: 14px 16px 16px;
+      }
+
+      #admin-catalog-block.card {
+        padding: 12px 14px 14px;
+      }
+
+      #admin-catalog-block .card-body {
+        gap: 0;
+      }
+
+      #user-configurator-layout > .card {
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      #products-section .card-body {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      #products-section .products-list {
+        flex: 1;
+        min-height: 0;
+        max-height: none;
+      }
+
+      .configurator-ops-card {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      .configurator-ops-card .card-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        /* padding-bottom: 8px; */
+      }
+
+      .configurator-ops-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding-right: 2px;
+        padding-bottom: 32px;
+      }
+
+      .configurator-ops-footer {
+        flex-shrink: 0;
+        margin-top: auto;
+        padding-top: 28px;
+        border-top: 1px solid #e5e7eb;
+        background: linear-gradient(
+          to top,
+          #f9fafb 85%,
+          rgba(249, 250, 251, 0.96) 100%
+        );
+      }
+
+      .configurator-ops-footer .actions {
+        margin-top: 0;
+      }
+
+      .product-text-clamp {
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.45;
+        word-break: break-word;
+      }
+
+      .product-text-expanded {
+        display: block;
+        line-height: 1.45;
+        word-break: break-word;
+      }
+
+      .product-more-toggle {
+        font-size: 11px;
+        color: #4f46e5;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px 0 0;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+
+      .product-more-toggle:hover {
+        color: #4338ca;
+      }
+
+      .product-specs-block {
+        margin-top: 6px;
+        font-size: 12px;
+        color: #475569;
+      }
+
+      .app-toast-host {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 100001;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        pointer-events: none;
+        max-width: min(360px, calc(100vw - 40px));
+      }
+
+      .app-toast {
+        pointer-events: auto;
+        padding: 12px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        line-height: 1.4;
+        color: #0f172a;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 40px rgba(15, 23, 42, 0.15);
+        opacity: 0;
+        transform: translateY(8px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+
+      .app-toast.app-toast--visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .app-toast--success {
+        border-color: #bbf7d0;
+        background: #f0fdf4;
+      }
+
+      .app-toast--error {
+        border-color: #fecaca;
+        background: #fef2f2;
+      }
+
+      .app-toast--warning {
+        border-color: #fde68a;
+        background: #fffbeb;
+      }
+
+      .admin-product-catalog-editor input.admin-catalog-field-dirty[type="text"],
+      .admin-product-catalog-editor input.admin-catalog-field-dirty[type="number"] {
+        border-color: #dc2626 !important;
+        box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.35);
+      }
+
+      button.admin-catalog-row-save.admin-catalog-save-pending {
+        border: none;
+        background: linear-gradient(135deg, #2563eb, #4f46e5);
+        color: #ffffff;
+        font-weight: 500;
+        box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
+        transition: transform 0.1s ease, box-shadow 0.1s ease,
+          opacity 0.1s ease;
+      }
+
+      button.admin-catalog-row-save.admin-catalog-save-pending:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 22px rgba(37, 99, 235, 0.45);
+        background: linear-gradient(135deg, #2563eb, #4f46e5);
+        color: #ffffff;
+      }
+
+      .addon-panel-warn-host {
+        min-height: 0;
       }
 
       .card-header {
@@ -138,15 +416,15 @@
         display: flex;
         flex-direction: column;
         gap: 8px;
-        max-height: 260px;
         overflow-y: auto;
         padding-right: 4px;
       }
 
       .product-item {
         display: flex;
-        align-items: flex-start;
-        gap: 10px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
         padding: 8px 9px;
         border-radius: 8px;
         background: #ffffff;
@@ -154,6 +432,81 @@
         cursor: pointer;
         transition: background 0.12s ease, border-color 0.12s ease,
           box-shadow 0.12s ease;
+      }
+
+      .product-item-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .equipment-addon-panel {
+        margin-top: 10px;
+        padding: 10px 10px 10px 12px;
+        border-left: 3px solid #93c5fd;
+        background: #f8fafc;
+        border-radius: 0 8px 8px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        cursor: default;
+      }
+
+      .equipment-addon-panel .addon-section-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-top: 4px;
+      }
+
+      .equipment-addon-panel .addon-hint {
+        font-size: 11px;
+        color: #64748b;
+        line-height: 1.35;
+      }
+
+      .equipment-addon-panel .addon-line {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 12px;
+        color: #334155;
+      }
+
+      .equipment-addon-panel .addon-line input[type="number"] {
+        width: 56px;
+      }
+
+      .equipment-addon-panel .suggest-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .equipment-addon-panel .addon-panel-feedback {
+        margin-top: 2px;
+      }
+
+      .equipment-addon-panel .addon-panel-feedback:empty {
+        display: none;
+      }
+
+      .equipment-addon-panel .secondary-btn {
+        padding: 4px 10px;
+        font-size: 11px;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        color: #334155;
+        cursor: pointer;
+      }
+
+      .equipment-addon-panel .secondary-btn:hover {
+        background: #f1f5f9;
       }
 
       .product-item:hover {
@@ -168,6 +521,11 @@
 
       .product-checkbox {
         margin-top: 3px;
+        width: 16px;
+        height: 16px;
+        /* Match primary button blue; avoids OS pink/magenta accent */
+        accent-color: #2563eb;
+        cursor: pointer;
       }
 
       .product-main {
@@ -273,6 +631,41 @@
         background: #fecaca;
       }
 
+      .pill.removable-user {
+        background: #dbeafe;
+        color: #1e3a8a;
+        border: 1px solid #93c5fd;
+        cursor: pointer;
+      }
+
+      .pill.removable-user:hover {
+        background: #bfdbfe;
+        border-color: #60a5fa;
+      }
+
+      body:not(.debug-ui-on) #products-counter {
+        display: none !important;
+      }
+
+      .field-label.field-label-with-meta {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 6px 12px;
+      }
+
+      .selected-items-count {
+        font-size: 11px;
+        font-weight: 500;
+        color: #64748b;
+      }
+
+      body.debug-ui-on .selected-items-count {
+        display: none !important;
+      }
+
       .actions {
         display: flex;
         flex-direction: column;
@@ -314,6 +707,36 @@
         box-shadow: none;
       }
 
+      .secondary-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 7px 12px;
+        border-radius: 999px;
+        border: 1px solid #c7d2fe;
+        background: #eef2ff;
+        color: #3730a3;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: transform 0.1s ease, background 0.1s ease, opacity 0.1s ease;
+      }
+
+      .secondary-btn:hover {
+        transform: translateY(-1px);
+        background: #e0e7ff;
+      }
+
+      .secondary-btn:active {
+        transform: translateY(0);
+      }
+
+      .secondary-btn:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
+
       .btn-caption {
         font-size: 11px;
         color: #6b7280;
@@ -323,6 +746,12 @@
         font-size: 12px;
         margin-top: 4px;
         min-height: 18px;
+      }
+
+      .admin-area .status-area:empty {
+        display: none;
+        margin: 0;
+        min-height: 0;
       }
 
       .status-text {
@@ -368,6 +797,556 @@
         font-size: 11px;
         color: #9ca3af;
       }
+
+      .admin-panel {
+        margin-top: 0;
+      }
+
+      .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+        margin-top: 4px;
+      }
+
+      .admin-table th,
+      .admin-table td {
+        border: 1px solid #e5e7eb;
+        padding: 6px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .admin-table th {
+        background: #f3f4f6;
+        color: #374151;
+        font-weight: 600;
+      }
+
+      .admin-inline {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: flex-end;
+        margin-top: 2px;
+      }
+
+      select.admin-select {
+        min-width: 140px;
+        max-width: 220px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        font-size: 12px;
+      }
+
+      .ghost-btn {
+        padding: 5px 10px;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        background: #fff;
+        font-size: 12px;
+        cursor: pointer;
+        color: #374151;
+      }
+
+      .ghost-btn:hover {
+        background: #f9fafb;
+      }
+
+      .ghost-btn.danger {
+        border-color: #fecaca;
+        color: #b91c1c;
+      }
+
+      .ghost-btn.danger:hover {
+        background: #fef2f2;
+      }
+
+      .admin-confirm-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100000;
+        background: rgba(15, 23, 42, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+      }
+
+      .admin-confirm-overlay[hidden] {
+        display: none !important;
+      }
+
+      .admin-confirm-dialog {
+        background: #fff;
+        border-radius: 12px;
+        max-width: 440px;
+        width: 100%;
+        padding: 20px 22px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+      }
+
+      .admin-confirm-message {
+        font-size: 14px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        margin-bottom: 18px;
+        color: #1e293b;
+      }
+
+      .admin-confirm-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+
+      .admin-product-drawer-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 99990;
+        background: rgba(15, 23, 42, 0.45);
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .admin-product-drawer-overlay[hidden] {
+        display: none !important;
+      }
+
+      .admin-product-drawer {
+        width: min(760px, 94vw);
+        height: 100%;
+        background: #ffffff;
+        border-left: 1px solid #e2e8f0;
+        box-shadow: -14px 0 32px rgba(15, 23, 42, 0.18);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .admin-product-drawer-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 14px;
+        border-bottom: 1px solid #e2e8f0;
+        background: #f8fafc;
+      }
+
+      .admin-product-drawer-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #0f172a;
+      }
+
+      .admin-product-drawer-close {
+        margin-left: auto;
+        min-width: 34px;
+        font-size: 18px;
+        line-height: 1;
+      }
+
+      .admin-product-drawer-body {
+        flex: 1 1 auto;
+        overflow: auto;
+        padding: 12px;
+      }
+
+      .admin-addon-user-label {
+        font-size: 12px;
+        color: #334155;
+        line-height: 1.35;
+        max-width: 280px;
+      }
+
+      .admin-fold {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #e5e7eb;
+      }
+
+      #admin-catalog-block .card-body > .admin-fold:first-of-type {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
+      }
+
+      .admin-fold-summary {
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        color: #111827;
+        list-style: none;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .admin-fold-summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .admin-fold-summary::before {
+        content: "▸";
+        display: inline-block;
+        width: 14px;
+        color: #6b7280;
+        transition: transform 0.15s ease;
+      }
+
+      details.admin-fold[open] > .admin-fold-summary::before {
+        transform: rotate(90deg);
+      }
+
+      .admin-fold-body {
+        margin-top: 6px;
+      }
+
+      .admin-fold-body > .field-description:first-child {
+        margin-bottom: 4px;
+      }
+
+      .admin-table-scroll {
+        max-height: min(320px, 45vh);
+        overflow: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        margin-top: 4px;
+      }
+
+      .admin-table-scroll .admin-table {
+        margin-top: 0;
+      }
+
+      .admin-product-edit-panel {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 8px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .admin-product-edit-panel .edit-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 8px;
+        align-items: start;
+      }
+
+      .admin-product-edit-panel .edit-grid-cell-wide {
+        grid-column: 1 / -1;
+      }
+
+      .admin-product-edit-panel label {
+        font-size: 11px;
+        color: #64748b;
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .admin-product-edit-panel input,
+      .admin-product-edit-panel select,
+      .admin-product-edit-panel textarea {
+        width: 100%;
+        font-size: 13px;
+        padding: 6px 10px;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+      }
+
+      .admin-product-edit-panel textarea {
+        resize: vertical;
+        line-height: 1.5;
+      }
+
+      .admin-product-edit-panel textarea.admin-textarea-desc {
+        min-height: 110px;
+      }
+
+      .admin-product-edit-panel textarea.admin-textarea-specs {
+        min-height: 200px;
+      }
+
+      .admin-product-edit-panel textarea.admin-textarea-rules {
+        min-height: 160px;
+        font-family: ui-monospace, "Cascadia Code", "Consolas", monospace;
+        font-size: 12px;
+      }
+
+      .admin-rules-mode-row {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 6px;
+        font-size: 13px;
+        color: #334155;
+      }
+
+      .admin-rules-mode-row label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 0;
+        cursor: pointer;
+        font-size: 13px;
+        color: #334155;
+        white-space: nowrap;
+      }
+
+      .admin-rules-wizard {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 8px 10px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+      }
+
+      .admin-rules-wizard-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px 14px;
+      }
+
+      .admin-rules-wizard-row > label[for] {
+        margin-bottom: 0;
+        flex-shrink: 0;
+      }
+
+      .admin-rules-wizard-desc {
+        flex: 1 1 160px;
+        min-width: 120px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #475569;
+        line-height: 1.35;
+      }
+
+      .admin-rules-wizard-row input[type="text"],
+      .admin-rules-wizard-row input[type="number"] {
+        max-width: 220px;
+        flex-shrink: 0;
+      }
+
+      .admin-rules-json-panel {
+        padding: 8px 10px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+      }
+
+      .admin-product-catalog-editor {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #e2e8f0;
+      }
+
+      .admin-product-catalog-editor .admin-table {
+        margin-top: 4px;
+        margin-bottom: 8px;
+        font-size: 12px;
+      }
+
+      .admin-product-catalog-editor .admin-table input[type="text"],
+      .admin-product-catalog-editor .admin-table input[type="number"] {
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        font-size: 12px;
+        padding: 4px 8px;
+      }
+
+      .admin-user-product-preview {
+        margin-top: 4px;
+        padding: 8px 10px;
+        border: 1px dashed #cbd5e1;
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .admin-user-product-preview .admin-user-product-preview-caption {
+        font-size: 11px;
+        color: #64748b;
+        margin-bottom: 0;
+        margin-top: 6px;
+      }
+
+      .admin-user-product-preview .admin-user-product-preview-placeholder {
+        font-size: 12px;
+        color: #94a3b8;
+        font-style: italic;
+      }
+
+      .admin-product-add-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 0;
+      }
+
+      .admin-product-add-stack .admin-inline {
+        margin-top: 0;
+      }
+
+      .admin-product-add-stack textarea.admin-textarea-desc,
+      .admin-product-add-stack textarea.admin-textarea-specs {
+        width: 100%;
+        font-size: 13px;
+        line-height: 1.5;
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        resize: vertical;
+      }
+
+      .admin-product-add-stack textarea.admin-textarea-desc {
+        min-height: 100px;
+      }
+
+      .admin-product-add-stack textarea.admin-textarea-specs {
+        min-height: 160px;
+      }
+
+      .admin-product-add-extras {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 8px;
+        align-items: start;
+      }
+
+      .admin-product-add-extras .field-group-wide {
+        grid-column: 1 / -1;
+      }
+
+      .admin-product-add-extras input[type="text"],
+      .admin-product-add-extras input[type="number"],
+      .admin-product-add-extras select {
+        width: 100%;
+        font-size: 13px;
+        padding: 6px 10px;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+      }
+
+      .admin-above-table {
+        margin-bottom: 8px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .admin-above-table--compact {
+        margin-bottom: 2px;
+        padding-bottom: 4px;
+      }
+
+      .admin-above-table--compact .status-area {
+        margin-top: 2px;
+        min-height: 0;
+      }
+
+      .admin-below-table {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #e5e7eb;
+      }
+
+      .admin-org-add-block {
+        margin-bottom: 12px;
+        padding-bottom: 6px;
+      }
+
+      .admin-fold--companies .admin-fold-body {
+        padding-bottom: 4px;
+      }
+
+      .admin-product-add-footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: flex-start;
+        gap: 10px 14px;
+        margin-top: 4px;
+      }
+
+      .admin-product-add-footer .admin-user-product-preview {
+        flex: 1 1 220px;
+        margin-top: 0;
+        min-width: 200px;
+      }
+
+      .admin-catalog-add-preview-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 8px 12px;
+        margin-top: 6px;
+      }
+
+      .admin-catalog-add-preview-actions .admin-user-product-preview {
+        flex: 1 1 200px;
+        margin-top: 0;
+        min-width: 180px;
+      }
+
+      .admin-product-edit-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 20px;
+        margin-top: 12px;
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
+        padding: 10px 0 4px;
+        background: linear-gradient(to top, #ffffff 72%, rgba(255, 255, 255, 0));
+      }
+
+      .admin-product-edit-actions .primary-btn {
+        margin-left: auto;
+      }
+
+      .admin-form-block-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0 0 6px;
+        letter-spacing: 0.01em;
+      }
+
+      /* Tighter gap before the first field (e.g. product name row). */
+      .admin-form-block-title--compact {
+        margin-bottom: 4px;
+      }
+
+      .admin-area {
+        margin-top: 12px;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+      }
+
+      .admin-page-heading {
+        font-size: 18px;
+        font-weight: 600;
+        color: #111827;
+        letter-spacing: -0.02em;
+        margin-bottom: 6px;
+      }
+
+      .admin-page-lead {
+        font-size: 13px;
+        color: #6b7280;
+        line-height: 1.45;
+        margin-bottom: 14px;
+        max-width: 52rem;
+      }
     </style>
   </head>
 
@@ -375,173 +1354,391 @@
     <div class="app">
       <header class="app-header">
         <div class="title-group">
-          <h1>Product configuration</h1>
-          <p>
-            Прототип: выбор продуктов и отправка конфигурации в backend без
-            авторизации.
+          <h1 id="app-page-title">Конфигуратор</h1>
+          <p id="header-blurb-user">
+            Конфигуратор: выберите продукты и создайте конфигурацию. Вход —
+            <a href="login.html">login.html</a>.
+          </p>
+          <p id="header-blurb-admin" style="display: none">
+            Админка: организации, пользователи, каталог оборудования и поля правил на
+            продукте (опции, лимиты). Конфигурации собирают пользователи с ролью User.
           </p>
         </div>
-        <div class="status-badge role-anonymous" id="role-badge">
-          Anonymous
+        <div class="header-user-cluster">
+          <button class="header-lang-btn" id="lang-toggle-btn" type="button">RU</button>
+          <button class="header-logout-btn" id="clear-token-btn" type="button">
+            Выйти
+          </button>
+          <div class="status-badge role-anonymous" id="role-badge">
+            Anonymous
+          </div>
         </div>
       </header>
 
-      <div class="layout">
+      <div class="layout" id="user-configurator-layout">
         <section class="card" id="products-section">
           <div class="card-header">
             <div>
-              <div class="card-title">Products</div>
+              <div class="card-title" id="products-card-title">Products</div>
               <div class="card-subtitle">
-                Выберите один или несколько продуктов для конфигурации.
+                Выберите позицию: доступные опции и лимиты задаются правилами и связями в
+                данных, а не названием класса устройства (controller/switch и т.д. — лишь
+                метки в каталоге).
               </div>
             </div>
             <span class="badge" id="products-counter">0 selected</span>
           </div>
           <div class="card-body">
-            <div class="field-group">
-              <div class="field-label">Источник списка</div>
-              <div class="field-description" id="products-source">
-                Mock список (локальные данные)
+            <div class="debug-only">
+              <div class="field-group">
+                <div class="field-label">
+                  Источник списка <span class="debug-tag">debug</span>
+                </div>
+                <div class="field-description" id="products-source">
+                  Mock список (локальные данные)
+                </div>
               </div>
+              <div class="divider"></div>
             </div>
 
-            <div class="divider"></div>
+            <div class="status-area" id="products-status-area"></div>
 
             <ul class="products-list" id="products-list"></ul>
-            <div class="scroll-hint">
+            <div class="scroll-hint debug-only">
               Если продуктов станет много — блок можно прокручивать.
             </div>
           </div>
         </section>
 
-        <section class="card">
+        <section class="card configurator-ops-card">
           <div class="card-header">
             <div>
-              <div class="card-title">Configuration</div>
+              <div class="card-title" id="configuration-card-title">Configuration</div>
               <div class="card-subtitle">
-                Параметры запроса `POST /configurations`.
+                <span class="product-only"
+                  >Слева отметьте оборудование, уточните опции в панели у позиции; при
+                  необходимости задайте цель AP и подберите пакеты. Затем создайте
+                  конфигурацию — проверка ограничений на стороне сервера.</span
+                >
+                <span class="debug-only"
+                  >Тело запроса: структура <code>lines</code> (см. подсказку ниже).</span
+                >
               </div>
             </div>
           </div>
           <div class="card-body">
-            <div class="field-group">
-              <div class="field-label">Authorization (JWT prototype)</div>
-              <div class="field-description">
-                Optional. If logged in, frontend will attach
-                <code>Authorization: Bearer ...</code> to requests.
+            <div class="configurator-ops-scroll">
+              <div class="field-group debug-only">
+                <div class="field-label">
+                  Сессия <span class="debug-tag">debug</span>
+                </div>
+                <div class="field-description">
+                  Токены в <code>localStorage</code>. Запросы идут с
+                  <code>Authorization: Bearer …</code>. Выход — кнопка
+                  <strong>Выйти</strong> в шапке.
+                </div>
+
+                <div class="status-area" id="auth-status-area"></div>
               </div>
 
-              <div class="field-input">
-                <input
-                  type="email"
-                  id="login-email-input"
-                  placeholder="email (e.g. admin@example.com)"
-                />
+              <div class="field-group debug-only">
+                <div class="field-label">
+                  User ID <span class="debug-tag">debug</span>
+                </div>
+                <div class="field-description">
+                  Упрощённо для прототипа; в запросе обычно подставляется id из
+                  токена.
+                </div>
+                <div class="field-input">
+                  <input
+                    type="number"
+                    id="user-id-input"
+                    min="1"
+                    step="1"
+                    value="1"
+                  />
+                </div>
               </div>
 
-              <div class="field-input">
-                <input
-                  type="password"
-                  id="login-password-input"
-                  placeholder="password (mock)"
-                />
+              <div class="field-group">
+                <div class="field-label field-label-with-meta">
+                  <span>
+                    <span class="product-only">Выбранные позиции</span>
+                    <span class="debug-only"
+                      >Selected items <span class="debug-tag">debug</span></span
+                    >
+                  </span>
+                  <span
+                    class="product-only selected-items-count"
+                    id="selected-items-count"
+                    aria-live="polite"
+                  ></span>
+                </div>
+                <div class="field-description debug-only">
+                  <code>POST /configurations</code>: <code>lines[]</code> —
+                  <code>equipment_product_id</code>, опционально
+                  <code>target_ap_count</code>, <code>addons[]</code> (legacy:
+                  <code>items</code>).
+                </div>
+                <div class="pill-selected" id="selected-items-pills"></div>
               </div>
 
-              <div class="actions" style="margin-top: 0;">
-                <button class="primary-btn" id="login-btn">
-                  <span>Login</span>
+              <div class="field-group">
+                <div class="field-label" id="project-info-label">Информация о проекте (для отдела продаж)</div>
+                <div class="field-description" id="project-info-description">
+                  Эти данные сохраняются вместе со спецификацией и попадают в список
+                  отправленных заявок.
+                </div>
+                <div class="field-input" style="display: grid; gap: 8px">
+                  <input
+                    type="text"
+                    id="project-name-input"
+                    placeholder="Название проекта"
+                    maxlength="200"
+                  />
+                  <input
+                    type="text"
+                    id="project-contact-name-input"
+                    placeholder="Контактное лицо"
+                    maxlength="200"
+                  />
+                  <input
+                    type="email"
+                    id="project-contact-email-input"
+                    placeholder="Контактный email"
+                    maxlength="255"
+                  />
+                  <textarea
+                    id="project-notes-input"
+                    placeholder="Комментарий / примечание для отдела продаж"
+                    maxlength="4000"
+                    style="min-height: 80px; resize: vertical; padding: 8px 10px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 14px"
+                  ></textarea>
+                </div>
+              </div>
+
+              <div class="divider debug-only"></div>
+
+              <div class="field-group debug-only">
+                <div class="small-label">
+                  Endpoint map <span class="debug-tag">debug</span>
+                </div>
+                <div class="small-value">
+                  <code>GET /products</code>,
+                  <code>POST /configurations</code> → <span id="api-base"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="configurator-ops-footer">
+              <div class="actions">
+                <button class="primary-btn" id="create-config-btn" type="button">
+                  <span id="create-config-label">Отправить на регистрацию</span>
                 </button>
-                <button class="primary-btn" id="clear-token-btn" disabled>
-                  <span>Logout</span>
-                </button>
+                <div class="btn-caption debug-only">
+                  Отправка: <code>POST /configurations</code> на backend.
+                </div>
               </div>
-
-              <div class="status-area" id="auth-status-area"></div>
-            </div>
-
-            <div class="field-group">
-              <div class="field-label">User ID</div>
-              <div class="field-description">
-                Упрощённо, просто число. Для прототипа можно оставить 1.
-              </div>
-              <div class="field-input">
-                <input
-                  type="number"
-                  id="user-id-input"
-                  min="1"
-                  step="1"
-                  value="1"
-                />
-              </div>
-            </div>
-
-            <div class="field-group">
-              <div class="field-label">Selected items</div>
-              <div class="field-description">
-                Будут отправлены как массив `items: number[]`.
-              </div>
-              <div class="pill-selected" id="selected-items-pills"></div>
-            </div>
-
-            <div class="actions">
-              <button class="primary-btn" id="create-config-btn">
-                <span>Create configuration</span>
-              </button>
-              <div class="btn-caption">
-                Кнопка отправляет запрос `POST /configurations` в твой backend.
-              </div>
-            </div>
-
-            <div class="status-area" id="status-area"></div>
-
-            <div class="divider"></div>
-
-            <div class="field-group" id="admin-user-block" style="display: none;">
-              <div class="field-label">Admin only: Create user</div>
-              <div class="field-description">
-                Видно только для `role_id=1`. Отправляет `POST /users`.
-              </div>
-              <div class="field-input">
-                <input
-                  type="text"
-                  id="admin-create-name-input"
-                  placeholder="name (e.g. Demo User)"
-                />
-              </div>
-              <div class="field-input">
-                <input
-                  type="email"
-                  id="admin-create-email-input"
-                  placeholder="email (e.g. demo@example.com)"
-                />
-              </div>
-              <div class="field-input">
-                <input
-                  type="password"
-                  id="admin-create-password-input"
-                  placeholder="password"
-                />
-              </div>
-              <div class="actions" style="margin-top: 0;">
-                <button class="primary-btn" id="admin-create-user-btn">
-                  <span>Create user (admin)</span>
-                </button>
-              </div>
-              <div class="status-area" id="admin-status-area"></div>
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="field-group">
-              <div class="small-label">Endpoint map</div>
-              <div class="small-value">
-                <code>GET /products</code>,
-                <code>POST /configurations</code> → <span id="api-base"></span>
-              </div>
+              <div class="status-area" id="status-area" style="margin-top: 10px"></div>
             </div>
           </div>
         </section>
       </div>
+
+      <div id="admin-area" class="admin-area" style="display: none">
+        <section class="card admin-panel" id="admin-catalog-block">
+        <div class="card-body">
+          <details class="admin-fold admin-fold--companies">
+            <summary class="admin-fold-summary" id="admin-fold-companies">Организации и домены</summary>
+            <div class="admin-fold-body">
+              <p class="field-description">
+                Разрешённый домен почты (например <code>aaa.ru</code>): регистрация и
+                вход пользователей привязаны к компании с этим доменом.
+              </p>
+              <div class="admin-table-scroll">
+                <table class="admin-table" id="admin-companies-table">
+                  <thead>
+                    <tr>
+                      <th id="th-companies-id">ID</th>
+                      <th id="th-companies-name">Название</th>
+                      <th id="th-companies-domain">Домен</th>
+                      <th id="th-companies-actions">Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-companies-tbody"></tbody>
+                </table>
+              </div>
+              <div
+                id="admin-company-edit-wrap"
+                class="admin-below-table"
+                style="display: none; margin-top: 4px"
+              >
+                <h4 class="admin-form-block-title" id="edit-company-title">Изменить организацию</h4>
+                <div class="admin-inline" style="align-items: flex-end; flex-wrap: wrap">
+                  <input type="hidden" id="admin-company-edit-id" value="" />
+                  <div class="field-group">
+                    <div class="field-label" id="edit-company-name-label">Название</div>
+                    <input type="text" id="admin-company-edit-name" placeholder="Название" />
+                  </div>
+                  <div class="field-group">
+                    <div class="field-label" id="edit-company-domain-label">Домен email</div>
+                    <input
+                      type="text"
+                      id="admin-company-edit-domain"
+                      placeholder="example.com"
+                    />
+                  </div>
+                  <button type="button" class="primary-btn" id="admin-save-company-btn">
+                    Сохранить
+                  </button>
+                  <button type="button" class="ghost-btn" id="admin-cancel-company-edit-btn">
+                    Отмена
+                  </button>
+                </div>
+              </div>
+              <div class="admin-below-table admin-org-add-block">
+                <h4 class="admin-form-block-title" id="add-company-title">Добавить организацию</h4>
+                <div id="admin-companies-status" class="status-area"></div>
+                <div class="admin-inline">
+                  <div class="field-group">
+                    <div class="field-label" id="add-company-name-label">Название</div>
+                    <input type="text" id="admin-company-name" placeholder="Acme Inc" />
+                  </div>
+                  <div class="field-group">
+                    <div class="field-label" id="add-company-domain-label">Домен email</div>
+                    <input
+                      type="text"
+                      id="admin-company-domain"
+                      placeholder="example.com"
+                    />
+                  </div>
+                  <button type="button" class="secondary-btn" id="admin-add-company-btn">
+                    Добавить организацию
+                  </button>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details class="admin-fold">
+            <summary class="admin-fold-summary" id="admin-fold-users">Пользователи</summary>
+            <div class="admin-fold-body">
+              <div class="admin-above-table admin-above-table--compact">
+                <div class="admin-inline">
+                  <div class="field-group">
+                    <div class="field-label" id="users-company-filter-label">Компания</div>
+                    <select class="admin-select" id="admin-users-company-select"></select>
+                  </div>
+                  <button type="button" class="secondary-btn" id="admin-users-refresh-btn">
+                    Обновить список
+                  </button>
+                </div>
+                <div id="admin-users-status" class="status-area"></div>
+              </div>
+              <div class="admin-table-scroll">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th id="th-users-id">ID</th>
+                      <th id="th-users-name">Имя</th>
+                      <th id="th-users-email">Email</th>
+                      <th id="th-users-role">Роль</th>
+                      <th id="th-users-company">Компания</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-users-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </details>
+
+          <details class="admin-fold" open>
+            <summary class="admin-fold-summary" id="admin-fold-catalog">Каталог: оборудование</summary>
+            <div class="admin-fold-body">
+              <div class="admin-table-scroll">
+                <table class="admin-table" id="admin-products-table">
+                  <thead>
+                    <tr>
+                      <th id="th-products-id">ID</th>
+                      <th id="th-products-name">Название</th>
+                      <th id="th-products-category">Категория (метка)</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-products-tbody"></tbody>
+                </table>
+              </div>
+              <div class="admin-below-table">
+                <h4 class="admin-form-block-title admin-form-block-title--compact" id="add-product-title">
+                  Добавить продукт
+                </h4>
+                <div class="admin-inline" style="margin-top: 0">
+                  <button type="button" class="primary-btn" id="admin-add-product-btn">
+                    Открыть карточку создания
+                  </button>
+                </div>
+                <div id="admin-products-status" class="status-area"></div>
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
+      </div>
+
+    <div id="app-toast-host" class="app-toast-host" aria-live="polite"></div>
+
+    <div
+      id="admin-confirm-overlay"
+      class="admin-confirm-overlay"
+      hidden
+      aria-hidden="true"
+    >
+      <div
+        class="admin-confirm-dialog"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="admin-confirm-message"
+      >
+        <div id="admin-confirm-message" class="admin-confirm-message"></div>
+        <div class="admin-confirm-actions">
+          <button type="button" class="ghost-btn" id="admin-confirm-cancel">
+            Отмена
+          </button>
+          <button type="button" class="ghost-btn danger" id="admin-confirm-ok">
+            Удалить
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="admin-product-drawer-overlay"
+      class="admin-product-drawer-overlay"
+      hidden
+      aria-hidden="true"
+    >
+      <aside
+        id="admin-product-drawer"
+        class="admin-product-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="admin-product-drawer-title"
+      >
+        <div class="admin-product-drawer-header">
+          <div class="admin-product-drawer-title" id="admin-product-drawer-title">
+            Карточка продукта
+          </div>
+          <button
+            type="button"
+            class="ghost-btn admin-product-drawer-close"
+            id="admin-product-drawer-close"
+            aria-label="Закрыть карточку"
+          >
+            ×
+          </button>
+        </div>
+        <div id="admin-product-drawer-body" class="admin-product-drawer-body"></div>
+      </aside>
     </div>
 
     <script>
@@ -549,52 +1746,713 @@
 
       // Change this if your backend runs on another port or host
       const API_BASE = "http://localhost:8000";
+      const UI_LANG_STORAGE_KEY = "ui_lang";
 
-      const mockProducts = [
-        { id: 101, name: "Mock Product X", description: "Local mock product X" },
-        { id: 102, name: "Mock Product Y", description: "Local mock product Y" },
-        {
-          id: 103,
-          name: "Mock Product Z",
-          description: "Local mock product Z with long description",
-        },
-      ];
-
+      // Fallback when GET /products fails: same demo ids as backend seed (501/502).
       const elements = {
+        langToggleBtn: document.getElementById("lang-toggle-btn"),
+        appPageTitle: document.getElementById("app-page-title"),
         productsList: document.getElementById("products-list"),
         productsCounter: document.getElementById("products-counter"),
         productsSource: document.getElementById("products-source"),
+        productsStatusArea: document.getElementById("products-status-area"),
         selectedPills: document.getElementById("selected-items-pills"),
-        loginEmailInput: document.getElementById("login-email-input"),
-        loginPasswordInput: document.getElementById("login-password-input"),
-        loginBtn: document.getElementById("login-btn"),
+        selectedItemsCount: document.getElementById("selected-items-count"),
         clearTokenBtn: document.getElementById("clear-token-btn"),
         authStatusArea: document.getElementById("auth-status-area"),
         userIdInput: document.getElementById("user-id-input"),
         createConfigBtn: document.getElementById("create-config-btn"),
-        adminUserBlock: document.getElementById("admin-user-block"),
-        adminCreateNameInput: document.getElementById("admin-create-name-input"),
-        adminCreateEmailInput: document.getElementById("admin-create-email-input"),
-        adminCreatePasswordInput: document.getElementById("admin-create-password-input"),
-        adminCreateUserBtn: document.getElementById("admin-create-user-btn"),
-        adminStatusArea: document.getElementById("admin-status-area"),
         statusArea: document.getElementById("status-area"),
+        projectNameInput: document.getElementById("project-name-input"),
+        projectContactNameInput: document.getElementById("project-contact-name-input"),
+        projectContactEmailInput: document.getElementById("project-contact-email-input"),
+        projectNotesInput: document.getElementById("project-notes-input"),
         apiBase: document.getElementById("api-base"),
         roleBadge: document.getElementById("role-badge"),
+        userConfiguratorLayout: document.getElementById(
+          "user-configurator-layout"
+        ),
+        headerBlurbUser: document.getElementById("header-blurb-user"),
+        headerBlurbAdmin: document.getElementById("header-blurb-admin"),
+        adminCatalogBlock: document.getElementById("admin-catalog-block"),
+        adminArea: document.getElementById("admin-area"),
+        adminUsersCompanySelect: document.getElementById(
+          "admin-users-company-select"
+        ),
+        adminUsersRefreshBtn: document.getElementById("admin-users-refresh-btn"),
+        adminUsersTbody: document.getElementById("admin-users-tbody"),
+        adminCompanyName: document.getElementById("admin-company-name"),
+        adminCompanyDomain: document.getElementById("admin-company-domain"),
+        adminAddCompanyBtn: document.getElementById("admin-add-company-btn"),
+        adminCompaniesTbody: document.getElementById("admin-companies-tbody"),
+        adminCompanyEditWrap: document.getElementById("admin-company-edit-wrap"),
+        adminCompanyEditId: document.getElementById("admin-company-edit-id"),
+        adminCompanyEditName: document.getElementById("admin-company-edit-name"),
+        adminCompanyEditDomain: document.getElementById("admin-company-edit-domain"),
+        adminSaveCompanyBtn: document.getElementById("admin-save-company-btn"),
+        adminCancelCompanyEditBtn: document.getElementById(
+          "admin-cancel-company-edit-btn"
+        ),
+        adminProductName: document.getElementById("admin-product-name"),
+        adminProductCategory: document.getElementById("admin-product-category"),
+        adminProductDesc: document.getElementById("admin-product-desc"),
+        adminProductSpecs: document.getElementById("admin-product-specs"),
+        adminProductBuiltIn: document.getElementById("admin-product-built-in"),
+        adminProductMaxSlots: document.getElementById("admin-product-max-slots"),
+        adminProductSpeedsJson: document.getElementById("admin-product-speeds-json"),
+        adminAddProductBtn: document.getElementById("admin-add-product-btn"),
+        adminProductsTbody: document.getElementById("admin-products-tbody"),
+        adminProductUserPreview: document.getElementById("admin-product-user-preview"),
+        adminProductDrawerOverlay: document.getElementById(
+          "admin-product-drawer-overlay"
+        ),
+        adminProductDrawer: document.getElementById("admin-product-drawer"),
+        adminProductDrawerBody: document.getElementById("admin-product-drawer-body"),
+        adminProductDrawerClose: document.getElementById("admin-product-drawer-close"),
       };
 
+      let uiLang = localStorage.getItem(UI_LANG_STORAGE_KEY) || "ru";
+
+      function applyUiLanguage(lang) {
+        uiLang = lang === "en" ? "en" : "ru";
+        localStorage.setItem(UI_LANG_STORAGE_KEY, uiLang);
+        document.documentElement.lang = uiLang;
+        const isEn = uiLang === "en";
+        if (elements.langToggleBtn) elements.langToggleBtn.textContent = isEn ? "EN" : "RU";
+        if (elements.appPageTitle) {
+          elements.appPageTitle.textContent = isEn ? "Configurator" : "Конфигуратор";
+        }
+        const productsTitle = document.getElementById("products-card-title");
+        if (productsTitle) productsTitle.textContent = isEn ? "Products" : "Продукты";
+        const confTitle = document.getElementById("configuration-card-title");
+        if (confTitle) confTitle.textContent = isEn ? "Configuration" : "Конфигурация";
+        const createLbl = document.getElementById("create-config-label");
+        if (createLbl) {
+          createLbl.textContent = isEn
+            ? "Submit for registration"
+            : "Отправить на регистрацию";
+        }
+        const projectInfoLabel = document.getElementById("project-info-label");
+        if (projectInfoLabel) {
+          projectInfoLabel.textContent = isEn
+            ? "Project details (for sales team)"
+            : "Информация о проекте (для отдела продаж)";
+        }
+        const projectInfoDescription = document.getElementById("project-info-description");
+        if (projectInfoDescription) {
+          projectInfoDescription.textContent = isEn
+            ? "These fields are saved with the specification and appear in submitted requests."
+            : "Эти данные сохраняются вместе со спецификацией и попадают в список отправленных заявок.";
+        }
+        if (elements.projectNameInput) {
+          elements.projectNameInput.placeholder = isEn ? "Project name" : "Название проекта";
+        }
+        if (elements.projectContactNameInput) {
+          elements.projectContactNameInput.placeholder = isEn
+            ? "Contact person"
+            : "Контактное лицо";
+        }
+        if (elements.projectContactEmailInput) {
+          elements.projectContactEmailInput.placeholder = isEn
+            ? "Contact email"
+            : "Контактный email";
+        }
+        if (elements.projectNotesInput) {
+          elements.projectNotesInput.placeholder = isEn
+            ? "Comment / note for sales team"
+            : "Комментарий / примечание для отдела продаж";
+        }
+        if (elements.clearTokenBtn) {
+          elements.clearTokenBtn.textContent = isEn ? "Log out" : "Выйти";
+        }
+        const foldCompanies = document.getElementById("admin-fold-companies");
+        if (foldCompanies) {
+          foldCompanies.textContent = isEn
+            ? "Companies and domains"
+            : "Организации и домены";
+        }
+        const foldUsers = document.getElementById("admin-fold-users");
+        if (foldUsers) foldUsers.textContent = isEn ? "Users" : "Пользователи";
+        const foldCatalog = document.getElementById("admin-fold-catalog");
+        if (foldCatalog) {
+          foldCatalog.textContent = isEn
+            ? "Catalog: equipment"
+            : "Каталог: оборудование";
+        }
+        const addCompanyTitle = document.getElementById("add-company-title");
+        if (addCompanyTitle) {
+          addCompanyTitle.textContent = isEn ? "Add company" : "Добавить организацию";
+        }
+        const addCompanyNameLabel = document.getElementById("add-company-name-label");
+        if (addCompanyNameLabel) {
+          addCompanyNameLabel.textContent = isEn ? "Name" : "Название";
+        }
+        const addCompanyDomainLabel = document.getElementById(
+          "add-company-domain-label"
+        );
+        if (addCompanyDomainLabel) {
+          addCompanyDomainLabel.textContent = isEn ? "Email domain" : "Домен email";
+        }
+        const editCompanyTitle = document.getElementById("edit-company-title");
+        if (editCompanyTitle) {
+          editCompanyTitle.textContent = isEn ? "Edit company" : "Изменить организацию";
+        }
+        const editCompanyNameLabel = document.getElementById("edit-company-name-label");
+        if (editCompanyNameLabel) {
+          editCompanyNameLabel.textContent = isEn ? "Name" : "Название";
+        }
+        const editCompanyDomainLabel = document.getElementById(
+          "edit-company-domain-label"
+        );
+        if (editCompanyDomainLabel) {
+          editCompanyDomainLabel.textContent = isEn ? "Email domain" : "Домен email";
+        }
+        const usersCompanyFilterLabel = document.getElementById(
+          "users-company-filter-label"
+        );
+        if (usersCompanyFilterLabel) {
+          usersCompanyFilterLabel.textContent = isEn ? "Company" : "Компания";
+        }
+        const addProductTitle = document.getElementById("add-product-title");
+        if (addProductTitle) {
+          addProductTitle.textContent = isEn ? "Add product" : "Добавить продукт";
+        }
+        const thCompaniesName = document.getElementById("th-companies-name");
+        if (thCompaniesName) thCompaniesName.textContent = isEn ? "Name" : "Название";
+        const thCompaniesDomain = document.getElementById("th-companies-domain");
+        if (thCompaniesDomain) thCompaniesDomain.textContent = isEn ? "Domain" : "Домен";
+        const thCompaniesActions = document.getElementById("th-companies-actions");
+        if (thCompaniesActions) {
+          thCompaniesActions.textContent = isEn ? "Actions" : "Действия";
+        }
+        const thUsersName = document.getElementById("th-users-name");
+        if (thUsersName) thUsersName.textContent = isEn ? "Name" : "Имя";
+        const thUsersRole = document.getElementById("th-users-role");
+        if (thUsersRole) thUsersRole.textContent = isEn ? "Role" : "Роль";
+        const thUsersCompany = document.getElementById("th-users-company");
+        if (thUsersCompany) thUsersCompany.textContent = isEn ? "Company" : "Компания";
+        const thProductsName = document.getElementById("th-products-name");
+        if (thProductsName) thProductsName.textContent = isEn ? "Name" : "Название";
+        const thProductsCategory = document.getElementById("th-products-category");
+        if (thProductsCategory) {
+          thProductsCategory.textContent = isEn ? "Category (label)" : "Категория (метка)";
+        }
+        const drawerTitle = document.getElementById("admin-product-drawer-title");
+        if (drawerTitle) {
+          drawerTitle.textContent = isEn ? "Product card" : "Карточка продукта";
+        }
+        if (elements.adminUsersRefreshBtn) {
+          elements.adminUsersRefreshBtn.textContent = isEn
+            ? "Refresh list"
+            : "Обновить список";
+        }
+        if (elements.adminAddCompanyBtn) {
+          elements.adminAddCompanyBtn.textContent = isEn
+            ? "Add company"
+            : "Добавить организацию";
+        }
+        if (elements.adminAddProductBtn) {
+          elements.adminAddProductBtn.textContent = isEn
+            ? "Open create card"
+            : "Открыть карточку создания";
+        }
+        if (elements.adminUsersCompanySelect) {
+          fillAdminUsersCompanySelect();
+        }
+        if (getCurrentRoleId() === 1) {
+          renderAdminCompaniesTable();
+          renderAdminProductsTable();
+          syncAdminProductDrawer();
+        }
+      }
+
       let products = [];
-      let selectedIds = new Set();
+      let adminEditingProductId = null;
+      let adminCreatingProduct = false;
+      let adminProductDrawerEscHandler = null;
+      /** @type {Map<number, { targetAp: number|null, moduleQty: Record<number,number>, licenseQty: Record<number,number> }>} */
+      let configLineState = new Map();
+      /** Persist license-pack suggestion messages across renderProducts() rebuilds. */
+      let licenseSuggestFeedbackByProductId = new Map();
+      let optionsCache = {};
+      /** Expanded product cards (description / specs) — user UI */
+      let productCardExpandedIds = new Set();
+      let companiesList = [];
+      let adminUsersList = [];
+
+      function defaultLineState() {
+        return {
+          targetAp: null,
+          moduleQty: {},
+          licenseQty: {},
+          licPickOrder: [],
+          modPickOrder: [],
+        };
+      }
+
+      function touchLicensePickOrder(st, licenseId, qty) {
+        const id = Number(licenseId);
+        if (!st.licPickOrder) st.licPickOrder = [];
+        const idx = st.licPickOrder.indexOf(id);
+        if (qty > 0) {
+          if (idx >= 0) st.licPickOrder.splice(idx, 1);
+          st.licPickOrder.push(id);
+        } else if (idx >= 0) {
+          st.licPickOrder.splice(idx, 1);
+        }
+      }
+
+      function touchModulePickOrder(st, moduleId, qty) {
+        const id = Number(moduleId);
+        if (!st.modPickOrder) st.modPickOrder = [];
+        const idx = st.modPickOrder.indexOf(id);
+        if (qty > 0) {
+          if (idx >= 0) st.modPickOrder.splice(idx, 1);
+          st.modPickOrder.push(id);
+        } else if (idx >= 0) {
+          st.modPickOrder.splice(idx, 1);
+        }
+      }
+
+      function computeModuleQtySum(st) {
+        let s = 0;
+        for (const k of Object.keys(st.moduleQty || {})) {
+          const q = Number(st.moduleQty[k]);
+          if (q > 0) s += q;
+        }
+        return s;
+      }
+
+      /** @returns {{license_id:number,quantity:number}[]} */
+      function orderedLicenseAddons(st) {
+        const out = [];
+        const seen = new Set();
+        for (const lid of st.licPickOrder || []) {
+          const qty = Number(st.licenseQty[lid]);
+          if (qty > 0) {
+            out.push({ license_id: Number(lid), quantity: qty });
+            seen.add(Number(lid));
+          }
+        }
+        for (const lid of Object.keys(st.licenseQty || {})) {
+          const n = Number(lid);
+          if (!seen.has(n) && Number(st.licenseQty[lid]) > 0) {
+            out.push({ license_id: n, quantity: Number(st.licenseQty[lid]) });
+          }
+        }
+        return out;
+      }
+
+      /** @returns {{module_id:number,quantity:number}[]} */
+      function orderedModuleAddons(st) {
+        const out = [];
+        const seen = new Set();
+        for (const mid of st.modPickOrder || []) {
+          const qty = Number(st.moduleQty[mid]);
+          if (qty > 0) {
+            out.push({ module_id: Number(mid), quantity: qty });
+            seen.add(Number(mid));
+          }
+        }
+        for (const mid of Object.keys(st.moduleQty || {})) {
+          const n = Number(mid);
+          if (!seen.has(n) && Number(st.moduleQty[mid]) > 0) {
+            out.push({ module_id: n, quantity: Number(st.moduleQty[mid]) });
+          }
+        }
+        return out;
+      }
+
+      function ensureLineState(productId) {
+        if (!configLineState.has(productId)) {
+          configLineState.set(productId, defaultLineState());
+        }
+        return configLineState.get(productId);
+      }
+
+      /** Same label as in user configurator (license line). */
+      function formatLicenseUserLabel(lic) {
+        const pack = lic.units_per_pack != null ? lic.units_per_pack : 1;
+        return lic.name + " (" + pack + " AP / пакет)";
+      }
+
+      /** Same label as in user configurator (module line). */
+      function formatModuleUserLabel(m) {
+        const speed = m.speed_gbps != null ? m.speed_gbps + " Gbps" : "—";
+        const ff = m.form_factor || "—";
+        return m.name + " · " + speed + " · " + ff;
+      }
+
+      function isProductSelected(productId) {
+        return configLineState.has(productId);
+      }
+
+      function selectionPillCaption(p) {
+        const debugUi = document.body.classList.contains("debug-ui-on");
+        const st = ensureLineState(p.id);
+        if (debugUi) {
+          return p.name + " (id=" + p.id + ")";
+        }
+        const opt = optionsCache[p.id];
+        const licById = {};
+        if (opt && opt.licenses) {
+          for (const l of opt.licenses) licById[l.id] = l;
+        }
+        const modById = {};
+        if (opt && opt.modules) {
+          for (const m of opt.modules) modById[m.id] = m;
+        }
+        const chunks = [];
+        if (st.targetAp != null && st.targetAp > 0) {
+          chunks.push("цель " + st.targetAp + " AP");
+        }
+        const licSeen = new Set();
+        for (const lid of st.licPickOrder || []) {
+          const q = Number(st.licenseQty[lid]);
+          if (q > 0 && licById[lid]) {
+            chunks.push(formatLicenseUserLabel(licById[lid]) + " ×" + q);
+            licSeen.add(Number(lid));
+          }
+        }
+        for (const lid of Object.keys(st.licenseQty || {})) {
+          const n = Number(lid);
+          const q = Number(st.licenseQty[lid]);
+          if (q > 0 && !licSeen.has(n)) {
+            const L = licById[n];
+            chunks.push(
+              (L ? formatLicenseUserLabel(L) : "лицензия " + n) + " ×" + q
+            );
+            licSeen.add(n);
+          }
+        }
+        const modSeen = new Set();
+        for (const mid of st.modPickOrder || []) {
+          const q = Number(st.moduleQty[mid]);
+          if (q > 0 && modById[mid]) {
+            chunks.push(formatModuleUserLabel(modById[mid]) + " ×" + q);
+            modSeen.add(Number(mid));
+          }
+        }
+        for (const mid of Object.keys(st.moduleQty || {})) {
+          const n = Number(mid);
+          const q = Number(st.moduleQty[mid]);
+          if (q > 0 && !modSeen.has(n)) {
+            const M = modById[n];
+            chunks.push(
+              (M ? formatModuleUserLabel(M) : "модуль " + n) + " ×" + q
+            );
+            modSeen.add(n);
+          }
+        }
+        if (chunks.length === 0) return p.name;
+        return p.name + " · " + chunks.join(" · ");
+      }
+
+      function addonCountForProduct(p) {
+        return p.addon_options_count != null ? p.addon_options_count : 0;
+      }
+
+      function renderLicenseSuggestFeedbackHost(productId, host) {
+        host.innerHTML = "";
+        const entry = licenseSuggestFeedbackByProductId.get(productId);
+        if (!entry || !entry.message) return;
+        const div = document.createElement("div");
+        div.className = "status-text " + (entry.type || "info");
+        div.textContent = entry.message;
+        host.appendChild(div);
+      }
+
+      async function renderAddonPanel(panel, p) {
+        panel.innerHTML = "";
+        const loading = document.createElement("div");
+        loading.className = "status-text info";
+        loading.textContent = "Загрузка опций…";
+        panel.appendChild(loading);
+
+        let data;
+        try {
+          if (!optionsCache[p.id]) {
+            const r = await apiFetch("/products/" + p.id + "/configuration-options");
+            if (!r.ok) throw new Error("HTTP " + r.status);
+            optionsCache[p.id] = await r.json();
+          }
+          data = optionsCache[p.id];
+        } catch (err) {
+          panel.innerHTML = "";
+          const errEl = document.createElement("div");
+          errEl.className = "status-text error";
+          errEl.textContent = "Не удалось загрузить опции для этой позиции.";
+          panel.appendChild(errEl);
+          return;
+        }
+
+        panel.innerHTML = "";
+        const st = ensureLineState(p.id);
+
+        if (data.built_in_license_units != null) {
+          const hint = document.createElement("div");
+          hint.className = "addon-hint";
+          hint.textContent =
+            "Встроенная ёмкость лицензий: " +
+            data.built_in_license_units +
+            " AP.";
+          panel.appendChild(hint);
+        }
+
+        if (data.max_module_slots != null) {
+          const hint = document.createElement("div");
+          hint.className = "addon-hint";
+          hint.textContent =
+            "Максимум модулей — сумма количеств по всем выбранным типам трансиверов (не «на один тип»): " +
+            data.max_module_slots +
+            ".";
+          panel.appendChild(hint);
+        }
+
+        if (data.module_speeds_supported && data.module_speeds_supported.length) {
+          const hint = document.createElement("div");
+          hint.className = "addon-hint";
+          hint.textContent =
+            "Допустимые скорости оптики (Гбит/с): " +
+            data.module_speeds_supported.join(", ") +
+            ".";
+          panel.appendChild(hint);
+        }
+
+        const apTargetComboWarn = document.createElement("div");
+        apTargetComboWarn.className = "addon-panel-warn-host";
+
+        if (data.licenses && data.licenses.length) {
+          const feedbackHost = document.createElement("div");
+          feedbackHost.className = "addon-panel-feedback";
+          feedbackHost.setAttribute("aria-live", "polite");
+
+          function clearLicenseFeedbackForThisProduct() {
+            licenseSuggestFeedbackByProductId.delete(p.id);
+            feedbackHost.innerHTML = "";
+          }
+
+          function showImmediateLicenseFeedback(message, type) {
+            licenseSuggestFeedbackByProductId.delete(p.id);
+            feedbackHost.innerHTML = "";
+            if (!message) return;
+            const div = document.createElement("div");
+            div.className = "status-text " + type;
+            div.textContent = message;
+            feedbackHost.appendChild(div);
+          }
+
+          const title = document.createElement("div");
+          title.className = "addon-section-title";
+          title.textContent = "Лицензии (пакеты)";
+          panel.appendChild(title);
+
+          const suggestRow = document.createElement("div");
+          suggestRow.className = "suggest-row";
+          const apLabel = document.createElement("label");
+          apLabel.style.fontSize = "11px";
+          apLabel.style.color = "#64748b";
+          apLabel.textContent = "Целевое число AP:";
+          const apInput = document.createElement("input");
+          apInput.type = "number";
+          apInput.min = "1";
+          apInput.step = "1";
+          apInput.value = st.targetAp != null ? String(st.targetAp) : "";
+          apInput.addEventListener("click", (ev) => ev.stopPropagation());
+          apInput.addEventListener("input", () => {
+            clearLicenseFeedbackForThisProduct();
+            const v = parseInt(apInput.value, 10);
+            st.targetAp = Number.isFinite(v) && v > 0 ? v : null;
+            refreshApTargetComboWarn();
+            renderSelectedPills();
+          });
+          const suggestBtn = document.createElement("button");
+          suggestBtn.type = "button";
+          suggestBtn.className = "secondary-btn";
+          suggestBtn.textContent = "Подобрать пакеты";
+          suggestBtn.addEventListener("click", async (ev) => {
+            ev.stopPropagation();
+            if (!st.targetAp || st.targetAp < 1) {
+              showImmediateLicenseFeedback(
+                "Укажите целевое число AP (целое > 0).",
+                "error"
+              );
+              return;
+            }
+            try {
+              const r = await apiFetch(
+                "/products/" +
+                  p.id +
+                  "/license-pack-suggestion?target_ap_count=" +
+                  encodeURIComponent(String(st.targetAp))
+              );
+              const j = await r.json().catch(() => null);
+              if (!r.ok) {
+                showImmediateLicenseFeedback(
+                  (j && j.detail) || "Не удалось получить подбор пакетов.",
+                  "error"
+                );
+                return;
+              }
+              const neededExtra =
+                j.needed_extra_units != null ? j.needed_extra_units : 0;
+              const residual =
+                j.residual_units_short != null ? j.residual_units_short : 0;
+              const suggestion = j.suggestion || [];
+
+              st.licenseQty = {};
+              st.licPickOrder = [];
+              for (const row of suggestion) {
+                const lid = row.license_id;
+                const q = Number(row.quantity) || 0;
+                if (q <= 0) continue;
+                st.licenseQty[lid] = (st.licenseQty[lid] || 0) + q;
+                if (!st.licPickOrder.includes(lid)) {
+                  st.licPickOrder.push(lid);
+                }
+              }
+
+              if (residual > 0) {
+                licenseSuggestFeedbackByProductId.set(p.id, {
+                  message:
+                    (j.note ||
+                      "Дискретные пакеты не закрывают цель полностью.") +
+                    " Не хватает " +
+                    residual +
+                    " AP; подставлен только частичный набор — донастройте вручную.",
+                  type: "error",
+                });
+                renderProducts();
+                return;
+              }
+
+              if (neededExtra === 0) {
+                licenseSuggestFeedbackByProductId.set(p.id, {
+                  message:
+                    "Дополнительные пакеты не нужны: встроенных " +
+                    (j.built_in_license_units ?? "—") +
+                    " AP уже достаточно для цели " +
+                    j.target_ap_count +
+                    " AP. Поля пакетов оставлены нулями.",
+                  type: "info",
+                });
+              } else if (suggestion.length === 0) {
+                licenseSuggestFeedbackByProductId.set(p.id, {
+                  message:
+                    "Подбор не вернул пакеты — проверьте каталог лицензий или целевое число AP.",
+                  type: "error",
+                });
+              } else {
+                licenseSuggestFeedbackByProductId.delete(p.id);
+                showToast("Пакеты лицензий подставлены в форму.", "success");
+              }
+              renderProducts();
+            } catch (e) {
+              console.error(e);
+              showImmediateLicenseFeedback(
+                "Ошибка запроса подбора пакетов.",
+                "error"
+              );
+            }
+          });
+          suggestRow.appendChild(apLabel);
+          suggestRow.appendChild(apInput);
+          suggestRow.appendChild(suggestBtn);
+          panel.appendChild(suggestRow);
+          panel.appendChild(feedbackHost);
+          renderLicenseSuggestFeedbackHost(p.id, feedbackHost);
+          panel.appendChild(apTargetComboWarn);
+
+          function refreshApTargetComboWarn() {
+            syncApTargetWarningEl(apTargetComboWarn, st, data);
+          }
+
+          for (const lic of data.licenses) {
+            if (st.licenseQty[lic.id] == null) st.licenseQty[lic.id] = 0;
+            const row = document.createElement("div");
+            row.className = "addon-line";
+            const lab = document.createElement("span");
+            lab.textContent = formatLicenseUserLabel(lic);
+            const inp = document.createElement("input");
+            inp.type = "number";
+            inp.min = "0";
+            inp.step = "1";
+            inp.value = String(st.licenseQty[lic.id]);
+            inp.addEventListener("click", (ev) => ev.stopPropagation());
+            inp.addEventListener("input", () => {
+              clearLicenseFeedbackForThisProduct();
+              const q = parseInt(inp.value, 10);
+              const nq = Number.isFinite(q) && q >= 0 ? q : 0;
+              st.licenseQty[lic.id] = nq;
+              touchLicensePickOrder(st, lic.id, nq);
+              refreshApTargetComboWarn();
+              renderSelectedPills();
+            });
+            row.appendChild(lab);
+            row.appendChild(inp);
+            panel.appendChild(row);
+          }
+          refreshApTargetComboWarn();
+        }
+
+        if (data.modules && data.modules.length) {
+          const title = document.createElement("div");
+          title.className = "addon-section-title";
+          title.textContent = "Модули / трансиверы";
+          panel.appendChild(title);
+          const moduleSlotsWarn = document.createElement("div");
+          moduleSlotsWarn.className = "addon-panel-warn-host";
+          function refreshModuleSlots() {
+            syncModuleSlotsWarningEl(moduleSlotsWarn, data.max_module_slots, st);
+          }
+          for (const m of data.modules) {
+            if (st.moduleQty[m.id] == null) st.moduleQty[m.id] = 0;
+            const row = document.createElement("div");
+            row.className = "addon-line";
+            const lab = document.createElement("span");
+            lab.textContent = formatModuleUserLabel(m);
+            const inp = document.createElement("input");
+            inp.type = "number";
+            inp.min = "0";
+            inp.step = "1";
+            inp.value = String(st.moduleQty[m.id]);
+            inp.addEventListener("click", (ev) => ev.stopPropagation());
+            inp.addEventListener("input", () => {
+              const q = parseInt(inp.value, 10);
+              const nq = Number.isFinite(q) && q >= 0 ? q : 0;
+              st.moduleQty[m.id] = nq;
+              touchModulePickOrder(st, m.id, nq);
+              refreshModuleSlots();
+              renderSelectedPills();
+            });
+            row.appendChild(lab);
+            row.appendChild(inp);
+            panel.appendChild(row);
+          }
+          panel.appendChild(moduleSlotsWarn);
+          refreshModuleSlots();
+        }
+
+        renderSelectedPills();
+      }
 
       const TOKEN_STORAGE_KEY = "access_token";
       const REFRESH_TOKEN_STORAGE_KEY = "refresh_token";
       let accessToken = localStorage.getItem(TOKEN_STORAGE_KEY);
       let refreshToken = localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
 
+      function shouldUseUserToasts() {
+        return getCurrentRoleId() === 2;
+      }
+
       function setAuthStatus(message, type = "info") {
         // type: info | success | error
         elements.authStatusArea.innerHTML = "";
         if (!message) return;
+        if (shouldUseUserToasts() && (type === "success" || type === "error")) {
+          showToast(message, type);
+          return;
+        }
 
         const div = document.createElement("div");
         div.className = "status-text " + type;
@@ -602,13 +2460,1853 @@
         elements.authStatusArea.appendChild(div);
       }
 
-      function setAdminStatus(message, type = "info") {
-        elements.adminStatusArea.innerHTML = "";
+      function setCatalogStatus(areaId, message, type = "info") {
+        const el = document.getElementById(areaId);
+        if (!el) return;
+        el.innerHTML = "";
         if (!message) return;
         const div = document.createElement("div");
         div.className = "status-text " + type;
         div.textContent = message;
-        elements.adminStatusArea.appendChild(div);
+        el.appendChild(div);
+      }
+
+      /**
+       * Modal confirm for admin deletes (embedded browsers often block window.confirm).
+       * @returns {Promise<boolean>}
+       */
+      function adminConfirmDelete(subjectLine, consequenceLines) {
+        const overlay = document.getElementById("admin-confirm-overlay");
+        const msgEl = document.getElementById("admin-confirm-message");
+        if (!overlay || !msgEl) {
+          const bullets = (consequenceLines || [])
+            .filter(Boolean)
+            .map((x) => "• " + x)
+            .join("\n");
+          const msg =
+            "ВНИМАНИЕ: удаление необратимо.\n\n" +
+            subjectLine +
+            (bullets ? "\n\n" + bullets : "") +
+            "\n\nТочно удалить?";
+          return Promise.resolve(window.confirm(msg));
+        }
+
+        const bullets = (consequenceLines || [])
+          .filter(Boolean)
+          .map((x) => "• " + x)
+          .join("\n");
+        const msg =
+          "ВНИМАНИЕ: удаление необратимо.\n\n" +
+          subjectLine +
+          (bullets ? "\n\n" + bullets : "") +
+          "\n\nТочно удалить?";
+        msgEl.textContent = msg;
+
+        return new Promise((resolve) => {
+          const btnOk = document.getElementById("admin-confirm-ok");
+          const btnCancel = document.getElementById("admin-confirm-cancel");
+          if (!btnOk || !btnCancel) {
+            resolve(false);
+            return;
+          }
+          let settled = false;
+          const finish = (ok) => {
+            if (settled) return;
+            settled = true;
+            overlay.hidden = true;
+            overlay.setAttribute("aria-hidden", "true");
+            document.removeEventListener("keydown", onEsc);
+            btnOk.removeEventListener("click", onOk);
+            btnCancel.removeEventListener("click", onCancel);
+            overlay.removeEventListener("click", onOverlayClick);
+            resolve(ok);
+          };
+          const onEsc = (e) => {
+            if (e.key === "Escape") {
+              e.preventDefault();
+              finish(false);
+            }
+          };
+          const onOk = () => finish(true);
+          const onCancel = () => finish(false);
+          const onOverlayClick = (e) => {
+            if (e.target === overlay) finish(false);
+          };
+          document.addEventListener("keydown", onEsc);
+          btnOk.addEventListener("click", onOk);
+          btnCancel.addEventListener("click", onCancel);
+          overlay.addEventListener("click", onOverlayClick);
+          overlay.hidden = false;
+          overlay.setAttribute("aria-hidden", "false");
+          btnCancel.focus();
+        });
+      }
+
+      function closeAdminProductDrawer() {
+        const overlay = elements.adminProductDrawerOverlay;
+        const body = elements.adminProductDrawerBody;
+        if (!overlay || !body) return;
+        adminCreatingProduct = false;
+        overlay.hidden = true;
+        overlay.setAttribute("aria-hidden", "true");
+        body.innerHTML = "";
+        if (adminProductDrawerEscHandler) {
+          document.removeEventListener("keydown", adminProductDrawerEscHandler);
+          adminProductDrawerEscHandler = null;
+        }
+      }
+
+      function openAdminProductDrawer(p, opts) {
+        const overlay = elements.adminProductDrawerOverlay;
+        const drawer = elements.adminProductDrawer;
+        const body = elements.adminProductDrawerBody;
+        const createMode = !!(opts && opts.createMode);
+        if (!overlay || !drawer || !body) return;
+        adminCreatingProduct = createMode;
+        body.innerHTML = "";
+        body.appendChild(buildAdminProductEditPanel(p, { createMode }));
+        overlay.hidden = false;
+        overlay.setAttribute("aria-hidden", "false");
+        if (adminProductDrawerEscHandler) {
+          document.removeEventListener("keydown", adminProductDrawerEscHandler);
+        }
+        adminProductDrawerEscHandler = (e) => {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            adminEditingProductId = null;
+            closeAdminProductDrawer();
+          }
+        };
+        document.addEventListener("keydown", adminProductDrawerEscHandler);
+        if (elements.adminProductDrawerClose) elements.adminProductDrawerClose.focus();
+      }
+
+      function syncAdminProductDrawer() {
+        if (adminCreatingProduct) return;
+        if (getCurrentRoleId() !== 1 || !adminEditingProductId) {
+          closeAdminProductDrawer();
+          return;
+        }
+        const p = products.find((x) => Number(x.id) === Number(adminEditingProductId));
+        if (!p) {
+          adminEditingProductId = null;
+          closeAdminProductDrawer();
+          return;
+        }
+        openAdminProductDrawer(p);
+      }
+
+      function openAdminProductCreateDrawer() {
+        adminEditingProductId = null;
+        const draft = {
+          id: null,
+          name: (elements.adminProductName && elements.adminProductName.value) || "",
+          description:
+            (elements.adminProductDesc && elements.adminProductDesc.value) || "",
+          technical_specs:
+            (elements.adminProductSpecs && elements.adminProductSpecs.value) || "",
+          product_category:
+            (elements.adminProductCategory && elements.adminProductCategory.value) || "",
+          built_in_license_units:
+            (elements.adminProductBuiltIn && elements.adminProductBuiltIn.value) || null,
+          max_module_slots:
+            (elements.adminProductMaxSlots && elements.adminProductMaxSlots.value) || null,
+          module_speeds_json:
+            (elements.adminProductSpeedsJson && elements.adminProductSpeedsJson.value) || "",
+          rules_json: "",
+        };
+        openAdminProductDrawer(draft, { createMode: true });
+      }
+
+      function refreshAdminProductUserPreview() {
+        const host = elements.adminProductUserPreview;
+        if (!host) return;
+        host.innerHTML = "";
+        const nm = (elements.adminProductName && elements.adminProductName.value) || "";
+        const ds = (elements.adminProductDesc && elements.adminProductDesc.value) || "";
+        const nameTrim = nm.trim();
+        const descTrim = ds.trim();
+        if (!nameTrim && !descTrim) {
+          const ph = document.createElement("div");
+          ph.className = "admin-user-product-preview-placeholder";
+          ph.textContent =
+            "Введите название и описание — здесь появится превью.";
+          host.appendChild(ph);
+        } else {
+          const title = document.createElement("div");
+          title.className = "product-name";
+          title.textContent = nameTrim || "(без названия)";
+          const desc = document.createElement("div");
+          desc.className = "product-desc";
+          desc.textContent = descTrim || "—";
+          host.appendChild(title);
+          host.appendChild(desc);
+        }
+        const cap = document.createElement("div");
+        cap.className = "admin-user-product-preview-caption";
+        cap.textContent = "Так карточка выглядит у пользователя в списке:";
+        host.appendChild(cap);
+      }
+
+      function companyLabel(companyId) {
+        const c = companiesList.find((x) => x.id === companyId);
+        return c ? c.name + " · " + c.domain : "id " + companyId;
+      }
+
+      function roleLabel(roleId) {
+        if (roleId === 1) return "Admin";
+        if (roleId === 2) return "User";
+        if (roleId === 3) return "Guest";
+        return String(roleId ?? "—");
+      }
+
+      function fillAdminUsersCompanySelect() {
+        const sel = elements.adminUsersCompanySelect;
+        if (!sel) return;
+        const prev = sel.value;
+        sel.innerHTML = "";
+        const allOpt = document.createElement("option");
+        allOpt.value = "";
+        allOpt.textContent = uiLang === "en" ? "All companies" : "Все компании";
+        sel.appendChild(allOpt);
+        companiesList.forEach((c) => {
+          const opt = document.createElement("option");
+          opt.value = String(c.id);
+          opt.textContent = c.name + " (" + c.domain + ")";
+          sel.appendChild(opt);
+        });
+        if (prev !== undefined && [...sel.options].some((o) => o.value === prev)) {
+          sel.value = prev;
+        }
+      }
+
+      function hideAdminCompanyEdit() {
+        if (elements.adminCompanyEditWrap) {
+          elements.adminCompanyEditWrap.style.display = "none";
+        }
+        if (elements.adminCompanyEditId) elements.adminCompanyEditId.value = "";
+        if (elements.adminCompanyEditName) elements.adminCompanyEditName.value = "";
+        if (elements.adminCompanyEditDomain) elements.adminCompanyEditDomain.value = "";
+      }
+
+      function openAdminCompanyEdit(c) {
+        if (!elements.adminCompanyEditWrap) return;
+        elements.adminCompanyEditId.value = String(c.id);
+        elements.adminCompanyEditName.value = c.name || "";
+        elements.adminCompanyEditDomain.value = c.domain || "";
+        elements.adminCompanyEditWrap.style.display = "";
+        elements.adminCompanyEditName.focus();
+      }
+
+      function renderAdminCompaniesTable() {
+        const tb = elements.adminCompaniesTbody;
+        if (!tb) return;
+        tb.innerHTML = "";
+        companiesList.forEach((c) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML =
+            "<td>" +
+            c.id +
+            "</td><td>" +
+            escapeHtml(c.name) +
+            "</td><td>" +
+            escapeHtml(c.domain) +
+            "</td><td></td>";
+          const tdBtn = tr.querySelector("td:last-child");
+          tdBtn.style.whiteSpace = "nowrap";
+          const btnEdit = document.createElement("button");
+          btnEdit.type = "button";
+          btnEdit.className = "ghost-btn";
+          btnEdit.textContent = uiLang === "en" ? "Edit" : "Изменить";
+          btnEdit.addEventListener("click", () => openAdminCompanyEdit(c));
+          const btnDel = document.createElement("button");
+          btnDel.type = "button";
+          btnDel.className = "ghost-btn danger";
+          btnDel.style.marginLeft = "6px";
+          btnDel.textContent = uiLang === "en" ? "Delete" : "Удалить";
+          btnDel.addEventListener("click", () => deleteAdminCompany(c));
+          tdBtn.appendChild(btnEdit);
+          tdBtn.appendChild(btnDel);
+          tb.appendChild(tr);
+        });
+      }
+
+      function escapeHtml(s) {
+        const d = document.createElement("div");
+        d.textContent = s;
+        return d.innerHTML;
+      }
+
+      async function loadAdminCompanies() {
+        if (getCurrentRoleId() !== 1) return;
+        try {
+          const res = await apiFetch("/companies", { method: "GET" });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) {
+            setCatalogStatus(
+              "admin-companies-status",
+              (data && data.detail) || "Не удалось загрузить организации",
+              "error"
+            );
+            return;
+          }
+          companiesList = Array.isArray(data) ? data : [];
+          fillAdminUsersCompanySelect();
+          renderAdminCompaniesTable();
+          setCatalogStatus("admin-companies-status", "", "info");
+        } catch (e) {
+          console.error(e);
+          setCatalogStatus(
+            "admin-companies-status",
+            "Сеть: не удалось загрузить организации",
+            "error"
+          );
+        }
+      }
+
+      async function loadAdminUsers(options) {
+        if (getCurrentRoleId() !== 1) return;
+        const toastOnSuccess = options && options.toastOnSuccess;
+        const sel = elements.adminUsersCompanySelect;
+        const q =
+          sel && sel.value && sel.value !== ""
+            ? "?company_id=" + encodeURIComponent(sel.value)
+            : "";
+        try {
+          const res = await apiFetch("/users" + q, { method: "GET" });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) {
+            setCatalogStatus(
+              "admin-users-status",
+              (data && data.detail) || "Не удалось загрузить пользователей",
+              "error"
+            );
+            return;
+          }
+          adminUsersList = Array.isArray(data) ? data : [];
+          renderAdminUsersTable();
+          setCatalogStatus("admin-users-status", "", "info");
+          if (toastOnSuccess) {
+            showToast("Список пользователей обновлён", "success");
+          }
+        } catch (e) {
+          console.error(e);
+          setCatalogStatus("admin-users-status", "Сеть.", "error");
+        }
+      }
+
+      function renderAdminUsersTable() {
+        const tb = elements.adminUsersTbody;
+        if (!tb) return;
+        tb.innerHTML = "";
+        adminUsersList.forEach((u) => {
+          const tr = document.createElement("tr");
+          const tds = [
+            String(u.id),
+            u.name || "—",
+            u.email || "—",
+            roleLabel(u.role_id),
+            companyLabel(u.company_id),
+          ];
+          tds.forEach((text) => {
+            const td = document.createElement("td");
+            td.textContent = text;
+            tr.appendChild(td);
+          });
+          tb.appendChild(tr);
+        });
+      }
+
+      async function deleteAdminCompany(c) {
+        const id = c.id;
+        if (
+          !(await adminConfirmDelete(
+            "Удалить организацию \"" + (c.name || id) + "\" (id " + id + ")?",
+            [
+              "Пользователи с этой организацией могут потерять доступ или данные — проверьте политику API.",
+            ]
+          ))
+        ) {
+          return;
+        }
+        try {
+          const res = await apiFetch("/companies/" + id, { method: "DELETE" });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) {
+            setCatalogStatus(
+              "admin-companies-status",
+              (data && data.detail) || "Ошибка удаления",
+              "error"
+            );
+            return;
+          }
+          if (
+            elements.adminCompanyEditId &&
+            String(elements.adminCompanyEditId.value) === String(id)
+          ) {
+            hideAdminCompanyEdit();
+          }
+          await loadAdminCompanies();
+          await loadAdminUsers();
+          setCatalogStatus("admin-companies-status", "", "info");
+          showToast("Организация удалена", "success");
+        } catch (e) {
+          console.error(e);
+          setCatalogStatus("admin-companies-status", "Сеть.", "error");
+        }
+      }
+
+      async function saveAdminCompany() {
+        const id = Number(elements.adminCompanyEditId && elements.adminCompanyEditId.value);
+        const name = (elements.adminCompanyEditName.value || "").trim();
+        const domain = (elements.adminCompanyEditDomain.value || "").trim();
+        if (!id || id <= 0) {
+          setCatalogStatus("admin-companies-status", "Не выбрана организация.", "error");
+          return;
+        }
+        if (!name || !domain) {
+          setCatalogStatus(
+            "admin-companies-status",
+            "Укажите название и домен.",
+            "error"
+          );
+          return;
+        }
+        try {
+          const res = await apiFetch("/companies/" + id, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, domain }),
+          });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) {
+            setCatalogStatus(
+              "admin-companies-status",
+              (data && data.detail) || "Ошибка сохранения",
+              "error"
+            );
+            return;
+          }
+          hideAdminCompanyEdit();
+          await loadAdminCompanies();
+          await loadAdminUsers();
+          setCatalogStatus("admin-companies-status", "", "info");
+          showToast("Организация обновлена", "success");
+        } catch (e) {
+          console.error(e);
+          setCatalogStatus("admin-companies-status", "Сеть.", "error");
+        }
+      }
+
+      async function addAdminCompany() {
+        const name = (elements.adminCompanyName.value || "").trim();
+        const domain = (elements.adminCompanyDomain.value || "").trim();
+        if (!name || !domain) {
+          setCatalogStatus("admin-companies-status", "Укажите название и домен.", "error");
+          return;
+        }
+        try {
+          const res = await apiFetch("/companies", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, domain }),
+          });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) {
+            setCatalogStatus(
+              "admin-companies-status",
+              (data && data.detail) || "Ошибка",
+              "error"
+            );
+            return;
+          }
+          elements.adminCompanyName.value = "";
+          elements.adminCompanyDomain.value = "";
+          await loadAdminCompanies();
+          await loadAdminUsers();
+          setCatalogStatus("admin-companies-status", "", "info");
+          showToast("Организация добавлена", "success");
+        } catch (e) {
+          console.error(e);
+          setCatalogStatus("admin-companies-status", "Сеть.", "error");
+        }
+      }
+
+      function renderAdminProductsTable() {
+        const tb = elements.adminProductsTbody;
+        if (!tb) return;
+        tb.innerHTML = "";
+        products.forEach((p) => {
+          const tr = document.createElement("tr");
+          const tdId = document.createElement("td");
+          tdId.textContent = String(p.id);
+          const tdName = document.createElement("td");
+          tdName.textContent = p.name;
+          const tdCat = document.createElement("td");
+          tdCat.textContent =
+            p.product_category && String(p.product_category).trim()
+              ? String(p.product_category).trim()
+              : "—";
+          const tdAct = document.createElement("td");
+          tdAct.style.whiteSpace = "nowrap";
+          const btnEdit = document.createElement("button");
+          btnEdit.type = "button";
+          btnEdit.className = "ghost-btn";
+          btnEdit.textContent = uiLang === "en" ? "Edit" : "Изменить";
+          btnEdit.addEventListener("click", () => {
+            adminEditingProductId = p.id;
+            syncAdminProductDrawer();
+          });
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "ghost-btn danger";
+          btn.textContent = uiLang === "en" ? "Delete" : "Удалить";
+          btn.addEventListener("click", () => deleteAdminProduct(p));
+          tdAct.appendChild(btnEdit);
+          tdAct.appendChild(document.createTextNode(" "));
+          tdAct.appendChild(btn);
+          tr.appendChild(tdId);
+          tr.appendChild(tdName);
+          tr.appendChild(tdCat);
+          tr.appendChild(tdAct);
+          tb.appendChild(tr);
+        });
+      }
+
+      /**
+       * Admin-only catalog rows (all modules, no speed filter). Reloads after edits.
+       * @param {number} productId
+       * @param {HTMLElement} host
+       */
+      async function loadProductCatalogEditorUi(productId, host) {
+        const isEn = uiLang === "en";
+        host.innerHTML = "";
+        const loading = document.createElement("div");
+        loading.className = "status-text info";
+        loading.textContent = isEn
+          ? "Loading catalog options..."
+          : "Загрузка опций каталога…";
+        host.appendChild(loading);
+
+        function parseOptInt(v) {
+          const s = String(v ?? "").trim();
+          if (s === "") return null;
+          const n = parseInt(s, 10);
+          return Number.isFinite(n) ? n : null;
+        }
+
+        function syncModuleUserLabelSpan(span, inName, inSp, inFf) {
+          const nm = inName.value.trim() || "(без названия)";
+          span.textContent = formatModuleUserLabel({
+            name: nm,
+            speed_gbps: parseOptInt(inSp.value),
+            form_factor: inFf.value.trim() === "" ? null : inFf.value.trim(),
+          });
+        }
+
+        function syncLicenseUserLabelSpan(span, inName, inU) {
+          const nm = inName.value.trim() || "(без названия)";
+          const u = parseInt(inU.value, 10);
+          const pack = Number.isFinite(u) && u >= 1 ? u : 1;
+          span.textContent = formatLicenseUserLabel({
+            name: nm,
+            units_per_pack: pack,
+          });
+        }
+
+        let data;
+        try {
+          const res = await apiFetch(
+            "/products/" + productId + "/catalog-editor"
+          );
+          data = await res.json().catch(() => null);
+          if (!res.ok) {
+            host.innerHTML = "";
+            const errEl = document.createElement("div");
+            errEl.className = "status-text error";
+            errEl.textContent =
+              (data && data.detail) || "Не удалось загрузить каталог.";
+            host.appendChild(errEl);
+            return;
+          }
+        } catch (e) {
+          console.error(e);
+          host.innerHTML = "";
+          const errEl = document.createElement("div");
+          errEl.className = "status-text error";
+          errEl.textContent = "Сеть.";
+          host.appendChild(errEl);
+          return;
+        }
+
+        async function afterCatalogMutation() {
+          await loadProducts();
+          await loadProductCatalogEditorUi(productId, host);
+        }
+
+        host.innerHTML = "";
+        host.classList.remove("admin-catalog-editor--dirty");
+        let unsavedToastShown = false;
+
+        function markCatalogEditorDirty(dirtyInput) {
+          host.classList.add("admin-catalog-editor--dirty");
+          if (dirtyInput) dirtyInput.classList.add("admin-catalog-field-dirty");
+          if (unsavedToastShown) return;
+          unsavedToastShown = true;
+          showToast(
+            isEn
+              ? "Changes in module/license rows are not auto-saved: click Save in the row."
+              : "Правки в строках модулей и лицензий не сохраняются сами: нажмите «Сохранить» в строке (поля продукта выше — отдельная кнопка «Сохранить»).",
+            "warning"
+          );
+        }
+
+        function markCatalogRowDirty(tr, dirtyInput) {
+          markCatalogEditorDirty(dirtyInput);
+          if (tr) {
+            const saveBtn = tr.querySelector("button.admin-catalog-row-save");
+            if (saveBtn) saveBtn.classList.add("admin-catalog-save-pending");
+          }
+        }
+
+        const titleM = document.createElement("h4");
+        titleM.className =
+          "admin-form-block-title admin-form-block-title--compact";
+        titleM.textContent = isEn ? "Modules (transceivers etc.)" : "Модули (трансиверы и др.)";
+        host.appendChild(titleM);
+
+        const tblM = document.createElement("table");
+        tblM.className = "admin-table";
+        tblM.innerHTML =
+          isEn
+            ? "<thead><tr><th>ID</th><th>User label</th><th>Name (catalog)</th><th>Speed Gbps</th><th>Form factor</th><th></th></tr></thead>"
+            : "<thead><tr><th>ID</th><th>Как у пользователя</th><th>Название (каталог)</th><th>Скорость Гбит/с</th><th>Form factor</th><th></th></tr></thead>";
+        const tbM = document.createElement("tbody");
+        tblM.appendChild(tbM);
+        (data.modules || []).forEach((mod) => {
+          const tr = document.createElement("tr");
+          const tdId = document.createElement("td");
+          tdId.textContent = String(mod.id);
+          const tdUser = document.createElement("td");
+          const spanUser = document.createElement("div");
+          spanUser.className = "admin-addon-user-label";
+          tdUser.appendChild(spanUser);
+          const tdName = document.createElement("td");
+          const inName = document.createElement("input");
+          inName.type = "text";
+          inName.value = mod.name || "";
+          tdName.appendChild(inName);
+          const tdSp = document.createElement("td");
+          const inSp = document.createElement("input");
+          inSp.type = "number";
+          inSp.min = "0";
+          inSp.step = "1";
+          inSp.placeholder = "пусто";
+          if (mod.speed_gbps != null) inSp.value = String(mod.speed_gbps);
+          tdSp.appendChild(inSp);
+          const tdFf = document.createElement("td");
+          const inFf = document.createElement("input");
+          inFf.type = "text";
+          inFf.placeholder = "SFP…";
+          inFf.value = mod.form_factor || "";
+          tdFf.appendChild(inFf);
+          const syncM = () =>
+            syncModuleUserLabelSpan(spanUser, inName, inSp, inFf);
+          function onModFieldInput(ev) {
+            syncM();
+            markCatalogRowDirty(tr, ev.target);
+          }
+          inName.addEventListener("input", onModFieldInput);
+          inSp.addEventListener("input", onModFieldInput);
+          inFf.addEventListener("input", onModFieldInput);
+          syncM();
+          const tdAct = document.createElement("td");
+          tdAct.style.whiteSpace = "nowrap";
+          const btnSave = document.createElement("button");
+          btnSave.type = "button";
+          btnSave.className = "ghost-btn admin-catalog-row-save";
+          btnSave.textContent = uiLang === "en" ? "Save" : "Сохранить";
+          btnSave.addEventListener("click", async () => {
+            const nm = inName.value.trim();
+            if (!nm) {
+              setCatalogStatus(
+                "admin-products-status",
+                "У модуля нужно название.",
+                "error"
+              );
+              return;
+            }
+            const body = {
+              name: nm,
+              speed_gbps: parseOptInt(inSp.value),
+              form_factor:
+                inFf.value.trim() === "" ? null : inFf.value.trim(),
+              max_quantity: null,
+            };
+            try {
+              const res = await apiFetch("/products/modules/" + mod.id, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+              });
+              const j = await res.json().catch(() => null);
+              if (!res.ok) {
+                setCatalogStatus(
+                  "admin-products-status",
+                  (j && j.detail) || "Ошибка модуля",
+                  "error"
+                );
+                return;
+              }
+              setCatalogStatus("admin-products-status", "", "info");
+              showToast("Модуль сохранён", "success");
+              await afterCatalogMutation();
+            } catch (e) {
+              console.error(e);
+              setCatalogStatus("admin-products-status", "Сеть.", "error");
+            }
+          });
+          const btnDel = document.createElement("button");
+          btnDel.type = "button";
+          btnDel.className = "ghost-btn danger";
+          btnDel.textContent = uiLang === "en" ? "Delete" : "Удалить";
+          btnDel.addEventListener("click", async () => {
+            if (
+              !(await adminConfirmDelete(
+                "Удалить модуль \"" + (mod.name || mod.id) + "\" (id " + mod.id + ")?",
+                ["Строки конфигураций с этим модулем будут очищены."]
+              ))
+            ) {
+              return;
+            }
+            try {
+              const res = await apiFetch("/products/modules/" + mod.id, {
+                method: "DELETE",
+              });
+              const j = await res.json().catch(() => null);
+              if (!res.ok) {
+                setCatalogStatus(
+                  "admin-products-status",
+                  (j && j.detail) || "Ошибка",
+                  "error"
+                );
+                return;
+              }
+              setCatalogStatus("admin-products-status", "", "info");
+              showToast("Модуль удалён", "success");
+              await afterCatalogMutation();
+            } catch (e) {
+              console.error(e);
+              setCatalogStatus("admin-products-status", "Сеть.", "error");
+            }
+          });
+          tdAct.appendChild(btnSave);
+          tdAct.appendChild(document.createTextNode(" "));
+          tdAct.appendChild(btnDel);
+          tr.appendChild(tdId);
+          tr.appendChild(tdUser);
+          tr.appendChild(tdName);
+          tr.appendChild(tdSp);
+          tr.appendChild(tdFf);
+          tr.appendChild(tdAct);
+          tbM.appendChild(tr);
+        });
+        host.appendChild(tblM);
+
+        const addRowM = document.createElement("div");
+        addRowM.className = "admin-inline";
+        addRowM.style.flexWrap = "wrap";
+        addRowM.style.gap = "8px";
+        addRowM.style.alignItems = "flex-end";
+        function mkIn(ph, type) {
+          const w = document.createElement("div");
+          w.className = "field-group";
+          w.style.flex = "1";
+          w.style.minWidth = "120px";
+          const lab = document.createElement("div");
+          lab.className = "field-label";
+          lab.textContent = ph;
+          const inp = document.createElement("input");
+          inp.type = type;
+          if (type === "number") {
+            inp.min = "0";
+            inp.step = "1";
+          }
+          w.appendChild(lab);
+          w.appendChild(inp);
+          return { wrap: w, inp: inp };
+        }
+        const aName = mkIn(isEn ? "New module - name" : "Новый модуль — название", "text");
+        const aSp = mkIn(isEn ? "Speed Gbps" : "Скорость Гбит/с", "number");
+        const aFf = mkIn("Form factor", "text");
+        addRowM.appendChild(aName.wrap);
+        addRowM.appendChild(aSp.wrap);
+        addRowM.appendChild(aFf.wrap);
+        const addModPreviewWrap = document.createElement("div");
+        addModPreviewWrap.className = "field-group";
+        addModPreviewWrap.style.flex = "1 1 200px";
+        addModPreviewWrap.style.minWidth = "180px";
+        addModPreviewWrap.style.marginBottom = "0";
+        const addModPreviewLab = document.createElement("div");
+        addModPreviewLab.className = "field-label";
+        addModPreviewLab.textContent = isEn ? "User preview" : "Превью у пользователя";
+        const addModPreviewVal = document.createElement("div");
+        addModPreviewVal.className = "admin-addon-user-label";
+        addModPreviewVal.style.marginTop = "4px";
+        function syncAddModPreview() {
+          syncModuleUserLabelSpan(addModPreviewVal, aName.inp, aSp.inp, aFf.inp);
+          if (
+            (aName.inp.value || "").trim() ||
+            (aSp.inp.value || "").trim() ||
+            (aFf.inp.value || "").trim()
+          ) {
+            markCatalogEditorDirty();
+          }
+        }
+        aName.inp.addEventListener("input", syncAddModPreview);
+        aSp.inp.addEventListener("input", syncAddModPreview);
+        aFf.inp.addEventListener("input", syncAddModPreview);
+        syncAddModPreview();
+        addModPreviewWrap.appendChild(addModPreviewLab);
+        addModPreviewWrap.appendChild(addModPreviewVal);
+        const btnAddM = document.createElement("button");
+        btnAddM.type = "button";
+        btnAddM.className = "secondary-btn";
+        btnAddM.textContent = isEn ? "Add module" : "Добавить модуль";
+        btnAddM.addEventListener("click", async () => {
+          const nm = aName.inp.value.trim();
+          if (!nm) {
+            setCatalogStatus(
+              "admin-products-status",
+              "Укажите название нового модуля.",
+              "error"
+            );
+            return;
+          }
+          const body = {
+            name: nm,
+            speed_gbps: parseOptInt(aSp.inp.value),
+            form_factor:
+              aFf.inp.value.trim() === "" ? null : aFf.inp.value.trim(),
+            max_quantity: null,
+          };
+          try {
+            const res = await apiFetch(
+              "/products/" + productId + "/modules",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+              }
+            );
+            const j = await res.json().catch(() => null);
+            if (!res.ok) {
+              setCatalogStatus(
+                "admin-products-status",
+                (j && j.detail) || "Ошибка",
+                "error"
+              );
+              return;
+            }
+            aName.inp.value = "";
+            aSp.inp.value = "";
+            aFf.inp.value = "";
+            setCatalogStatus("admin-products-status", "", "info");
+            showToast("Модуль добавлен", "success");
+            await afterCatalogMutation();
+          } catch (e) {
+            console.error(e);
+            setCatalogStatus("admin-products-status", "Сеть.", "error");
+          }
+        });
+        const addModActionsRow = document.createElement("div");
+        addModActionsRow.className = "admin-catalog-add-preview-actions";
+        addModActionsRow.appendChild(addModPreviewWrap);
+        addModActionsRow.appendChild(btnAddM);
+        host.appendChild(addRowM);
+        host.appendChild(addModActionsRow);
+
+        const titleL = document.createElement("h4");
+        titleL.className =
+          "admin-form-block-title admin-form-block-title--compact";
+        titleL.style.marginTop = "10px";
+        titleL.textContent = isEn ? "License packs" : "Пакеты лицензий";
+        host.appendChild(titleL);
+        const hintL = document.createElement("p");
+        hintL.className = "field-description";
+        hintL.textContent = isEn
+          ? "Pack size (units_per_pack): how many AP (or other units) one order row adds."
+          : "Размер пакета (units_per_pack) — сколько AP (или других единиц) даёт одна строка заказа.";
+        host.appendChild(hintL);
+
+        const tblL = document.createElement("table");
+        tblL.className = "admin-table";
+        tblL.innerHTML =
+          isEn
+            ? "<thead><tr><th>ID</th><th>User label</th><th>Name (catalog)</th><th>Units per pack</th><th></th></tr></thead>"
+            : "<thead><tr><th>ID</th><th>Как у пользователя</th><th>Название (каталог)</th><th>Единиц в пакете</th><th></th></tr></thead>";
+        const tbL = document.createElement("tbody");
+        tblL.appendChild(tbL);
+        (data.licenses || []).forEach((lic) => {
+          const tr = document.createElement("tr");
+          const tdId = document.createElement("td");
+          tdId.textContent = String(lic.id);
+          const tdUser = document.createElement("td");
+          const spanLUser = document.createElement("div");
+          spanLUser.className = "admin-addon-user-label";
+          tdUser.appendChild(spanLUser);
+          const tdName = document.createElement("td");
+          const inName = document.createElement("input");
+          inName.type = "text";
+          inName.value = lic.name || "";
+          tdName.appendChild(inName);
+          const tdU = document.createElement("td");
+          const inU = document.createElement("input");
+          inU.type = "number";
+          inU.min = "1";
+          inU.step = "1";
+          inU.value = String(lic.units_per_pack ?? 1);
+          tdU.appendChild(inU);
+          const syncL = () =>
+            syncLicenseUserLabelSpan(spanLUser, inName, inU);
+          function onLicFieldInput(ev) {
+            syncL();
+            markCatalogRowDirty(tr, ev.target);
+          }
+          inName.addEventListener("input", onLicFieldInput);
+          inU.addEventListener("input", onLicFieldInput);
+          syncL();
+          const tdAct = document.createElement("td");
+          tdAct.style.whiteSpace = "nowrap";
+          const btnSave = document.createElement("button");
+          btnSave.type = "button";
+          btnSave.className = "ghost-btn admin-catalog-row-save";
+          btnSave.textContent = uiLang === "en" ? "Save" : "Сохранить";
+          btnSave.addEventListener("click", async () => {
+            const nm = inName.value.trim();
+            if (!nm) {
+              setCatalogStatus(
+                "admin-products-status",
+                "У лицензии нужно название.",
+                "error"
+              );
+              return;
+            }
+            const u = parseInt(inU.value, 10);
+            if (!Number.isFinite(u) || u < 1) {
+              setCatalogStatus(
+                "admin-products-status",
+                "Единиц в пакете: целое ≥ 1.",
+                "error"
+              );
+              return;
+            }
+            try {
+              const res = await apiFetch("/products/licenses/" + lic.id, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: nm, units_per_pack: u }),
+              });
+              const j = await res.json().catch(() => null);
+              if (!res.ok) {
+                setCatalogStatus(
+                  "admin-products-status",
+                  (j && j.detail) || "Ошибка лицензии",
+                  "error"
+                );
+                return;
+              }
+              setCatalogStatus("admin-products-status", "", "info");
+              showToast("Пакет лицензий сохранён", "success");
+              await afterCatalogMutation();
+            } catch (e) {
+              console.error(e);
+              setCatalogStatus("admin-products-status", "Сеть.", "error");
+            }
+          });
+          const btnDel = document.createElement("button");
+          btnDel.type = "button";
+          btnDel.className = "ghost-btn danger";
+          btnDel.textContent = uiLang === "en" ? "Delete" : "Удалить";
+          btnDel.addEventListener("click", async () => {
+            if (
+              !(await adminConfirmDelete(
+                "Удалить пакет лицензий \"" +
+                  (lic.name || lic.id) +
+                  "\" (id " +
+                  lic.id +
+                  ")?",
+                ["Строки конфигураций с этим пакетом будут очищены."]
+              ))
+            ) {
+              return;
+            }
+            try {
+              const res = await apiFetch("/products/licenses/" + lic.id, {
+                method: "DELETE",
+              });
+              const j = await res.json().catch(() => null);
+              if (!res.ok) {
+                setCatalogStatus(
+                  "admin-products-status",
+                  (j && j.detail) || "Ошибка",
+                  "error"
+                );
+                return;
+              }
+              setCatalogStatus("admin-products-status", "", "info");
+              showToast("Пакет лицензий удалён", "success");
+              await afterCatalogMutation();
+            } catch (e) {
+              console.error(e);
+              setCatalogStatus("admin-products-status", "Сеть.", "error");
+            }
+          });
+          tdAct.appendChild(btnSave);
+          tdAct.appendChild(document.createTextNode(" "));
+          tdAct.appendChild(btnDel);
+          tr.appendChild(tdId);
+          tr.appendChild(tdUser);
+          tr.appendChild(tdName);
+          tr.appendChild(tdU);
+          tr.appendChild(tdAct);
+          tbL.appendChild(tr);
+        });
+        host.appendChild(tblL);
+
+        const addRowL = document.createElement("div");
+        addRowL.className = "admin-inline";
+        addRowL.style.flexWrap = "wrap";
+        addRowL.style.gap = "8px";
+        addRowL.style.alignItems = "flex-end";
+        const lName = mkIn(isEn ? "New pack - name" : "Новый пакет — название", "text");
+        const lU = mkIn(isEn ? "Units per pack" : "Единиц в пакете", "number");
+        lU.inp.value = "16";
+        addRowL.appendChild(lName.wrap);
+        addRowL.appendChild(lU.wrap);
+        const addLicPreviewWrap = document.createElement("div");
+        addLicPreviewWrap.className = "field-group";
+        addLicPreviewWrap.style.flex = "1 1 200px";
+        addLicPreviewWrap.style.minWidth = "180px";
+        addLicPreviewWrap.style.marginBottom = "0";
+        const addLicPreviewLab = document.createElement("div");
+        addLicPreviewLab.className = "field-label";
+        addLicPreviewLab.textContent = isEn ? "User preview" : "Превью у пользователя";
+        const addLicPreviewVal = document.createElement("div");
+        addLicPreviewVal.className = "admin-addon-user-label";
+        addLicPreviewVal.style.marginTop = "4px";
+        function syncAddLicPreview() {
+          syncLicenseUserLabelSpan(addLicPreviewVal, lName.inp, lU.inp);
+          if ((lName.inp.value || "").trim()) {
+            markCatalogEditorDirty();
+          }
+        }
+        lName.inp.addEventListener("input", syncAddLicPreview);
+        lU.inp.addEventListener("input", syncAddLicPreview);
+        syncAddLicPreview();
+        addLicPreviewWrap.appendChild(addLicPreviewLab);
+        addLicPreviewWrap.appendChild(addLicPreviewVal);
+        const btnAddL = document.createElement("button");
+        btnAddL.type = "button";
+        btnAddL.className = "secondary-btn";
+        btnAddL.textContent = isEn ? "Add pack" : "Добавить пакет";
+        btnAddL.addEventListener("click", async () => {
+          const nm = lName.inp.value.trim();
+          if (!nm) {
+            setCatalogStatus(
+              "admin-products-status",
+              "Укажите название пакета.",
+              "error"
+            );
+            return;
+          }
+          const u = parseInt(lU.inp.value, 10);
+          if (!Number.isFinite(u) || u < 1) {
+            setCatalogStatus(
+              "admin-products-status",
+              "Единиц в пакете: целое ≥ 1.",
+              "error"
+            );
+            return;
+          }
+          try {
+            const res = await apiFetch(
+              "/products/" + productId + "/licenses",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: nm, units_per_pack: u }),
+              }
+            );
+            const j = await res.json().catch(() => null);
+            if (!res.ok) {
+              setCatalogStatus(
+                "admin-products-status",
+                (j && j.detail) || "Ошибка",
+                "error"
+              );
+              return;
+            }
+            lName.inp.value = "";
+            lU.inp.value = "16";
+            setCatalogStatus("admin-products-status", "", "info");
+            showToast("Пакет лицензий добавлен", "success");
+            await afterCatalogMutation();
+          } catch (e) {
+            console.error(e);
+            setCatalogStatus("admin-products-status", "Сеть.", "error");
+          }
+        });
+        const addLicActionsRow = document.createElement("div");
+        addLicActionsRow.className = "admin-catalog-add-preview-actions";
+        addLicActionsRow.appendChild(addLicPreviewWrap);
+        addLicActionsRow.appendChild(btnAddL);
+        host.appendChild(addRowL);
+        host.appendChild(addLicActionsRow);
+      }
+
+      function adminSplitProductRulesJson(raw) {
+        const empty = {
+          speedAllowed: null,
+          modulesMax: null,
+          licenseIncluded: null,
+          rest: [],
+          parseError: false,
+        };
+        if (raw == null || String(raw).trim() === "") return empty;
+        let arr = [];
+        try {
+          const d = JSON.parse(String(raw));
+          if (Array.isArray(d)) arr = d;
+          else if (d && typeof d === "object") arr = [d];
+          else return { ...empty, parseError: true };
+        } catch {
+          return { ...empty, parseError: true };
+        }
+        const rest = [];
+        let speedAllowed = null;
+        let modulesMax = null;
+        let licenseIncluded = null;
+        for (const r of arr) {
+          if (!r || typeof r !== "object") {
+            rest.push(r);
+            continue;
+          }
+          if (
+            r.type === "filter" &&
+            r.field === "speed" &&
+            Array.isArray(r.allowed) &&
+            speedAllowed === null
+          ) {
+            const nums = r.allowed
+              .map((x) => parseInt(x, 10))
+              .filter((n) => Number.isFinite(n));
+            if (nums.length) speedAllowed = nums;
+            else rest.push(r);
+            continue;
+          }
+          if (
+            r.type === "limit" &&
+            r.field === "modules" &&
+            r.max !== undefined &&
+            r.max !== null &&
+            modulesMax === null
+          ) {
+            const m = parseInt(r.max, 10);
+            if (Number.isFinite(m) && m >= 0) modulesMax = m;
+            else rest.push(r);
+            continue;
+          }
+          if (
+            r.type === "license" &&
+            r.included !== undefined &&
+            r.included !== null &&
+            licenseIncluded === null
+          ) {
+            const v = parseInt(r.included, 10);
+            if (Number.isFinite(v) && v >= 0) licenseIncluded = v;
+            else rest.push(r);
+            continue;
+          }
+          rest.push(r);
+        }
+        return { speedAllowed, modulesMax, licenseIncluded, rest, parseError: false };
+      }
+
+      function adminBuildRulesJsonFromWizard(
+        chkSpeed,
+        speedText,
+        chkMod,
+        modVal,
+        chkLic,
+        licVal,
+        preservedRest
+      ) {
+        const out = [];
+        if (chkSpeed) {
+          const parts = String(speedText || "")
+            .split(/[,;\s]+/)
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .map((s) => parseInt(s, 10))
+            .filter((n) => Number.isFinite(n));
+          if (!parts.length) {
+            return {
+              error:
+                "Отмечено ограничение скоростей: введите числа через запятую (например 1, 10).",
+            };
+          }
+          out.push({ type: "filter", field: "speed", allowed: parts });
+        }
+        if (chkMod) {
+          const m = parseInt(modVal, 10);
+          if (!Number.isFinite(m) || m < 0) {
+            return { error: "Макс. модулей в правилах: неотрицательное целое." };
+          }
+          out.push({ type: "limit", field: "modules", max: m });
+        }
+        if (chkLic) {
+          const v = parseInt(licVal, 10);
+          if (!Number.isFinite(v) || v < 0) {
+            return { error: "Встроенные AP в правилах: неотрицательное целое." };
+          }
+          out.push({ type: "license", included: v });
+        }
+        for (const r of preservedRest) out.push(r);
+        return { rules: out };
+      }
+
+      function buildAdminProductEditPanel(p, opts) {
+        const createMode = !!(opts && opts.createMode);
+        const isEn = uiLang === "en";
+        const modeKey = createMode ? "new" : String(p.id);
+        const wrap = document.createElement("div");
+        wrap.className = "admin-product-edit-panel";
+        const panelTitle = document.createElement("h4");
+        panelTitle.className =
+          "admin-form-block-title admin-form-block-title--compact";
+        panelTitle.textContent = createMode
+          ? isEn
+            ? "Create product"
+            : "Создание продукта"
+          : isEn
+            ? "Edit product"
+            : "Редактирование продукта";
+        wrap.appendChild(panelTitle);
+
+        const grid = document.createElement("div");
+        grid.className = "edit-grid";
+
+        function addField(labelText, inputEl) {
+          const cell = document.createElement("div");
+          const lab = document.createElement("label");
+          lab.textContent = labelText;
+          cell.appendChild(lab);
+          cell.appendChild(inputEl);
+          grid.appendChild(cell);
+        }
+
+        function addFieldStack(labelText, inputEl, hintText) {
+          const cell = document.createElement("div");
+          const lab = document.createElement("label");
+          lab.textContent = labelText;
+          cell.appendChild(lab);
+          cell.appendChild(inputEl);
+          if (hintText) {
+            const h = document.createElement("div");
+            h.className = "field-description";
+            h.style.marginTop = "4px";
+            h.textContent = hintText;
+            cell.appendChild(h);
+          }
+          grid.appendChild(cell);
+        }
+
+        function addFieldWide(labelText, inputEl) {
+          const cell = document.createElement("div");
+          cell.className = "edit-grid-cell-wide";
+          const lab = document.createElement("label");
+          lab.textContent = labelText;
+          cell.appendChild(lab);
+          cell.appendChild(inputEl);
+          grid.appendChild(cell);
+        }
+
+        const inpName = document.createElement("input");
+        inpName.type = "text";
+        inpName.value = p.name || "";
+        addField(isEn ? "Name" : "Название", inpName);
+
+        const taDesc = document.createElement("textarea");
+        taDesc.className = "admin-textarea-desc";
+        taDesc.rows = 5;
+        taDesc.value = p.description || "";
+        addFieldWide(isEn ? "Description" : "Описание", taDesc);
+
+        const taSpecs = document.createElement("textarea");
+        taSpecs.className = "admin-textarea-specs";
+        taSpecs.rows = 10;
+        taSpecs.value = p.technical_specs || "";
+        addFieldWide(isEn ? "Technical specifications" : "Технические характеристики", taSpecs);
+
+        const inpCategory = document.createElement("input");
+        inpCategory.type = "text";
+        inpCategory.placeholder = "";
+        inpCategory.value = p.product_category || "";
+        addFieldStack(
+          isEn ? "Category (label)" : "Категория (метка)",
+          inpCategory,
+          isEn
+            ? "For example controller, switch, router - label only."
+            : "Например controller, switch, router — только подпись в каталоге."
+        );
+
+        const inpBuilt = document.createElement("input");
+        inpBuilt.type = "number";
+        inpBuilt.min = "0";
+        inpBuilt.step = "1";
+        inpBuilt.placeholder = "";
+        if (p.built_in_license_units != null) {
+          inpBuilt.value = String(p.built_in_license_units);
+        }
+        addFieldStack(
+          isEn ? "Built-in AP (licenses)" : "Встроенные AP (лицензии)",
+          inpBuilt,
+          isEn
+            ? "Built-in licensed AP units; empty means none."
+            : "Встроенные лицензируемые AP; пусто — нет."
+        );
+
+        const inpSpeeds = document.createElement("input");
+        inpSpeeds.type = "text";
+        inpSpeeds.placeholder = "";
+        inpSpeeds.value = p.module_speeds_json || "";
+        addFieldStack(
+          isEn ? "Module speeds in catalog (JSON)" : "Скорости модулей в каталоге (JSON)",
+          inpSpeeds,
+          isEn
+            ? "Array of Gbps numbers, e.g. [1, 10]. Empty means no filter."
+            : "Массив чисел в Гбит/с, например [1, 10]. Пусто — без фильтра."
+        );
+
+        const inpSlots = document.createElement("input");
+        inpSlots.type = "number";
+        inpSlots.min = "0";
+        inpSlots.step = "1";
+        inpSlots.placeholder = "";
+        if (p.max_module_slots != null) {
+          inpSlots.value = String(p.max_module_slots);
+        }
+        addFieldStack(
+          isEn ? "Max modules (total per product)" : "Макс. модулей (всего на продукт)",
+          inpSlots,
+          isEn
+            ? "Total module slots limit in configuration; empty means no limit."
+            : "Общий лимит слотов по модулям в конфигурации; пусто — без лимита."
+        );
+
+        const rulesSplit = adminSplitProductRulesJson(p.rules_json);
+        const preservedRulesRest = rulesSplit.rest.slice();
+
+        const rulesBlock = document.createElement("div");
+        rulesBlock.className = "edit-grid-cell-wide";
+
+        const rulesBlockTitle = document.createElement("div");
+        rulesBlockTitle.className = "field-label";
+        rulesBlockTitle.style.marginBottom = "4px";
+        rulesBlockTitle.textContent = isEn
+          ? "Advanced configurator rules"
+          : "Расширенные правила конфигуратора";
+        rulesBlock.appendChild(rulesBlockTitle);
+
+        const modeRow = document.createElement("div");
+        modeRow.className = "admin-rules-mode-row";
+        const radSimple = document.createElement("input");
+        radSimple.type = "radio";
+        radSimple.name = "admin-rules-mode-" + modeKey;
+        radSimple.id = "admin-rules-simple-" + modeKey;
+        const radJson = document.createElement("input");
+        radJson.type = "radio";
+        radJson.name = "admin-rules-mode-" + modeKey;
+        radJson.id = "admin-rules-json-" + modeKey;
+        const labS = document.createElement("label");
+        labS.setAttribute("for", radSimple.id);
+        labS.appendChild(radSimple);
+        labS.appendChild(
+          document.createTextNode(isEn ? " Simple mode" : " Простая настройка")
+        );
+        const labJ = document.createElement("label");
+        labJ.setAttribute("for", radJson.id);
+        labJ.appendChild(radJson);
+        labJ.appendChild(
+          document.createTextNode(isEn ? " Edit JSON" : " Редактировать JSON")
+        );
+        modeRow.appendChild(labS);
+        modeRow.appendChild(labJ);
+        rulesBlock.appendChild(modeRow);
+
+        const wiz = document.createElement("div");
+        wiz.className = "admin-rules-wizard";
+
+        function makeWizardRow(checkId, checkLabel, inputEl) {
+          const row = document.createElement("div");
+          row.className = "admin-rules-wizard-row";
+          const chk = document.createElement("input");
+          chk.type = "checkbox";
+          chk.id = checkId;
+          const labChk = document.createElement("label");
+          labChk.setAttribute("for", checkId);
+          labChk.style.marginBottom = "0";
+          labChk.appendChild(chk);
+          const desc = document.createElement("span");
+          desc.className = "admin-rules-wizard-desc";
+          desc.textContent = checkLabel;
+          row.appendChild(labChk);
+          row.appendChild(desc);
+          row.appendChild(inputEl);
+          return { row, chk };
+        }
+
+        const inpSpeedCsv = document.createElement("input");
+        inpSpeedCsv.type = "text";
+        inpSpeedCsv.placeholder = "1, 10";
+        const speedRw = makeWizardRow(
+          "admin-r-speed-" + modeKey,
+          isEn ? "Limit module speeds (Gbps)" : "Ограничить скорости модулей (Гбит/с)",
+          inpSpeedCsv
+        );
+        wiz.appendChild(speedRw.row);
+
+        const inpModOv = document.createElement("input");
+        inpModOv.type = "number";
+        inpModOv.min = "0";
+        inpModOv.step = "1";
+        inpModOv.placeholder = "";
+        const modRw = makeWizardRow(
+          "admin-r-mod-" + modeKey,
+          isEn ? "Set max modules" : "Задать максимум модулей",
+          inpModOv
+        );
+        wiz.appendChild(modRw.row);
+
+        const inpLicOv = document.createElement("input");
+        inpLicOv.type = "number";
+        inpLicOv.min = "0";
+        inpLicOv.step = "1";
+        inpLicOv.placeholder = "";
+        const licRw = makeWizardRow(
+          "admin-r-lic-" + modeKey,
+          isEn ? "Set built-in AP" : "Задать встроенные AP",
+          inpLicOv
+        );
+        wiz.appendChild(licRw.row);
+
+        rulesBlock.appendChild(wiz);
+
+        const jsonPanel = document.createElement("div");
+        jsonPanel.className = "admin-rules-json-panel";
+        const labJson = document.createElement("label");
+        labJson.textContent = isEn ? "Rules array (JSON)" : "Массив правил (JSON)";
+        labJson.style.display = "block";
+        labJson.style.marginBottom = "4px";
+        const taRules = document.createElement("textarea");
+        taRules.className = "admin-textarea-rules";
+        taRules.rows = 10;
+        taRules.spellcheck = false;
+        taRules.placeholder = '[{"type":"filter","field":"speed","allowed":[1,10]}]';
+        jsonPanel.appendChild(labJson);
+        jsonPanel.appendChild(taRules);
+        rulesBlock.appendChild(jsonPanel);
+
+        if (rulesSplit.speedAllowed && rulesSplit.speedAllowed.length) {
+          speedRw.chk.checked = true;
+          inpSpeedCsv.value = rulesSplit.speedAllowed.join(", ");
+        }
+        if (
+          rulesSplit.modulesMax !== null &&
+          rulesSplit.modulesMax !== undefined
+        ) {
+          modRw.chk.checked = true;
+          inpModOv.value = String(rulesSplit.modulesMax);
+        }
+        if (
+          rulesSplit.licenseIncluded !== null &&
+          rulesSplit.licenseIncluded !== undefined
+        ) {
+          licRw.chk.checked = true;
+          inpLicOv.value = String(rulesSplit.licenseIncluded);
+        }
+
+        taRules.value =
+          p.rules_json != null && String(p.rules_json).trim() !== ""
+            ? String(p.rules_json)
+            : "";
+
+        function prettyRulesForTa() {
+          const built = adminBuildRulesJsonFromWizard(
+            speedRw.chk.checked,
+            inpSpeedCsv.value,
+            modRw.chk.checked,
+            inpModOv.value,
+            licRw.chk.checked,
+            inpLicOv.value,
+            preservedRulesRest
+          );
+          if (built.error) return null;
+          if (!built.rules.length) return "";
+          return JSON.stringify(built.rules, null, 2);
+        }
+
+        function syncModeUi() {
+          const jsonMode = radJson.checked;
+          wiz.style.display = jsonMode ? "none" : "block";
+          jsonPanel.style.display = jsonMode ? "block" : "none";
+          if (jsonMode && !rulesSplit.parseError) {
+            const pr = prettyRulesForTa();
+            if (pr !== null) {
+              taRules.value = pr === "" ? "[]" : pr;
+            }
+          }
+        }
+
+        const useJsonMode =
+          rulesSplit.rest.length > 0 || rulesSplit.parseError;
+        if (useJsonMode) {
+          radJson.checked = true;
+          radSimple.checked = false;
+        } else {
+          radSimple.checked = true;
+          radJson.checked = false;
+        }
+        syncModeUi();
+
+        radSimple.addEventListener("change", () => {
+          if (radSimple.checked) syncModeUi();
+        });
+        radJson.addEventListener("change", () => {
+          if (radJson.checked) syncModeUi();
+        });
+
+        grid.appendChild(rulesBlock);
+
+        wrap.appendChild(grid);
+
+        if (!createMode) {
+          const catalogHost = document.createElement("div");
+          catalogHost.className = "admin-product-catalog-editor";
+          wrap.appendChild(catalogHost);
+          void loadProductCatalogEditorUi(p.id, catalogHost);
+        } else {
+          const createHint = document.createElement("div");
+          createHint.className = "field-description";
+          createHint.textContent =
+            isEn
+              ? "Click 'Create and add components' - this product opens right away, then you can add modules and license packs."
+              : "Нажмите «Создать и добавить компоненты» — после этого откроется этот же продукт, и можно будет сразу добавить модули и пакеты лицензий.";
+          wrap.appendChild(createHint);
+        }
+
+        const actions = document.createElement("div");
+        actions.className = "admin-product-edit-actions";
+        const btnSave = document.createElement("button");
+        btnSave.type = "button";
+        btnSave.className = "primary-btn";
+        btnSave.textContent = createMode
+          ? isEn
+            ? "Create and add components"
+            : "Создать и добавить компоненты"
+          : isEn
+            ? "Save"
+            : "Сохранить";
+        function syncSaveEnabled() {
+          btnSave.disabled = inpName.value.trim() === "";
+        }
+        inpName.addEventListener("input", syncSaveEnabled);
+        syncSaveEnabled();
+        btnSave.addEventListener("click", async () => {
+          const body = {
+            name: inpName.value.trim(),
+            description: taDesc.value.trim(),
+            technical_specs: (taSpecs.value || "").trim() || "—",
+            product_kind: "equipment",
+            product_category:
+              inpCategory.value.trim() === ""
+                ? null
+                : inpCategory.value.trim(),
+          };
+          const bi = inpBuilt.value.trim();
+          if (bi === "") {
+            body.built_in_license_units = null;
+          } else {
+            const n = parseInt(bi, 10);
+            if (!Number.isFinite(n) || n < 0) {
+              setCatalogStatus(
+                "admin-products-status",
+                "Встроенные AP: неотрицательное целое или пусто.",
+                "error"
+              );
+              return;
+            }
+            body.built_in_license_units = n;
+          }
+          const speeds = inpSpeeds.value.trim();
+          body.module_speeds_json = speeds === "" ? null : speeds;
+          const slots = inpSlots.value.trim();
+          if (slots === "") {
+            body.max_module_slots = null;
+          } else {
+            const m = parseInt(slots, 10);
+            if (!Number.isFinite(m) || m < 0) {
+              setCatalogStatus(
+                "admin-products-status",
+                "Макс. модулей: неотрицательное целое или пусто.",
+                "error"
+              );
+              return;
+            }
+            body.max_module_slots = m;
+          }
+          if (radJson.checked) {
+            const rulesRaw = (taRules.value || "").trim();
+            if (rulesRaw === "") {
+              body.rules_json = null;
+            } else {
+              try {
+                const j = JSON.parse(rulesRaw);
+                const arr = Array.isArray(j) ? j : [j];
+                body.rules_json = arr.length ? JSON.stringify(arr) : null;
+              } catch (e) {
+                setCatalogStatus(
+                  "admin-products-status",
+                  "Правила (JSON): невалидный JSON.",
+                  "error"
+                );
+                return;
+              }
+            }
+          } else {
+            const built = adminBuildRulesJsonFromWizard(
+              speedRw.chk.checked,
+              inpSpeedCsv.value,
+              modRw.chk.checked,
+              inpModOv.value,
+              licRw.chk.checked,
+              inpLicOv.value,
+              preservedRulesRest
+            );
+            if (built.error) {
+              setCatalogStatus(
+                "admin-products-status",
+                built.error,
+                "error"
+              );
+              return;
+            }
+            body.rules_json =
+              built.rules.length > 0 ? JSON.stringify(built.rules) : null;
+          }
+          if (createMode) await createAdminProductFromDrawer(body);
+          else await patchAdminProduct(p.id, body);
+        });
+        const btnCancel = document.createElement("button");
+        btnCancel.type = "button";
+        btnCancel.className = "ghost-btn";
+        btnCancel.textContent = isEn ? "Cancel" : "Отмена";
+        btnCancel.addEventListener("click", () => {
+          adminEditingProductId = null;
+          closeAdminProductDrawer();
+        });
+        actions.appendChild(btnCancel);
+        actions.appendChild(btnSave);
+        wrap.appendChild(actions);
+        return wrap;
+      }
+
+      async function patchAdminProduct(id, body) {
+        try {
+          const res = await apiFetch("/products/" + id, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) {
+            setCatalogStatus(
+              "admin-products-status",
+              (data && data.detail) || "Ошибка сохранения",
+              "error"
+            );
+            return;
+          }
+          adminEditingProductId = null;
+          closeAdminProductDrawer();
+          await loadProducts();
+          setCatalogStatus("admin-products-status", "", "info");
+          showToast("Продукт сохранён", "success");
+        } catch (e) {
+          console.error(e);
+          setCatalogStatus("admin-products-status", "Сеть.", "error");
+        }
+      }
+
+      async function createAdminProductFromDrawer(body) {
+        try {
+          const res = await apiFetch("/products", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) {
+            setCatalogStatus(
+              "admin-products-status",
+              (data && data.detail) || "Ошибка создания",
+              "error"
+            );
+            return;
+          }
+          adminCreatingProduct = false;
+          adminEditingProductId = data && data.id != null ? Number(data.id) : null;
+          await loadProducts();
+          setCatalogStatus("admin-products-status", "", "info");
+          showToast("Продукт добавлен", "success");
+        } catch (e) {
+          console.error(e);
+          setCatalogStatus("admin-products-status", "Сеть.", "error");
+        }
+      }
+
+      async function deleteAdminProduct(p) {
+        const id = p.id;
+        if (
+          !(await adminConfirmDelete(
+            "Удалить продукт \"" + (p.name || id) + "\" (id " + id + ")?",
+            [
+              "Удалятся все модули и пакеты лицензий этого продукта.",
+              "Строки конфигураций, которые на них ссылаются, будут очищены.",
+            ]
+          ))
+        ) {
+          return;
+        }
+        try {
+          const res = await apiFetch("/products/" + id, { method: "DELETE" });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) {
+            setCatalogStatus(
+              "admin-products-status",
+              (data && data.detail) || "Ошибка",
+              "error"
+            );
+            return;
+          }
+          await loadProducts();
+          setCatalogStatus("admin-products-status", "", "info");
+          showToast("Продукт удалён", "success");
+        } catch (e) {
+          console.error(e);
+          setCatalogStatus("admin-products-status", "Сеть.", "error");
+        }
+      }
+
+      async function addAdminProduct() {
+        const name = (elements.adminProductName.value || "").trim();
+        const description = (elements.adminProductDesc.value || "").trim();
+        const technical_specs = (
+          elements.adminProductSpecs && elements.adminProductSpecs.value
+            ? elements.adminProductSpecs.value
+            : ""
+        ).trim();
+        if (!name) {
+          setCatalogStatus("admin-products-status", "Укажите название.", "error");
+          return;
+        }
+
+        let built_in_license_units = null;
+        const biRaw = (elements.adminProductBuiltIn && elements.adminProductBuiltIn.value || "").trim();
+        if (biRaw !== "") {
+          const n = parseInt(biRaw, 10);
+          if (!Number.isFinite(n) || n < 0) {
+            setCatalogStatus(
+              "admin-products-status",
+              "Встроенные AP: неотрицательное целое или пусто.",
+              "error"
+            );
+            return;
+          }
+          built_in_license_units = n;
+        }
+
+        let max_module_slots = null;
+        const slotsRaw = (elements.adminProductMaxSlots && elements.adminProductMaxSlots.value || "").trim();
+        if (slotsRaw !== "") {
+          const m = parseInt(slotsRaw, 10);
+          if (!Number.isFinite(m) || m < 0) {
+            setCatalogStatus(
+              "admin-products-status",
+              "Макс. модулей: неотрицательное целое или пусто.",
+              "error"
+            );
+            return;
+          }
+          max_module_slots = m;
+        }
+
+        const speedsRaw = (elements.adminProductSpeedsJson && elements.adminProductSpeedsJson.value || "").trim();
+        const module_speeds_json = speedsRaw === "" ? null : speedsRaw;
+
+        const catRaw = (
+          elements.adminProductCategory && elements.adminProductCategory.value
+            ? elements.adminProductCategory.value
+            : ""
+        ).trim();
+        const product_category = catRaw === "" ? null : catRaw;
+
+        try {
+          const res = await apiFetch("/products", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name,
+              description,
+              technical_specs: technical_specs || "—",
+              product_kind: "equipment",
+              product_category,
+              built_in_license_units,
+              max_module_slots,
+              module_speeds_json,
+            }),
+          });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) {
+            setCatalogStatus(
+              "admin-products-status",
+              (data && data.detail) || "Ошибка",
+              "error"
+            );
+            return;
+          }
+          elements.adminProductName.value = "";
+          if (elements.adminProductCategory) elements.adminProductCategory.value = "";
+          elements.adminProductDesc.value = "";
+          if (elements.adminProductSpecs) elements.adminProductSpecs.value = "";
+          if (elements.adminProductBuiltIn) elements.adminProductBuiltIn.value = "";
+          if (elements.adminProductMaxSlots) elements.adminProductMaxSlots.value = "";
+          if (elements.adminProductSpeedsJson) elements.adminProductSpeedsJson.value = "";
+          refreshAdminProductUserPreview();
+          await loadProducts();
+          setCatalogStatus("admin-products-status", "", "info");
+          showToast("Продукт добавлен", "success");
+        } catch (e) {
+          console.error(e);
+          setCatalogStatus("admin-products-status", "Сеть.", "error");
+        }
+      }
+
+      function refreshAdminProductUi() {
+        if (getCurrentRoleId() !== 1) return;
+        renderAdminProductsTable();
+        syncAdminProductDrawer();
       }
 
       function parseJwt(token) {
@@ -654,17 +4352,25 @@
         elements.roleBadge.textContent = "Anonymous";
       }
 
+      function redirectToLogin() {
+        window.location.href = "login.html";
+      }
+
+      async function ensureAuthenticated() {
+        accessToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+        refreshToken = localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+        if (accessToken) return true;
+        if (refreshToken) {
+          const ok = await refreshAccessToken();
+          if (ok) return true;
+        }
+        redirectToLogin();
+        return false;
+      }
+
       function syncAuthUI() {
         if (!accessToken) {
-          elements.clearTokenBtn.disabled = true;
-          elements.createConfigBtn.disabled = true;
-          elements.adminUserBlock.style.display = "none";
-          updateRoleBadge(null);
-          setAdminStatus("", "info");
-          setAuthStatus(
-            "Not logged in. Create configuration is disabled until login.",
-            "info"
-          );
+          redirectToLogin();
           return;
         }
 
@@ -674,13 +4380,31 @@
         const roleId = data && data.role_id != null ? String(data.role_id) : "?";
         const roleIdNumber = data && data.role_id != null ? Number(data.role_id) : null;
 
-        elements.clearTokenBtn.disabled = false;
-        elements.createConfigBtn.disabled = false;
-        elements.adminUserBlock.style.display =
-          Number(roleId) === 1 ? "block" : "none";
+        const isAdmin = Number(roleId) === 1;
+        if (elements.appPageTitle) {
+          elements.appPageTitle.textContent = isAdmin
+            ? "Администрирование"
+            : "Конфигуратор";
+        }
+        if (elements.userConfiguratorLayout) {
+          elements.userConfiguratorLayout.style.display = isAdmin ? "none" : "";
+        }
+        if (elements.headerBlurbUser) {
+          elements.headerBlurbUser.style.display = isAdmin ? "none" : "";
+        }
+        if (elements.headerBlurbAdmin) {
+          elements.headerBlurbAdmin.style.display = isAdmin ? "" : "none";
+        }
+        updateCreateConfigBtnState();
+        if (elements.adminArea) {
+          elements.adminArea.style.display = isAdmin ? "block" : "none";
+        }
         updateRoleBadge(roleIdNumber);
-        if (Number(roleId) !== 1) {
-          setAdminStatus("", "info");
+        if (Number(roleId) === 1) {
+          (async () => {
+            await loadAdminCompanies();
+            await loadAdminUsers();
+          })();
         }
         setAuthStatus(
           "Logged in. user_id=" +
@@ -716,7 +4440,7 @@
           const json = await response.json().catch(() => null);
           if (!response.ok || !json || !json.access_token || !json.refresh_token) {
             clearStoredTokens();
-            syncAuthUI();
+            redirectToLogin();
             return false;
           }
 
@@ -729,7 +4453,7 @@
         } catch (error) {
           console.error("Refresh token request failed:", error);
           clearStoredTokens();
-          syncAuthUI();
+          redirectToLogin();
           return false;
         }
       }
@@ -754,10 +4478,28 @@
         return response;
       }
 
+      function setProductsStatus(message, type = "info") {
+        if (!elements.productsStatusArea) return;
+        elements.productsStatusArea.innerHTML = "";
+        if (!message) return;
+        if (shouldUseUserToasts() && (type === "success" || type === "error")) {
+          showToast(message, type);
+          return;
+        }
+        const div = document.createElement("div");
+        div.className = "status-text " + type;
+        div.textContent = message;
+        elements.productsStatusArea.appendChild(div);
+      }
+
       function setStatus(message, type = "info") {
-        // type: info | success | error
+        // Configuration card only (POST /configurations, validation).
         elements.statusArea.innerHTML = "";
         if (!message) return;
+        if (shouldUseUserToasts() && (type === "success" || type === "error")) {
+          showToast(message, type);
+          return;
+        }
 
         const div = document.createElement("div");
         div.className = "status-text " + type;
@@ -765,17 +4507,125 @@
         elements.statusArea.appendChild(div);
       }
 
+      function showToast(message, type = "success") {
+        const host = document.getElementById("app-toast-host");
+        if (!host || !message) return;
+        const t = document.createElement("div");
+        t.className = "app-toast app-toast--" + type;
+        t.textContent = message;
+        host.appendChild(t);
+        requestAnimationFrame(() => t.classList.add("app-toast--visible"));
+        const hideMs = type === "error" ? 5000 : 3400;
+        setTimeout(() => {
+          t.classList.remove("app-toast--visible");
+          setTimeout(() => t.remove(), 220);
+        }, hideMs);
+      }
+
+      function syncModuleSlotsWarningEl(warnEl, maxSlots, st) {
+        if (!warnEl) return;
+        warnEl.innerHTML = "";
+        if (maxSlots == null) {
+          warnEl.__moduleSlotsWarnHash = "";
+          return;
+        }
+        const sum = computeModuleQtySum(st);
+        if (sum > maxSlots) {
+          const msg =
+            "Сумма количеств модулей (" +
+            sum +
+            ") превышает лимит слотов для этого продукта (" +
+            maxSlots +
+            "). Лимит считается по всем типам трансиверов вместе, не по каждому отдельно.";
+          const msgHash = msg;
+          if (warnEl.__moduleSlotsWarnHash !== msgHash) {
+            warnEl.__moduleSlotsWarnHash = msgHash;
+            showToast(msg, "error");
+          }
+          return;
+        }
+        warnEl.__moduleSlotsWarnHash = "";
+      }
+
+      function syncApTargetWarningEl(warnEl, st, data) {
+        if (!warnEl) return;
+        warnEl.innerHTML = "";
+        if (!st.targetAp || st.targetAp < 1) return;
+        if (!data || !data.licenses || !data.licenses.length) return;
+        const built =
+          data.built_in_license_units != null ? data.built_in_license_units : 0;
+        let extra = 0;
+        for (const lic of data.licenses) {
+          const q = Number(st.licenseQty[lic.id]) || 0;
+          extra += q * (lic.units_per_pack || 0);
+        }
+        const total = built + extra;
+        if (total < st.targetAp) {
+          const msg =
+            "По выбранным пакетам и встроенной ёмкости получается " +
+            total +
+            " AP, а цель " +
+            st.targetAp +
+            " AP. Такую цель нельзя закрыть текущим набором — добавьте пакеты или снизьте цель.";
+          const msgHash = msg;
+          if (warnEl.__apTargetWarnHash !== msgHash) {
+            warnEl.__apTargetWarnHash = msgHash;
+            showToast(msg, "error");
+          }
+          return;
+        }
+        warnEl.__apTargetWarnHash = "";
+      }
+
+      function hasBlockingSelectionWarnings() {
+        for (const [pid, st] of configLineState.entries()) {
+          const data = optionsCache[pid];
+          if (!data) continue;
+          if (
+            data.max_module_slots != null &&
+            computeModuleQtySum(st) > data.max_module_slots
+          ) {
+            return true;
+          }
+          if (st.targetAp && st.targetAp > 0 && data.licenses && data.licenses.length) {
+            const built =
+              data.built_in_license_units != null ? data.built_in_license_units : 0;
+            let extra = 0;
+            for (const lic of data.licenses) {
+              const q = Number(st.licenseQty[lic.id]) || 0;
+              extra += q * (lic.units_per_pack || 0);
+            }
+            if (built + extra < st.targetAp) return true;
+          }
+        }
+        return false;
+      }
+
+      function updateCreateConfigBtnState() {
+        if (!elements.createConfigBtn) return;
+        if (getCurrentRoleId() === 1) {
+          elements.createConfigBtn.disabled = true;
+          return;
+        }
+        const nothingSelected = configLineState.size === 0;
+        const hasBlockingWarning = hasBlockingSelectionWarnings();
+        elements.createConfigBtn.disabled = nothingSelected || hasBlockingWarning;
+      }
+
       function renderProducts() {
         elements.productsList.innerHTML = "";
         products.forEach((p) => {
           const li = document.createElement("li");
           li.className =
-            "product-item" + (selectedIds.has(p.id) ? " selected" : "");
+            "product-item" + (isProductSelected(p.id) ? " selected" : "");
+
+          const row = document.createElement("div");
+          row.className = "product-item-row";
 
           const checkbox = document.createElement("input");
           checkbox.type = "checkbox";
           checkbox.className = "product-checkbox";
-          checkbox.checked = selectedIds.has(p.id);
+          checkbox.checked = isProductSelected(p.id);
 
           const main = document.createElement("div");
           main.className = "product-main";
@@ -784,26 +4634,98 @@
           name.className = "product-name";
           name.textContent = p.name;
 
+          const descText = (p.description ?? "").trim();
+          const specsText = (p.technical_specs ?? "").trim();
+          const expanded = productCardExpandedIds.has(p.id);
+          const hasAnyText = descText.length > 0 || specsText.length > 0;
+          let descInnerEl = null;
+          let specInnerEl = null;
+
           const desc = document.createElement("div");
           desc.className = "product-desc";
-          desc.textContent = p.description ?? "";
+          if (descText) {
+            const descInner = document.createElement("div");
+            descInner.className = expanded
+              ? "product-text-expanded"
+              : "product-text-clamp";
+            descInner.textContent = descText;
+            desc.appendChild(descInner);
+            descInnerEl = descInner;
+          }
+          if (specsText) {
+            const specWrap = document.createElement("div");
+            specWrap.className = "product-specs-block";
+            const specLab = document.createElement("div");
+            specLab.style.fontWeight = "600";
+            specLab.style.fontSize = "11px";
+            specLab.style.color = "#64748b";
+            specLab.style.marginBottom = "2px";
+            specLab.textContent = "Технические характеристики";
+            const specInner = document.createElement("div");
+            specInner.className = expanded
+              ? "product-text-expanded"
+              : "product-text-clamp";
+            specInner.textContent = specsText;
+            specWrap.appendChild(specLab);
+            specWrap.appendChild(specInner);
+            desc.appendChild(specWrap);
+            specInnerEl = specInner;
+          }
+
+          function appendToggleButton(label) {
+            const moreBtn = document.createElement("button");
+            moreBtn.type = "button";
+            moreBtn.className = "product-more-toggle";
+            moreBtn.textContent = label;
+            moreBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              if (productCardExpandedIds.has(p.id)) {
+                productCardExpandedIds.delete(p.id);
+              } else {
+                productCardExpandedIds.add(p.id);
+              }
+              renderProducts();
+            });
+            desc.appendChild(moreBtn);
+          }
+
+          if (expanded && hasAnyText) {
+            appendToggleButton("Свернуть");
+          }
 
           const meta = document.createElement("div");
-          meta.className = "product-meta";
-          meta.textContent = "ID: " + p.id;
+          meta.className = "product-meta debug-only";
+          const ac = addonCountForProduct(p);
+          meta.textContent =
+            "ID: " +
+            p.id +
+            (p.product_category ? " · cat: " + p.product_category : "") +
+            (p.product_kind ? " · " + p.product_kind : "") +
+            (ac ? " · options: " + ac : "");
 
           main.appendChild(name);
           main.appendChild(desc);
           main.appendChild(meta);
 
-          li.appendChild(checkbox);
-          li.appendChild(main);
+          row.appendChild(checkbox);
+          row.appendChild(main);
+          li.appendChild(row);
+
+          const n = addonCountForProduct(p);
+          if (n > 0 && isProductSelected(p.id)) {
+            const panel = document.createElement("div");
+            panel.className = "equipment-addon-panel";
+            panel.addEventListener("click", (ev) => ev.stopPropagation());
+            li.appendChild(panel);
+            renderAddonPanel(panel, p);
+          }
 
           const toggle = () => {
-            if (selectedIds.has(p.id)) {
-              selectedIds.delete(p.id);
+            if (isProductSelected(p.id)) {
+              configLineState.delete(p.id);
+              licenseSuggestFeedbackByProductId.delete(p.id);
             } else {
-              selectedIds.add(p.id);
+              configLineState.set(p.id, defaultLineState());
             }
             renderSelectedPills();
             renderProducts();
@@ -811,6 +4733,7 @@
           };
 
           li.addEventListener("click", (e) => {
+            if (e.target.closest(".equipment-addon-panel")) return;
             if (e.target === checkbox) {
               toggle();
             } else {
@@ -820,84 +4743,150 @@
           });
 
           elements.productsList.appendChild(li);
+
+          if (!expanded && hasAnyText && (descInnerEl || specInnerEl)) {
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                let overflow = false;
+                if (descInnerEl) {
+                  overflow =
+                    descInnerEl.scrollHeight > descInnerEl.clientHeight + 1;
+                }
+                if (specInnerEl) {
+                  overflow =
+                    overflow ||
+                    specInnerEl.scrollHeight > specInnerEl.clientHeight + 1;
+                }
+                if (overflow) {
+                  appendToggleButton("Показать полностью");
+                }
+              });
+            });
+          }
         });
       }
 
       function renderSelectedPills() {
         elements.selectedPills.innerHTML = "";
+        const debugUi = document.body.classList.contains("debug-ui-on");
         products
-          .filter((p) => selectedIds.has(p.id))
+          .filter((p) => isProductSelected(p.id))
           .forEach((p) => {
             const pill = document.createElement("span");
-            pill.className = "pill removable";
-            pill.textContent = p.name + " (id=" + p.id + ")";
-            pill.title = "Click to remove from selection";
-            pill.addEventListener("click", () => {
-              selectedIds.delete(p.id);
+            pill.className = debugUi ? "pill removable" : "pill removable-user";
+            pill.textContent = selectionPillCaption(p);
+            pill.title = debugUi
+              ? "Remove from configuration (id " + p.id + ")"
+              : "Убрать из выбранных";
+            pill.addEventListener("click", (e) => {
+              e.stopPropagation();
+              configLineState.delete(p.id);
+              licenseSuggestFeedbackByProductId.delete(p.id);
               renderSelectedPills();
               renderProducts();
               updateCounter();
             });
             elements.selectedPills.appendChild(pill);
           });
+        updateCreateConfigBtnState();
       }
 
       function updateCounter() {
-        const count = selectedIds.size;
-        elements.productsCounter.textContent =
-          count + (count === 1 ? " selected" : " selected");
+        const count = configLineState.size;
+        if (elements.productsCounter) {
+          elements.productsCounter.textContent = count + " selected";
+        }
+        if (elements.selectedItemsCount) {
+          if (count === 0) {
+            elements.selectedItemsCount.textContent = "Не выбрано";
+          } else if (count === 1) {
+            elements.selectedItemsCount.textContent = "Выбрана 1 позиция";
+          } else {
+            elements.selectedItemsCount.textContent =
+              "Выбрано позиций: " + count;
+          }
+        }
+        updateCreateConfigBtnState();
       }
 
       async function loadProducts() {
-        // Try to fetch from backend first, then fallback to mock
-        setStatus("Загружаем продукты из backend...", "info");
+        setProductsStatus("", "info");
         elements.productsSource.textContent =
           "GET /products (пробуем запрос к backend)";
+
+        let httpStatus = null;
+        let serverDetail = "";
 
         try {
           const response = await apiFetch("/products", {
             method: "GET",
           });
+          httpStatus = response.status;
+          const data = await response.json().catch(() => null);
 
           if (!response.ok) {
-            throw new Error("GET /products failed with status " + response.status);
+            const d = data && data.detail;
+            if (typeof d === "string") {
+              serverDetail = d;
+            } else if (Array.isArray(d)) {
+              serverDetail = d
+                .map((x) =>
+                  x && typeof x.msg === "string" ? x.msg : JSON.stringify(x)
+                )
+                .join("; ");
+            } else if (d != null) {
+              serverDetail = String(d);
+            } else {
+              serverDetail = response.statusText || "";
+            }
+            throw new Error("HTTP " + httpStatus);
           }
 
-          const data = await response.json();
-
-          // Expecting array of products with id, name, description
           products = Array.isArray(data) ? data : [];
           if (products.length === 0) {
-            throw new Error("Empty products array from backend");
+            serverDetail = "Сервер вернул пустой список продуктов.";
+            throw new Error("empty_list");
           }
 
           elements.productsSource.textContent =
             "GET /products (данные из backend)";
-          setStatus("Продукты успешно загружены из backend.", "success");
+          setProductsStatus("", "info");
         } catch (error) {
           console.error("Failed to load products from backend:", error);
-          // Fallback to local mock
-          products = mockProducts.slice();
-          elements.productsSource.textContent =
-            "Mock список (backend недоступен, используем локальные данные)";
-          setStatus(
-            "Не удалось получить список продуктов из backend. Используем mock‑данные.",
+          products = [];
+          const parts = [
+            "Не удалось загрузить каталог продуктов.",
+            httpStatus != null ? "HTTP " + httpStatus + "." : "",
+            serverDetail ? serverDetail : "",
+            error &&
+            error.message &&
+            error.message !== "HTTP " + httpStatus &&
+            error.message !== "empty_list"
+              ? error.message
+              : "",
+          ];
+          setProductsStatus(
+            parts.filter(Boolean).join(" ").replace(/\s+/g, " ").trim(),
             "error"
           );
+          elements.productsSource.textContent =
+            "GET /products — ошибка" +
+            (httpStatus != null ? " (" + httpStatus + ")" : "");
         }
 
-        selectedIds = new Set();
+        configLineState = new Map();
+        licenseSuggestFeedbackByProductId.clear();
+        optionsCache = {};
+        productCardExpandedIds.clear();
         renderProducts();
         renderSelectedPills();
         updateCounter();
+        refreshAdminProductUi();
       }
 
       async function createConfiguration() {
         if (!accessToken) {
-          setStatus(
-            "Сначала выполни login. Без токена backend не принимает POST /configurations.",
-            "error"
-          );
+          redirectToLogin();
           return;
         }
 
@@ -907,9 +4896,8 @@
           return;
         }
 
-        const items = Array.from(selectedIds);
-        if (items.length === 0) {
-          setStatus("Выбери хотя бы один продукт для конфигурации.", "error");
+        if (configLineState.size === 0) {
+          setStatus("Выбери хотя бы одну позицию для конфигурации.", "error");
           return;
         }
 
@@ -922,13 +4910,43 @@
           }
         }
 
+        const lines = [];
+        for (const [pid, st] of configLineState) {
+          const licAdds = orderedLicenseAddons(st);
+          const modAdds = orderedModuleAddons(st);
+          const addons = licAdds.concat(modAdds);
+          const line = {
+            equipment_product_id: pid,
+            addons,
+          };
+          if (st.targetAp != null && st.targetAp > 0) {
+            line.target_ap_count = st.targetAp;
+          }
+          lines.push(line);
+        }
+
         const payload = {
           user_id: userId,
-          items: items,
+          lines,
+          project_name: (elements.projectNameInput?.value || "").trim(),
+          project_contact_name: (elements.projectContactNameInput?.value || "").trim(),
+          project_contact_email: (elements.projectContactEmailInput?.value || "")
+            .trim()
+            .toLowerCase(),
+          project_notes: (elements.projectNotesInput?.value || "").trim(),
         };
 
+        if (!payload.project_name) {
+          setStatus("Укажи название проекта перед отправкой.", "error");
+          return;
+        }
+        if (!payload.project_contact_email || !payload.project_contact_email.includes("@")) {
+          setStatus("Укажи корректный контактный email проекта.", "error");
+          return;
+        }
+
         elements.createConfigBtn.disabled = true;
-        setStatus("Отправляем POST /configurations...", "info");
+        setStatus("Отправляем POST /configurations…", "info");
 
         try {
           const response = await apiFetch("/configurations", {
@@ -958,7 +4976,14 @@
 
           let message = "Конфигурация успешно создана на backend.";
           if (json && json.configuration_id != null) {
-            message += " ID: " + json.configuration_id;
+            message += " ID: " + json.configuration_id + ".";
+          }
+          if (json && json.specification && json.specification.length) {
+            message +=
+              " Строк спецификации: " + json.specification.length + ".";
+          }
+          if (json && json.submitted_to_sales) {
+            message += " Заявка отправлена в отдел продаж.";
           }
           setStatus(message, "success");
         } catch (error) {
@@ -972,101 +4997,11 @@
         }
       }
 
-      async function createUserAsAdmin() {
-        const roleId = getCurrentRoleId();
-        if (roleId !== 1) {
-          setAdminStatus("Only admin can create users.", "error");
-          return;
-        }
+      async function init() {
+        const authed = await ensureAuthenticated();
+        if (!authed) return;
 
-        const name = (elements.adminCreateNameInput.value || "").trim();
-        const email = (elements.adminCreateEmailInput.value || "").trim();
-        const password = elements.adminCreatePasswordInput.value || "";
-        if (!name || !email || !password) {
-          setAdminStatus("Fill name, email and password.", "error");
-          return;
-        }
-
-        elements.adminCreateUserBtn.disabled = true;
-        setAdminStatus("Creating user...", "info");
-        try {
-          const response = await apiFetch("/users", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name,
-              email,
-              password,
-              role_id: 2,
-              company_id: 1,
-            }),
-          });
-          const json = await response.json().catch(() => null);
-          if (!response.ok) {
-            const detail = json && json.detail ? String(json.detail) : "Create user failed";
-            setAdminStatus(detail, "error");
-            return;
-          }
-
-          setAdminStatus("User created. id=" + (json.id ?? "?"), "success");
-          elements.adminCreateNameInput.value = "";
-          elements.adminCreateEmailInput.value = "";
-          elements.adminCreatePasswordInput.value = "";
-        } catch (error) {
-          console.error("Create user failed:", error);
-          setAdminStatus("Network error while creating user.", "error");
-        } finally {
-          elements.adminCreateUserBtn.disabled = false;
-        }
-      }
-
-      function init() {
         elements.apiBase.textContent = API_BASE;
-
-        elements.loginBtn.addEventListener("click", async () => {
-          const email = (elements.loginEmailInput.value || "").trim();
-          const password = elements.loginPasswordInput.value || "";
-
-          if (!email) {
-            setAuthStatus("Please enter email.", "error");
-            return;
-          }
-
-          elements.loginBtn.disabled = true;
-          setAuthStatus("Logging in...", "info");
-
-          try {
-            const response = await fetch(API_BASE + "/auth/login", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email, password }),
-            });
-
-            const json = await response.json().catch(() => null);
-            if (!response.ok) {
-              const detail = json && json.detail ? json.detail : "Login failed";
-              setAuthStatus(String(detail), "error");
-              return;
-            }
-
-            accessToken = json && json.access_token ? json.access_token : null;
-            refreshToken = json && json.refresh_token ? json.refresh_token : null;
-            if (!accessToken || !refreshToken) {
-              setAuthStatus("Login succeeded but token payload is incomplete.", "error");
-              return;
-            }
-
-            localStorage.setItem(TOKEN_STORAGE_KEY, accessToken);
-            localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, refreshToken);
-            syncAuthUI();
-            setAuthStatus("Login OK. Token attached to requests.", "success");
-          } catch (e) {
-            console.error("Login error:", e);
-            setAuthStatus("Network error during login.", "error");
-          } finally {
-            elements.loginBtn.disabled = false;
-          }
-        });
 
         elements.clearTokenBtn.addEventListener("click", async () => {
           const tokenToRevoke = refreshToken;
@@ -1084,8 +5019,11 @@
 
           clearStoredTokens();
           elements.userIdInput.value = "1";
-          syncAuthUI();
-          setAuthStatus("Logged out.", "info");
+          if (elements.projectNameInput) elements.projectNameInput.value = "";
+          if (elements.projectContactNameInput) elements.projectContactNameInput.value = "";
+          if (elements.projectContactEmailInput) elements.projectContactEmailInput.value = "";
+          if (elements.projectNotesInput) elements.projectNotesInput.value = "";
+          redirectToLogin();
         });
 
         syncAuthUI();
@@ -1093,14 +5031,104 @@
         elements.createConfigBtn.addEventListener("click", () => {
           createConfiguration();
         });
-        elements.adminCreateUserBtn.addEventListener("click", () => {
-          createUserAsAdmin();
-        });
+        if (elements.adminUsersRefreshBtn) {
+          elements.adminUsersRefreshBtn.addEventListener("click", () => {
+            loadAdminUsers({ toastOnSuccess: true });
+          });
+        }
+        if (elements.adminUsersCompanySelect) {
+          elements.adminUsersCompanySelect.addEventListener("change", () => {
+            loadAdminUsers();
+          });
+        }
+
+        if (elements.adminAddCompanyBtn) {
+          elements.adminAddCompanyBtn.addEventListener("click", () => {
+            addAdminCompany();
+          });
+        }
+        if (elements.adminSaveCompanyBtn) {
+          elements.adminSaveCompanyBtn.addEventListener("click", () => {
+            saveAdminCompany();
+          });
+        }
+        if (elements.adminCancelCompanyEditBtn) {
+          elements.adminCancelCompanyEditBtn.addEventListener("click", () => {
+            hideAdminCompanyEdit();
+            setCatalogStatus("admin-companies-status", "", "info");
+          });
+        }
+        if (elements.adminAddProductBtn) {
+          elements.adminAddProductBtn.addEventListener("click", () => {
+            openAdminProductCreateDrawer();
+          });
+        }
+        if (elements.langToggleBtn) {
+          elements.langToggleBtn.addEventListener("click", () => {
+            applyUiLanguage(uiLang === "ru" ? "en" : "ru");
+          });
+        }
+        if (elements.adminProductDrawerClose) {
+          elements.adminProductDrawerClose.addEventListener("click", () => {
+            adminEditingProductId = null;
+            closeAdminProductDrawer();
+          });
+        }
+        if (elements.adminProductDrawerOverlay) {
+          elements.adminProductDrawerOverlay.addEventListener("click", (e) => {
+            if (e.target !== elements.adminProductDrawerOverlay) return;
+            adminEditingProductId = null;
+            closeAdminProductDrawer();
+          });
+        }
+        if (elements.adminProductDrawer) {
+          elements.adminProductDrawer.addEventListener("click", (e) => {
+            e.stopPropagation();
+          });
+        }
+        if (elements.adminProductName && elements.adminProductDesc) {
+          const rpv = () => refreshAdminProductUserPreview();
+          elements.adminProductName.addEventListener("input", rpv);
+          elements.adminProductDesc.addEventListener("input", rpv);
+          rpv();
+        }
 
         loadProducts();
       }
 
-      document.addEventListener("DOMContentLoaded", init);
+      const DEBUG_UI_STORAGE_KEY = "debug_ui_visible";
+
+      function applyDebugUiToggle(enabled) {
+        document.body.classList.toggle("debug-ui-on", enabled);
+        const btn = document.getElementById("debug-ui-toggle");
+        if (btn) {
+          btn.setAttribute("aria-pressed", enabled ? "true" : "false");
+          btn.textContent = enabled ? "Debug: on" : "Debug: off";
+        }
+        renderSelectedPills();
+        updateCounter();
+      }
+
+      function setupDebugUiToggle() {
+        const btn = document.getElementById("debug-ui-toggle");
+        const storedOn = localStorage.getItem(DEBUG_UI_STORAGE_KEY) === "1";
+        if (!btn) {
+          applyDebugUiToggle(storedOn);
+          return;
+        }
+        applyDebugUiToggle(storedOn);
+        btn.addEventListener("click", () => {
+          const next = !document.body.classList.contains("debug-ui-on");
+          applyDebugUiToggle(next);
+          localStorage.setItem(DEBUG_UI_STORAGE_KEY, next ? "1" : "0");
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        setupDebugUiToggle();
+        applyUiLanguage(uiLang);
+        init().catch((e) => console.error(e));
+      });
     </script>
   </body>
 </html>

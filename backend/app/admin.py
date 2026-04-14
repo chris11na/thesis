@@ -14,6 +14,7 @@ from app.models import (
     Company,
     User,
     CompatibilityRule,
+    ProductIncompatiblePair,
     Configuration,
     ConfigurationItem,
 )
@@ -77,7 +78,13 @@ def setup_admin(app: FastAPI) -> None:
     )
 
     class ProductAdmin(ModelView, model=Product):
-        column_list = [Product.id, Product.name, Product.description]
+        column_list = [
+            Product.id,
+            Product.name,
+            Product.product_category,
+            Product.product_kind,
+            Product.description,
+        ]
 
     class ModuleAdmin(ModelView, model=Module):
         column_list = [Module.id, Module.name, Module.product_id]
@@ -93,6 +100,13 @@ def setup_admin(app: FastAPI) -> None:
 
     class CompatibilityRuleAdmin(ModelView, model=CompatibilityRule):
         column_list = [CompatibilityRule.id, CompatibilityRule.product_id, CompatibilityRule.module_id, CompatibilityRule.rule_type]
+
+    class ProductIncompatiblePairAdmin(ModelView, model=ProductIncompatiblePair):
+        column_list = [
+            ProductIncompatiblePair.id,
+            ProductIncompatiblePair.product_smaller_id,
+            ProductIncompatiblePair.product_larger_id,
+        ]
 
     class ConfigurationAdmin(ModelView, model=Configuration):
         column_list = [Configuration.id, Configuration.user_id, Configuration.created_at]
@@ -119,6 +133,7 @@ def setup_admin(app: FastAPI) -> None:
     admin.add_view(CompanyAdmin)
     admin.add_view(UserAdmin)
     admin.add_view(CompatibilityRuleAdmin)
+    admin.add_view(ProductIncompatiblePairAdmin)
     admin.add_view(ConfigurationAdmin)
     admin.add_view(ConfigurationItemAdmin)
 

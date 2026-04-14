@@ -36,3 +36,7 @@ Thumbs.db
 # Logs
 *.log
 backend/backend.log
+
+# Personal defense notes (keep local only, not in git)
+DEFENSE_CHEATSHEET.md
+diploma/
