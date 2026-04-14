@@ -56,7 +56,8 @@ def _delete_product_and_children(db: Session, product_id: int) -> None:
 
 def _remove_legacy_demo_products(db: Session) -> None:
     """
-    Older seeds used product ids 201/202 for the same demo names. Current demo uses 501/502.
+    Older seeds used product ids 201/202 for the same demo names.
+    Current demo: RU equipment 501/502, EN mirror 503/504.
     """
     for pid in (201, 202):
         if db.query(Product).filter(Product.id == pid).first() is None:
@@ -70,12 +71,14 @@ def _remove_legacy_demo_products(db: Session) -> None:
 def _dedupe_demo_products_by_canonical_name(db: Session) -> None:
     """
     Same display name as seeded demos (e.g. admin re-created product) -> drop extras.
-    Keeps canonical ids 501 / 502 when present; otherwise keeps the lowest id.
+    Keeps canonical ids 501–504 when present; otherwise keeps the lowest id.
     Only removes rows not referenced by configuration_items.
     """
     demo_pairs = [
         ("Контроллер БЛВС (демо)", 501),
         ("Коммутатор L2/L3 (демо)", 502),
+        ("WLAN Controller (demo)", 503),
+        ("L2/L3 Switch (demo)", 504),
     ]
     for name, canonical_id in demo_pairs:
         rows = (
@@ -98,7 +101,7 @@ def _dedupe_demo_products_by_canonical_name(db: Session) -> None:
 
 
 def _seed_demo_equipment(db: Session) -> None:
-    """Demo products for thesis: WLAN controller + license packs, switch + optics."""
+    """Demo products for thesis: RU (501/502) and EN mirror (503/504) with licenses/modules."""
     _remove_legacy_demo_products(db)
     # Use high ids to avoid collisions with modules/licenses in flat compatibility checks.
     if db.query(Product).filter(Product.id == 501).first() is None:
@@ -157,6 +160,63 @@ def _seed_demo_equipment(db: Session) -> None:
                     )
                 )
 
+    # English catalog mirror (same roles as 501/502 for bilingual UI demos).
+    if db.query(Product).filter(Product.id == 503).first() is None:
+        db.add(
+            Product(
+                id=503,
+                name="WLAN Controller (demo)",
+                description="Access point management; licensing by AP count.",
+                technical_specs="16 AP built in; additional capacity via license packs.",
+                product_kind="equipment",
+                product_category="controller",
+                built_in_license_units=16,
+                module_speeds_json=None,
+                max_module_slots=None,
+            )
+        )
+        db.add(
+            Product(
+                id=504,
+                name="L2/L3 Switch (demo)",
+                description="Optical transceivers only at speeds supported by this chassis.",
+                technical_specs="Up to 8 SFP/SFP+ slots; 1 and 10 Gbps only.",
+                product_kind="equipment",
+                product_category="switch",
+                built_in_license_units=None,
+                module_speeds_json="[1, 10]",
+                max_module_slots=8,
+            )
+        )
+        db.flush()
+
+        for lid, lname, units in [
+            (524, "AP licenses, pack ×16", 16),
+            (525, "AP licenses, pack ×32", 32),
+            (526, "AP licenses, pack ×128", 128),
+        ]:
+            if db.query(License).filter(License.id == lid).first() is None:
+                db.add(
+                    License(id=lid, name=lname, product_id=503, units_per_pack=units)
+                )
+
+        for mid, mname, speed, ff, mx in [
+            (514, "1G SFP transceiver", 1, "SFP", 8),
+            (515, "10G SFP+ transceiver", 10, "SFP+", 8),
+            (516, "25G SFP28 transceiver (not for this switch)", 25, "SFP28", 8),
+        ]:
+            if db.query(Module).filter(Module.id == mid).first() is None:
+                db.add(
+                    Module(
+                        id=mid,
+                        name=mname,
+                        product_id=504,
+                        speed_gbps=speed,
+                        form_factor=ff,
+                        max_quantity=mx,
+                    )
+                )
+
     # Run every startup: early return used to skip this and left admin/duplicate rows.
     _dedupe_demo_products_by_canonical_name(db)
 
@@ -165,7 +225,7 @@ def seed_initial_data(db: Session) -> None:
     """
     Seed minimal data for the frontend prototype.
 
-    Inserts roles, company, users, demo equipment (501/502 + modules/licenses),
+    Inserts roles, company, users, demo equipment (501–504 + modules/licenses),
     and optional demo user.
     """
 
