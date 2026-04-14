@@ -301,6 +301,41 @@ def _user_token() -> str:
     return login.json()["access_token"]
 
 
+def test_user_recent_configurations_returns_last_created() -> None:
+    utok = _user_token()
+    headers = {"Authorization": f"Bearer {utok}"}
+    r0 = client.get("/configurations/me/recent", headers=headers)
+    assert r0.status_code == 200
+    assert isinstance(r0.json(), list)
+    cfg = client.post(
+        "/configurations",
+        json={"user_id": 2, "items": [501]},
+        headers=headers,
+    )
+    assert cfg.status_code == 200, cfg.text
+    cid = cfg.json()["configuration_id"]
+    r1 = client.get("/configurations/me/recent", headers=headers)
+    assert r1.status_code == 200
+    data = r1.json()
+    assert len(data) >= 1
+    assert data[0]["id"] == cid
+    assert data[0]["items_count"] >= 1
+
+
+def test_admin_cannot_list_recent_personal_configurations() -> None:
+    login = client.post(
+        "/auth/login",
+        json={"email": "admin@example.com", "password": "admin123"},
+    )
+    assert login.status_code == 200
+    token = login.json()["access_token"]
+    r = client.get(
+        "/configurations/me/recent",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert r.status_code == 403
+
+
 def test_configuration_options_excludes_incompatible_module_speed() -> None:
     tok = _user_token()
     r = client.get(

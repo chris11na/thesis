@@ -304,16 +304,17 @@
       <div class="status-area" id="auth-status-area"></div>
 
       <p class="hint" id="login-hint">
-        <strong>Регистрация:</strong> домен почты должен совпадать с организацией,
+        <!-- <strong>Регистрация:</strong> домен почты должен совпадать с организацией,
         которую администратор добавил в систему (например, для
         <code>name@example.com</code> в базе должна быть компания с доменом
-        <code>example.com</code>). 
+        <code>example.com</code>).  -->
         <br /> <br />
         Демо-вход:
-        <code>admin@example.com</code> / <code>admin123</code> или
+        <code>admin@example.com</code> / <code>admin123</code> 
+        <br /> 
         <code>user@example.com</code> / <code>user123</code>.
         <br /><br />
-        <strong>OAuth:</strong> кнопки появляются, если на backend в переменных
+        <!-- <strong>OAuth:</strong> кнопки появляются, если на backend в переменных
         окружения заданы <code>GOOGLE_CLIENT_ID</code> /
         <code>GOOGLE_CLIENT_SECRET</code> (и/или Microsoft). Домен почты из
         Google/Microsoft должен совпадать с компанией в базе. В консоли провайдера
@@ -322,7 +323,7 @@
         локально — <code>http://127.0.0.1:8000/auth/google/callback</code>. На
         Render также задай <code>PUBLIC_BASE_URL</code> (тот же https-URL API) и
         <code>FRONTEND_URL</code> (URL статического сайта с
-        <code>login.html</code>).
+        <code>login.html</code>). -->
       </p>
     </div>
 
@@ -376,7 +377,7 @@
           loginProgress: "Входим…",
         },
         en: {
-          title: "Sign in and register",
+          title: "Sign in or sign up",
           subtitle: "The configurator opens after you sign in or create an account.",
           tabLogin: "Sign in",
           tabRegister: "Sign up",

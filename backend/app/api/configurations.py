@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -401,6 +401,53 @@ def _create_legacy(
             "project_notes": config.project_notes,
         },
     }
+
+
+@router.get("/me/recent")
+def list_my_recent_configurations(
+    limit: int = Query(3, ge=1, le=10),
+    db: Session = Depends(get_db),
+    claims: dict = Depends(get_current_user_claims),
+):
+    """
+    Last configurations created by the authenticated user (for UI history).
+    Admins use the catalog only and do not have this list.
+    """
+    token_user_id = int(claims.get("sub"))
+    token_role_id = claims.get("role_id")
+    if token_role_id == 1:
+        raise HTTPException(
+            status_code=403,
+            detail="RBAC: administrators do not have personal configuration history here",
+        )
+
+    cap = min(limit, 3)
+    rows = (
+        db.query(Configuration)
+        .filter(Configuration.user_id == token_user_id)
+        .order_by(Configuration.created_at.desc())
+        .limit(cap)
+        .all()
+    )
+
+    out: list[dict] = []
+    for conf in rows:
+        items_count = (
+            db.query(ConfigurationItem)
+            .filter(ConfigurationItem.configuration_id == conf.id)
+            .count()
+        )
+        out.append(
+            {
+                "id": conf.id,
+                "created_at": conf.created_at.isoformat() if conf.created_at else None,
+                "project_name": conf.project_name,
+                "submitted_to_sales": bool(conf.submitted_to_sales),
+                "submitted_at": conf.submitted_at.isoformat() if conf.submitted_at else None,
+                "items_count": items_count,
+            }
+        )
+    return out
 
 
 @router.get("/submissions")
