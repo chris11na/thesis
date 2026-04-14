@@ -30,12 +30,25 @@
         padding: 28px;
         border: 1px solid #e5e7eb;
       }
-      .lang-toggle-wrap {
+      .card-header-row {
         display: flex;
-        justify-content: flex-end;
-        margin-bottom: 8px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+      .card-header-row h1 {
+        margin: 0;
+        flex: 1;
+        min-width: 0;
+        font-size: 20px;
+        font-weight: 600;
+        color: #111827;
+        line-height: 1.25;
       }
       .lang-toggle-btn {
+        flex-shrink: 0;
         padding: 6px 10px;
         border-radius: 999px;
         border: 1px solid #d1d5db;
@@ -44,12 +57,6 @@
         font-size: 12px;
         font-weight: 600;
         cursor: pointer;
-      }
-      h1 {
-        font-size: 20px;
-        font-weight: 600;
-        color: #111827;
-        margin-bottom: 6px;
       }
       .subtitle {
         font-size: 13px;
@@ -167,7 +174,7 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        margin: 18px 0 12px;
+        margin: 12px 0 12px;
         font-size: 12px;
         color: #9ca3af;
       }
@@ -231,10 +238,10 @@
   </head>
   <body>
     <div class="card">
-      <div class="lang-toggle-wrap">
+      <div class="card-header-row">
+        <h1 id="login-title">Вход и регистрация</h1>
         <button type="button" class="lang-toggle-btn" id="lang-toggle-btn">RU</button>
       </div>
-      <h1 id="login-title">Вход и регистрация</h1>
       <p class="subtitle" id="login-subtitle">
         Конфигуратор откроется после успешного входа или регистрации.
       </p>
