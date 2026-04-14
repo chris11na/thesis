@@ -315,7 +315,7 @@
       .configurator-ops-footer {
         flex-shrink: 0;
         margin-top: auto;
-        padding-top: 28px;
+        /* padding-top: 28px; */
         border-top: 1px solid #e5e7eb;
         background: linear-gradient(
           to top,
@@ -719,9 +719,91 @@
       }
 
       .pill-selected {
-        display: inline-flex;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+        max-height: 168px;
+        overflow-y: auto;
+        padding: 8px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: #f9fafb;
+      }
+
+      .pill-selected .pill,
+      .pill-selected .pill.removable-user {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        text-align: left;
+        white-space: normal;
+        border-radius: 8px;
+      }
+
+      .recent-configs-muted {
+        margin: 0;
+        font-size: 12px;
+        line-height: 1.45;
+        color: #64748b;
+      }
+
+      .confirm-submit-dialog {
+        max-width: min(520px, 92vw);
+        padding: 0;
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+      }
+
+      .confirm-submit-dialog::backdrop {
+        background: rgba(15, 23, 42, 0.45);
+      }
+
+      .confirm-submit-inner {
+        padding: 20px 22px;
+      }
+
+      .confirm-submit-inner h3 {
+        margin: 0 0 12px;
+        font-size: 16px;
+        font-weight: 600;
+        color: #0f172a;
+      }
+
+      .confirm-submit-scroll {
+        max-height: min(42vh, 320px);
+        overflow-y: auto;
+        margin: 0 0 14px;
+        padding: 10px 12px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 13px;
+        line-height: 1.5;
+        color: #334155;
+      }
+
+      .confirm-submit-scroll ul {
+        margin: 8px 0 0;
+        padding-left: 1.1em;
+      }
+
+      .confirm-submit-scroll li {
+        margin: 4px 0;
+      }
+
+      .confirm-submit-question {
+        margin: 0 0 16px;
+        font-size: 13px;
+        color: #475569;
+      }
+
+      .confirm-submit-actions {
+        display: flex;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: 10px;
+        justify-content: flex-end;
       }
 
       .pill {
@@ -1604,7 +1686,13 @@
                     id="project-name-input"
                     placeholder="Название проекта"
                     maxlength="200"
+                    required
                   />
+                  <p
+                    class="field-description"
+                    id="project-name-required-note"
+                    style="margin: 0"
+                  ></p>
                   <input
                     type="text"
                     id="project-contact-name-input"
@@ -1617,6 +1705,11 @@
                     placeholder="Контактный email"
                     maxlength="255"
                   />
+                  <p
+                    class="field-description"
+                    id="project-contact-fallback-note"
+                    style="margin: 0"
+                  ></p>
                   <textarea
                     id="project-notes-input"
                     placeholder="Комментарий / примечание для отдела продаж"
@@ -1667,18 +1760,25 @@
         <div class="card-body">
           <ul class="recent-configs-list" id="recent-configurations-list"></ul>
           <p
-            class="field-description"
+            class="recent-configs-muted"
             id="recent-configurations-empty"
             style="display: none; margin: 0"
           ></p>
-          <div
-            class="status-text error"
-            id="recent-configurations-error"
-            style="display: none"
-          ></div>
         </div>
       </section>
       </div>
+
+      <dialog class="confirm-submit-dialog" id="confirm-submit-dialog">
+        <div class="confirm-submit-inner">
+          <h3 id="confirm-submit-title"></h3>
+          <div class="confirm-submit-scroll" id="confirm-submit-scroll"></div>
+          <p class="confirm-submit-question" id="confirm-submit-question"></p>
+          <div class="confirm-submit-actions">
+            <button type="button" class="secondary-btn" id="confirm-submit-cancel"></button>
+            <button type="button" class="primary-btn" id="confirm-submit-ok"></button>
+          </div>
+        </div>
+      </dialog>
 
       <div id="admin-area" class="admin-area" style="display: none">
         <section class="card admin-panel" id="admin-catalog-block">
@@ -1936,9 +2036,18 @@
         recentConfigurationsEmpty: document.getElementById(
           "recent-configurations-empty"
         ),
-        recentConfigurationsError: document.getElementById(
-          "recent-configurations-error"
+        projectNameRequiredNote: document.getElementById(
+          "project-name-required-note"
         ),
+        projectContactFallbackNote: document.getElementById(
+          "project-contact-fallback-note"
+        ),
+        confirmSubmitDialog: document.getElementById("confirm-submit-dialog"),
+        confirmSubmitTitle: document.getElementById("confirm-submit-title"),
+        confirmSubmitScroll: document.getElementById("confirm-submit-scroll"),
+        confirmSubmitQuestion: document.getElementById("confirm-submit-question"),
+        confirmSubmitCancel: document.getElementById("confirm-submit-cancel"),
+        confirmSubmitOk: document.getElementById("confirm-submit-ok"),
         headerBlurbUser: document.getElementById("header-blurb-user"),
         headerBlurbAdmin: document.getElementById("header-blurb-admin"),
         adminCatalogBlock: document.getElementById("admin-catalog-block"),
@@ -2013,8 +2122,8 @@
         const projectInfoDescription = document.getElementById("project-info-description");
         if (projectInfoDescription) {
           projectInfoDescription.textContent = isEn
-            ? "These fields are saved with the specification and appear in submitted requests."
-            : "Эти данные сохраняются вместе со спецификацией и попадают в список отправленных заявок.";
+            ? "Project name is required. Other fields are saved with the specification and appear in submitted requests."
+            : "Название проекта обязательно. Остальные поля сохраняются со спецификацией и попадают в отправленные заявки.";
         }
         if (elements.projectNameInput) {
           elements.projectNameInput.placeholder = isEn ? "Project name" : "Название проекта";
@@ -2180,6 +2289,24 @@
           renderSelectedPills();
           updateCounter();
         }
+        if (elements.projectNameRequiredNote) {
+          elements.projectNameRequiredNote.textContent = isEn
+            ? "Project name is required before you submit."
+            : "Перед отправкой укажите название проекта.";
+        }
+        if (elements.projectContactFallbackNote) {
+          elements.projectContactFallbackNote.textContent = isEn
+            ? "Contact person and email for the project are optional. If you leave them blank, sales will use the email on your account (the one you signed in with)."
+            : "Имя и почта контакта по проекту необязательны. Если их не указать, отдел продаж свяжется по адресу вашей учётной записи (той, с которой вы вошли в систему).";
+        }
+        if (elements.confirmSubmitCancel) {
+          elements.confirmSubmitCancel.textContent = isEn ? "Cancel" : "Отмена";
+        }
+        if (elements.confirmSubmitOk) {
+          elements.confirmSubmitOk.textContent = isEn
+            ? "Yes, submit"
+            : "Да, отправить";
+        }
         const recentCfgTitle = document.getElementById(
           "recent-configurations-title"
         );
@@ -2190,8 +2317,8 @@
         }
         if (elements.recentConfigurationsEmpty) {
           elements.recentConfigurationsEmpty.textContent = isEn
-            ? "No saved configurations yet."
-            : "Пока нет сохранённых конфигураций.";
+            ? "Nothing here yet."
+            : "Пока ничего нет.";
         }
         if (getCurrentRoleId() !== 1 && accessToken) {
           void loadRecentConfigurations();
@@ -2199,6 +2326,8 @@
       }
 
       let products = [];
+      /** @type {object|null} Built POST /configurations body awaiting confirm dialog. */
+      let pendingConfigurationPayload = null;
       let adminEditingProductId = null;
       let adminCreatingProduct = false;
       let adminProductDrawerEscHandler = null;
@@ -4625,6 +4754,13 @@
         return roleId;
       }
 
+      function getSubmitterEmailFromToken() {
+        if (!accessToken) return "";
+        const data = parseJwt(accessToken);
+        const em = data && data.email != null ? String(data.email).trim() : "";
+        return em.toLowerCase();
+      }
+
       function updateRoleBadge(roleId) {
         if (roleId === 1) {
           elements.roleBadge.className = "status-badge role-admin";
@@ -4922,7 +5058,10 @@
         }
         const nothingSelected = configLineState.size === 0;
         const hasBlockingWarning = hasBlockingSelectionWarnings();
-        elements.createConfigBtn.disabled = nothingSelected || hasBlockingWarning;
+        const projectNameOk =
+          (elements.projectNameInput?.value || "").trim().length > 0;
+        elements.createConfigBtn.disabled =
+          nothingSelected || hasBlockingWarning || !projectNameOk;
       }
 
       function renderProducts() {
@@ -5153,27 +5292,31 @@
       async function loadRecentConfigurations() {
         if (getCurrentRoleId() === 1) return;
         if (!elements.recentConfigurationsList) return;
-        if (elements.recentConfigurationsError) {
-          elements.recentConfigurationsError.style.display = "none";
-          elements.recentConfigurationsError.textContent = "";
-        }
         if (!accessToken) return;
+        if (elements.recentConfigurationsEmpty) {
+          elements.recentConfigurationsEmpty.style.display = "none";
+        }
         try {
           const res = await apiFetch("/configurations/me/recent?limit=3");
           const data = await res.json().catch(() => null);
+          elements.recentConfigurationsList.innerHTML = "";
+          const rows = Array.isArray(data) ? data : [];
           if (!res.ok) {
-            if (elements.recentConfigurationsError) {
-              elements.recentConfigurationsError.textContent =
-                (data && data.detail) ||
-                catT("Не удалось загрузить список.", "Could not load list.");
-              elements.recentConfigurationsError.style.display = "block";
+            if (elements.recentConfigurationsEmpty) {
+              elements.recentConfigurationsEmpty.textContent = catT(
+                "Пока не удалось загрузить историю.",
+                "History could not be loaded right now."
+              );
+              elements.recentConfigurationsEmpty.style.display = "block";
             }
             return;
           }
-          elements.recentConfigurationsList.innerHTML = "";
-          const rows = Array.isArray(data) ? data : [];
           if (rows.length === 0) {
             if (elements.recentConfigurationsEmpty) {
+              elements.recentConfigurationsEmpty.textContent = catT(
+                "Пока ничего нет.",
+                "Nothing here yet."
+              );
               elements.recentConfigurationsEmpty.style.display = "block";
             }
             return;
@@ -5216,12 +5359,12 @@
           }
         } catch (e) {
           console.error(e);
-          if (elements.recentConfigurationsError) {
-            elements.recentConfigurationsError.textContent = catT(
-              "Сеть или сервер недоступен.",
-              "Network or server error."
+          if (elements.recentConfigurationsEmpty) {
+            elements.recentConfigurationsEmpty.textContent = catT(
+              "Пока не удалось загрузить историю.",
+              "History could not be loaded right now."
             );
-            elements.recentConfigurationsError.style.display = "block";
+            elements.recentConfigurationsEmpty.style.display = "block";
           }
         }
       }
@@ -5307,7 +5450,78 @@
         refreshAdminProductUi();
       }
 
-      async function createConfiguration() {
+      function appendConfirmSummaryRow(container, label, value) {
+        const row = document.createElement("div");
+        row.style.marginBottom = "6px";
+        const strong = document.createElement("strong");
+        strong.textContent = label + " ";
+        row.appendChild(strong);
+        const span = document.createElement("span");
+        span.textContent =
+          value != null && String(value).trim() ? String(value).trim() : "—";
+        row.appendChild(span);
+        container.appendChild(row);
+      }
+
+      function fillConfirmSubmitScroll(payload, submitterEmail) {
+        const host = elements.confirmSubmitScroll;
+        if (!host) return;
+        host.textContent = "";
+        appendConfirmSummaryRow(
+          host,
+          catT("Проект:", "Project:"),
+          payload.project_name
+        );
+        appendConfirmSummaryRow(
+          host,
+          catT("Контакт:", "Contact:"),
+          payload.project_contact_name
+        );
+        const explicitEmail = (payload.project_contact_email || "").trim();
+        const contactEmailDisplay = explicitEmail
+          ? explicitEmail
+          : submitterEmail
+            ? catT(
+                "(не указан — будет использована почта учётной записи)",
+                "(not set — your account email will be used)"
+              )
+            : "—";
+        appendConfirmSummaryRow(
+          host,
+          catT("Email контакта:", "Contact email:"),
+          contactEmailDisplay
+        );
+        appendConfirmSummaryRow(
+          host,
+          catT("Заметки:", "Notes:"),
+          payload.project_notes
+        );
+        if (submitterEmail) {
+          appendConfirmSummaryRow(
+            host,
+            catT("Почта учётной записи:", "Account email:"),
+            submitterEmail
+          );
+        }
+        const head = document.createElement("div");
+        head.style.marginTop = "10px";
+        head.style.fontWeight = "600";
+        head.textContent = catT("Состав:", "Contents:");
+        host.appendChild(head);
+        const ul = document.createElement("ul");
+        ul.style.margin = "6px 0 0";
+        ul.style.paddingLeft = "1.1em";
+        for (const line of payload.lines || []) {
+          const pid = line.equipment_product_id;
+          const p = products.find((x) => x.id === pid);
+          const li = document.createElement("li");
+          li.textContent = p ? selectionPillCaption(p) : "product #" + pid;
+          ul.appendChild(li);
+        }
+        host.appendChild(ul);
+      }
+
+      function beginCreateConfigurationFlow() {
         if (!accessToken) {
           redirectToLogin();
           return;
@@ -5336,7 +5550,6 @@
           return;
         }
 
-        // If token is present, prefer token user_id to avoid RBAC mismatches.
         if (accessToken) {
           const tokenData = parseJwt(accessToken);
           const tokenUserId = tokenData && tokenData.sub ? Number(tokenData.sub) : null;
@@ -5360,18 +5573,8 @@
           lines.push(line);
         }
 
-        const payload = {
-          user_id: userId,
-          lines,
-          project_name: (elements.projectNameInput?.value || "").trim(),
-          project_contact_name: (elements.projectContactNameInput?.value || "").trim(),
-          project_contact_email: (elements.projectContactEmailInput?.value || "")
-            .trim()
-            .toLowerCase(),
-          project_notes: (elements.projectNotesInput?.value || "").trim(),
-        };
-
-        if (!payload.project_name) {
+        const projectName = (elements.projectNameInput?.value || "").trim();
+        if (!projectName) {
           setStatus(
             catT(
               "Укажи название проекта перед отправкой.",
@@ -5381,14 +5584,72 @@
           );
           return;
         }
-        if (!payload.project_contact_email || !payload.project_contact_email.includes("@")) {
+
+        const contactName = (elements.projectContactNameInput?.value || "").trim();
+        const contactEmailRaw = (elements.projectContactEmailInput?.value || "")
+          .trim()
+          .toLowerCase();
+        if (contactEmailRaw && !contactEmailRaw.includes("@")) {
           setStatus(
             catT(
-              "Укажи корректный контактный email проекта.",
-              "Enter a valid project contact email."
+              "Контактный email проекта выглядит некорректно.",
+              "The project contact email does not look valid."
             ),
             "error"
           );
+          return;
+        }
+
+        const submitterEmail = getSubmitterEmailFromToken();
+        const payload = {
+          user_id: userId,
+          lines,
+          project_name: projectName,
+          project_contact_name: contactName || undefined,
+          project_notes: (elements.projectNotesInput?.value || "").trim() || undefined,
+        };
+        if (contactEmailRaw) {
+          payload.project_contact_email = contactEmailRaw;
+        }
+        if (submitterEmail) {
+          payload.submitter_email = submitterEmail;
+        }
+
+        pendingConfigurationPayload = payload;
+        fillConfirmSubmitScroll(payload, submitterEmail);
+        if (elements.confirmSubmitTitle) {
+          elements.confirmSubmitTitle.textContent = catT(
+            "Подтверждение отправки",
+            "Confirm submission"
+          );
+        }
+        if (elements.confirmSubmitQuestion) {
+          elements.confirmSubmitQuestion.textContent = catT(
+            "Отправить эту конфигурацию? Проверьте состав и данные проекта.",
+            "Submit this configuration? Please review the lines and project details."
+          );
+        }
+
+        if (
+          elements.confirmSubmitDialog &&
+          typeof elements.confirmSubmitDialog.showModal === "function"
+        ) {
+          elements.confirmSubmitDialog.showModal();
+        } else {
+          const ok = window.confirm(
+            catT("Отправить конфигурацию?", "Submit this configuration?")
+          );
+          if (ok) {
+            void executeCreateConfiguration(payload);
+          } else {
+            pendingConfigurationPayload = null;
+          }
+        }
+      }
+
+      async function executeCreateConfiguration(payload) {
+        if (!accessToken) {
+          redirectToLogin();
           return;
         }
 
@@ -5460,7 +5721,7 @@
             "error"
           );
         } finally {
-          elements.createConfigBtn.disabled = false;
+          updateCreateConfigBtnState();
         }
       }
 
@@ -5471,9 +5732,11 @@
         elements.apiBase.textContent = API_BASE;
 
         elements.clearTokenBtn.addEventListener("click", async () => {
+          // Keep the global loading overlay on until navigation: do not bumpGlobalLoading(-1)
+          // before redirect, or the main UI flashes for a frame without tokens.
+          bumpGlobalLoading(1);
           const tokenToRevoke = refreshToken;
           if (tokenToRevoke) {
-            bumpGlobalLoading(1);
             try {
               await fetch(API_BASE + "/auth/logout", {
                 method: "POST",
@@ -5482,8 +5745,6 @@
               });
             } catch (error) {
               console.error("Logout request failed:", error);
-            } finally {
-              bumpGlobalLoading(-1);
             }
           }
 
@@ -5499,8 +5760,32 @@
         syncAuthUI();
 
         elements.createConfigBtn.addEventListener("click", () => {
-          createConfiguration();
+          beginCreateConfigurationFlow();
         });
+        if (elements.projectNameInput) {
+          elements.projectNameInput.addEventListener("input", () => {
+            updateCreateConfigBtnState();
+          });
+        }
+        if (elements.confirmSubmitDialog) {
+          elements.confirmSubmitDialog.addEventListener("close", () => {
+            pendingConfigurationPayload = null;
+          });
+        }
+        if (elements.confirmSubmitDialog && elements.confirmSubmitCancel) {
+          elements.confirmSubmitCancel.addEventListener("click", () => {
+            elements.confirmSubmitDialog.close();
+          });
+        }
+        if (elements.confirmSubmitDialog && elements.confirmSubmitOk) {
+          elements.confirmSubmitOk.addEventListener("click", () => {
+            const payload = pendingConfigurationPayload;
+            elements.confirmSubmitDialog.close();
+            if (payload) {
+              void executeCreateConfiguration(payload);
+            }
+          });
+        }
         if (elements.adminUsersRefreshBtn) {
           elements.adminUsersRefreshBtn.addEventListener("click", () => {
             loadAdminUsers({ toastOnSuccess: true });

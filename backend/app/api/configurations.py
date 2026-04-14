@@ -50,6 +50,8 @@ class ConfigurationCreateRequest(BaseModel):
     project_contact_name: Optional[str] = None
     project_contact_email: Optional[str] = None
     project_notes: Optional[str] = None
+    # Account email from the client (must match the authenticated user when set).
+    submitter_email: Optional[str] = None
 
 
 def get_db():
@@ -141,22 +143,40 @@ def _clean_optional_text(value: Optional[str], max_len: int) -> Optional[str]:
     return text[:max_len]
 
 
-def _normalized_project_payload(payload: ConfigurationCreateRequest) -> dict:
+def _normalized_project_payload(
+    payload: ConfigurationCreateRequest,
+    account_email: str,
+) -> dict:
     project_name = _clean_optional_text(payload.project_name, 200)
     project_contact_name = _clean_optional_text(payload.project_contact_name, 200)
     project_contact_email = _clean_optional_text(payload.project_contact_email, 255)
     project_notes = _clean_optional_text(payload.project_notes, 4000)
 
+    account_norm = (account_email or "").strip().lower()
+    if "@" not in account_norm:
+        raise HTTPException(status_code=500, detail="User account email is missing")
+
+    if payload.submitter_email is not None:
+        sub = _clean_optional_text(payload.submitter_email, 255)
+        if sub and sub.lower() != account_norm:
+            raise HTTPException(
+                status_code=400,
+                detail="submitter_email must match the authenticated user's email",
+            )
+
     if project_contact_email and "@" not in project_contact_email:
         raise HTTPException(status_code=400, detail="project_contact_email must be a valid email")
 
-    submitted_to_sales = bool(project_name and project_contact_email)
+    # Persist effective contact email for sales (explicit project contact or account email).
+    stored_contact_email = project_contact_email or account_norm
+
+    submitted_to_sales = bool(project_name)
     submitted_at = datetime.utcnow() if submitted_to_sales else None
 
     return {
         "project_name": project_name,
         "project_contact_name": project_contact_name,
-        "project_contact_email": project_contact_email,
+        "project_contact_email": stored_contact_email,
         "project_notes": project_notes,
         "submitted_to_sales": submitted_to_sales,
         "submitted_at": submitted_at,
@@ -202,7 +222,7 @@ def create_configuration(
             detail="items or lines must be non-empty",
         )
 
-    project = _normalized_project_payload(payload)
+    project = _normalized_project_payload(payload, account_email=user.email)
 
     if has_items:
         return _create_legacy(db, payload.user_id, payload.items or [], project=project, company_id=user.company_id)

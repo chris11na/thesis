@@ -584,6 +584,40 @@ def test_configuration_sales_handoff_metadata_and_admin_submission_list() -> Non
     )
 
 
+def test_configuration_submitter_email_must_match_account() -> None:
+    tok = _user_token()
+    r = client.post(
+        "/configurations",
+        json={
+            "user_id": 2,
+            "submitter_email": "someone-else@example.com",
+            "project_name": "X",
+            "lines": [{"equipment_product_id": 502, "addons": []}],
+        },
+        headers={"Authorization": f"Bearer {tok}"},
+    )
+    assert r.status_code == 400
+    assert "submitter_email" in r.json().get("detail", "").lower()
+
+
+def test_configuration_uses_account_email_when_project_contact_empty() -> None:
+    tok = _user_token()
+    r = client.post(
+        "/configurations",
+        json={
+            "user_id": 2,
+            "submitter_email": "user@example.com",
+            "project_name": "Fallback contact test",
+            "lines": [{"equipment_product_id": 502, "addons": []}],
+        },
+        headers={"Authorization": f"Bearer {tok}"},
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body.get("submitted_to_sales") is True
+    assert body.get("project", {}).get("project_contact_email") == "user@example.com"
+
+
 def test_product_rules_json_patch() -> None:
     login = client.post(
         "/auth/login",
