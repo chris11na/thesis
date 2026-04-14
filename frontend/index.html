@@ -4435,7 +4435,6 @@
 
         const data = parseJwt(accessToken);
         const sub = data && data.sub ? Number(data.sub) : null;
-        const email = data && data.email ? String(data.email) : "?";
         const roleId = data && data.role_id != null ? String(data.role_id) : "?";
         const roleIdNumber = data && data.role_id != null ? Number(data.role_id) : null;
 
@@ -4465,15 +4464,6 @@
             await loadAdminUsers();
           })();
         }
-        setAuthStatus(
-          "Logged in. user_id=" +
-            (sub ?? "?") +
-            ", email=" +
-            email +
-            ", role_id=" +
-            roleId,
-          "success"
-        );
 
         if (sub && sub > 0) {
           elements.userIdInput.value = String(sub);
