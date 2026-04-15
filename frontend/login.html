@@ -364,6 +364,16 @@
           oauthChecking: "Проверяем способы входа…",
           signInGoogle: "Войти через Google",
           signInMicrosoft: "Войти через Microsoft",
+          loginSuccessRedirect: "Успешно. Переход…",
+          genericError: "Ошибка",
+          missingTokenPair: "Сервер не вернул пару токенов.",
+          enterEmail: "Введите email.",
+          networkUnavailable: "Сеть: не удалось связаться с backend.",
+          enterName: "Укажите имя.",
+          specifyEmail: "Укажите email.",
+          passwordTooShort: "Пароль не короче 6 символов.",
+          loginErrorFallback: "Ошибка входа",
+          registerErrorFallback: "Ошибка регистрации",
         },
         en: {
           title: "Sign in or sign up",
@@ -389,6 +399,16 @@
           oauthChecking: "Checking sign-in options…",
           signInGoogle: "Sign in with Google",
           signInMicrosoft: "Sign in with Microsoft",
+          loginSuccessRedirect: "Success. Redirecting…",
+          genericError: "Error",
+          missingTokenPair: "Server did not return the token pair.",
+          enterEmail: "Enter email.",
+          networkUnavailable: "Network: could not reach the backend.",
+          enterName: "Enter your name.",
+          specifyEmail: "Specify email.",
+          passwordTooShort: "Password must be at least 6 characters.",
+          loginErrorFallback: "Sign-in error",
+          registerErrorFallback: "Registration error",
         },
       };
 
@@ -478,7 +498,7 @@
       }
 
       function formatApiDetail(detail) {
-        if (detail == null) return "Ошибка";
+        if (detail == null) return i18n[currentLang].genericError;
         if (typeof detail === "string") return detail;
         if (Array.isArray(detail)) {
           return detail
@@ -506,12 +526,12 @@
         const at = json && json.access_token ? json.access_token : null;
         const rt = json && json.refresh_token ? json.refresh_token : null;
         if (!at || !rt) {
-          setAuthStatus("Сервер не вернул пару токенов.", "error");
+          setAuthStatus(i18n[currentLang].missingTokenPair, "error");
           return false;
         }
         localStorage.setItem(TOKEN_STORAGE_KEY, at);
         localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, rt);
-        setAuthStatus("Успешно. Переход…", "success");
+        setAuthStatus(i18n[currentLang].loginSuccessRedirect, "success");
         window.location.href = "index.html";
         return true;
       }
@@ -622,7 +642,7 @@
         const email = (loginEmailInput.value || "").trim().toLowerCase();
         const password = loginPasswordInput.value || "";
         if (!email) {
-          setAuthStatus("Введите email.", "error");
+          setAuthStatus(i18n[currentLang].enterEmail, "error");
           return;
         }
         loginBtn.disabled = true;
@@ -636,7 +656,8 @@
           const json = await response.json().catch(() => null);
           if (!response.ok) {
             setAuthStatus(
-              formatApiDetail(json && json.detail) || "Ошибка входа",
+              formatApiDetail(json && json.detail) ||
+                i18n[currentLang].loginErrorFallback,
               "error"
             );
             return;
@@ -644,7 +665,7 @@
           storeTokensAndGo(json);
         } catch (e) {
           console.error(e);
-          setAuthStatus("Сеть: не удалось связаться с backend.", "error");
+          setAuthStatus(i18n[currentLang].networkUnavailable, "error");
         } finally {
           loginBtn.disabled = false;
         }
@@ -655,15 +676,15 @@
         const email = (registerEmailInput.value || "").trim().toLowerCase();
         const password = registerPasswordInput.value || "";
         if (!name) {
-          setAuthStatus("Укажите имя.", "error");
+          setAuthStatus(i18n[currentLang].enterName, "error");
           return;
         }
         if (!email) {
-          setAuthStatus("Укажите email.", "error");
+          setAuthStatus(i18n[currentLang].specifyEmail, "error");
           return;
         }
         if (password.length < 6) {
-          setAuthStatus("Пароль не короче 6 символов.", "error");
+          setAuthStatus(i18n[currentLang].passwordTooShort, "error");
           return;
         }
         registerBtn.disabled = true;
@@ -677,7 +698,8 @@
           const json = await response.json().catch(() => null);
           if (!response.ok) {
             setAuthStatus(
-              formatApiDetail(json && json.detail) || "Ошибка регистрации",
+              formatApiDetail(json && json.detail) ||
+                i18n[currentLang].registerErrorFallback,
               "error"
             );
             return;
@@ -685,7 +707,7 @@
           storeTokensAndGo(json);
         } catch (e) {
           console.error(e);
-          setAuthStatus("Сеть: не удалось связаться с backend.", "error");
+          setAuthStatus(i18n[currentLang].networkUnavailable, "error");
         } finally {
           registerBtn.disabled = false;
         }

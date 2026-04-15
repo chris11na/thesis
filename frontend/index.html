@@ -348,9 +348,18 @@
       }
 
       .config-section-scroll {
-        max-height: min(30vh, 260px);
-        overflow-y: auto;
         padding-right: 4px;
+      }
+
+      .selected-items-scroll {
+        height: 190px;
+        min-height: 190px;
+        max-height: 190px;
+      }
+
+      .selected-items-scroll .pill-selected {
+        height: 100%;
+        max-height: none;
       }
 
       .config-section-title {
@@ -873,7 +882,7 @@
 
       .required-input-star {
         position: absolute;
-        right: 8px;
+        right: -12px;
         top: 50%;
         transform: translateY(-50%);
         color: #dc2626;
@@ -1761,7 +1770,7 @@
                   <code>target_ap_count</code>, <code>addons[]</code> (legacy:
                   <code>items</code>).
                 </div>
-                <div class="config-section-scroll">
+                <div class="config-section-scroll selected-items-scroll">
                   <div class="pill-selected" id="selected-items-pills"></div>
                 </div>
               </div>
@@ -1770,7 +1779,7 @@
                 <div class="field-label config-section-title" id="project-info-label">
                   Информация о проекте
                 </div>
-                <div class="config-section-scroll">
+                <div>
                   <div class="field-input" style="display: grid; gap: 8px">
                     <div class="required-input-wrap">
                       <input
@@ -1794,7 +1803,12 @@
                       placeholder="Контактный email"
                       maxlength="255"
                     />
-                    <div class="field-description" style="margin: 0">
+                    <div
+                      class="field-label field-label-with-meta"
+                      id="project-contact-label"
+                      style="margin: -2px 0 0"
+                    >
+                      <span>Контактное лицо / email</span>
                       <span class="inline-help" id="project-contact-help" aria-label="help">?</span>
                     </div>
                     <textarea
@@ -1874,7 +1888,7 @@
           <details class="admin-fold admin-fold--companies">
             <summary class="admin-fold-summary" id="admin-fold-companies">Организации и домены</summary>
             <div class="admin-fold-body">
-              <p class="field-description">
+              <p class="field-description" id="admin-domain-help">
                 Разрешённый домен почты (например <code>aaa.ru</code>): регистрация и
                 вход пользователей привязаны к компании с этим доменом.
               </p>
@@ -2202,6 +2216,12 @@
             ? "Project details"
             : "Информация о проекте";
         }
+        const adminDomainHelp = document.getElementById("admin-domain-help");
+        if (adminDomainHelp) {
+          adminDomainHelp.innerHTML = isEn
+            ? 'Allowed email domain (e.g. <code>aaa.ru</code>): user sign-up and sign-in are linked to the company with this domain.'
+            : 'Разрешённый домен почты (например <code>aaa.ru</code>): регистрация и вход пользователей привязаны к компании с этим доменом.';
+        }
         if (elements.projectNameInput) {
           elements.projectNameInput.placeholder = isEn ? "Project name" : "Название проекта";
         }
@@ -2214,6 +2234,12 @@
           elements.projectContactEmailInput.placeholder = isEn
             ? "Contact email"
             : "Контактный email";
+        }
+        const projectContactLabel = document.getElementById("project-contact-label");
+        if (projectContactLabel && projectContactLabel.firstElementChild) {
+          projectContactLabel.firstElementChild.textContent = isEn
+            ? "Contact person / email"
+            : "Контактное лицо / email";
         }
         if (elements.projectNotesInput) {
           elements.projectNotesInput.placeholder = isEn
@@ -3274,11 +3300,18 @@
           renderAdminUsersTable();
           setCatalogStatus("admin-users-status", "", "info");
           if (toastOnSuccess) {
-            showToast("Список пользователей обновлён", "success");
+            showToast(
+              catT("Список пользователей обновлён", "Users list updated"),
+              "success"
+            );
           }
         } catch (e) {
           console.error(e);
-          setCatalogStatus("admin-users-status", "Сеть.", "error");
+          setCatalogStatus(
+            "admin-users-status",
+            catT("Сеть.", "Network error."),
+            "error"
+          );
         }
       }
 
@@ -3336,10 +3369,14 @@
           await loadAdminCompanies();
           await loadAdminUsers();
           setCatalogStatus("admin-companies-status", "", "info");
-          showToast("Организация удалена", "success");
+          showToast(catT("Организация удалена", "Company deleted"), "success");
         } catch (e) {
           console.error(e);
-          setCatalogStatus("admin-companies-status", "Сеть.", "error");
+          setCatalogStatus(
+            "admin-companies-status",
+            catT("Сеть.", "Network error."),
+            "error"
+          );
         }
       }
 
@@ -3348,13 +3385,17 @@
         const name = (elements.adminCompanyEditName.value || "").trim();
         const domain = (elements.adminCompanyEditDomain.value || "").trim();
         if (!id || id <= 0) {
-          setCatalogStatus("admin-companies-status", "Не выбрана организация.", "error");
+          setCatalogStatus(
+            "admin-companies-status",
+            catT("Не выбрана организация.", "No company selected."),
+            "error"
+          );
           return;
         }
         if (!name || !domain) {
           setCatalogStatus(
             "admin-companies-status",
-            "Укажите название и домен.",
+            catT("Укажите название и домен.", "Enter company name and domain."),
             "error"
           );
           return;
@@ -3378,10 +3419,14 @@
           await loadAdminCompanies();
           await loadAdminUsers();
           setCatalogStatus("admin-companies-status", "", "info");
-          showToast("Организация обновлена", "success");
+          showToast(catT("Организация обновлена", "Company updated"), "success");
         } catch (e) {
           console.error(e);
-          setCatalogStatus("admin-companies-status", "Сеть.", "error");
+          setCatalogStatus(
+            "admin-companies-status",
+            catT("Сеть.", "Network error."),
+            "error"
+          );
         }
       }
 
@@ -3389,7 +3434,11 @@
         const name = (elements.adminCompanyName.value || "").trim();
         const domain = (elements.adminCompanyDomain.value || "").trim();
         if (!name || !domain) {
-          setCatalogStatus("admin-companies-status", "Укажите название и домен.", "error");
+          setCatalogStatus(
+            "admin-companies-status",
+            catT("Укажите название и домен.", "Enter company name and domain."),
+            "error"
+          );
           return;
         }
         try {
@@ -3412,10 +3461,14 @@
           await loadAdminCompanies();
           await loadAdminUsers();
           setCatalogStatus("admin-companies-status", "", "info");
-          showToast("Организация добавлена", "success");
+          showToast(catT("Организация добавлена", "Company added"), "success");
         } catch (e) {
           console.error(e);
-          setCatalogStatus("admin-companies-status", "Сеть.", "error");
+          setCatalogStatus(
+            "admin-companies-status",
+            catT("Сеть.", "Network error."),
+            "error"
+          );
         }
       }
 
@@ -3650,11 +3703,15 @@
                 return;
               }
               setCatalogStatus("admin-products-status", "", "info");
-              showToast("Модуль сохранён", "success");
+              showToast(catT("Модуль сохранён", "Module saved"), "success");
               await afterCatalogMutation();
             } catch (e) {
               console.error(e);
-              setCatalogStatus("admin-products-status", "Сеть.", "error");
+              setCatalogStatus(
+                "admin-products-status",
+                catT("Сеть.", "Network error."),
+                "error"
+              );
             }
           });
           const btnDel = document.createElement("button");
@@ -3684,11 +3741,15 @@
                 return;
               }
               setCatalogStatus("admin-products-status", "", "info");
-              showToast("Модуль удалён", "success");
+              showToast(catT("Модуль удалён", "Module deleted"), "success");
               await afterCatalogMutation();
             } catch (e) {
               console.error(e);
-              setCatalogStatus("admin-products-status", "Сеть.", "error");
+              setCatalogStatus(
+                "admin-products-status",
+                catT("Сеть.", "Network error."),
+                "error"
+              );
             }
           });
           tdAct.appendChild(btnSave);
@@ -3803,11 +3864,15 @@
             aSp.inp.value = "";
             aFf.inp.value = "";
             setCatalogStatus("admin-products-status", "", "info");
-            showToast("Модуль добавлен", "success");
+            showToast(catT("Модуль добавлен", "Module added"), "success");
             await afterCatalogMutation();
           } catch (e) {
             console.error(e);
-            setCatalogStatus("admin-products-status", "Сеть.", "error");
+            setCatalogStatus(
+              "admin-products-status",
+              catT("Сеть.", "Network error."),
+              "error"
+            );
           }
         });
         const addModActionsRow = document.createElement("div");
@@ -3908,11 +3973,15 @@
                 return;
               }
               setCatalogStatus("admin-products-status", "", "info");
-              showToast("Пакет лицензий сохранён", "success");
+              showToast(catT("Пакет лицензий сохранён", "License pack saved"), "success");
               await afterCatalogMutation();
             } catch (e) {
               console.error(e);
-              setCatalogStatus("admin-products-status", "Сеть.", "error");
+              setCatalogStatus(
+                "admin-products-status",
+                catT("Сеть.", "Network error."),
+                "error"
+              );
             }
           });
           const btnDel = document.createElement("button");
@@ -3946,11 +4015,15 @@
                 return;
               }
               setCatalogStatus("admin-products-status", "", "info");
-              showToast("Пакет лицензий удалён", "success");
+              showToast(catT("Пакет лицензий удалён", "License pack deleted"), "success");
               await afterCatalogMutation();
             } catch (e) {
               console.error(e);
-              setCatalogStatus("admin-products-status", "Сеть.", "error");
+              setCatalogStatus(
+                "admin-products-status",
+                catT("Сеть.", "Network error."),
+                "error"
+              );
             }
           });
           tdAct.appendChild(btnSave);
@@ -4006,7 +4079,7 @@
           if (!nm) {
             setCatalogStatus(
               "admin-products-status",
-              "Укажите название пакета.",
+              catT("Укажите название пакета.", "Enter pack name."),
               "error"
             );
             return;
@@ -4015,7 +4088,7 @@
           if (!Number.isFinite(u) || u < 1) {
             setCatalogStatus(
               "admin-products-status",
-              "Единиц в пакете: целое ≥ 1.",
+              catT("Единиц в пакете: целое ≥ 1.", "Units per pack: integer >= 1."),
               "error"
             );
             return;
@@ -4041,11 +4114,15 @@
             lName.inp.value = "";
             lU.inp.value = "16";
             setCatalogStatus("admin-products-status", "", "info");
-            showToast("Пакет лицензий добавлен", "success");
+            showToast(catT("Пакет лицензий добавлен", "License pack added"), "success");
             await afterCatalogMutation();
           } catch (e) {
             console.error(e);
-            setCatalogStatus("admin-products-status", "Сеть.", "error");
+            setCatalogStatus(
+              "admin-products-status",
+              catT("Сеть.", "Network error."),
+              "error"
+            );
           }
         });
         const addLicActionsRow = document.createElement("div");
@@ -4502,19 +4579,32 @@
         const btnSave = document.createElement("button");
         btnSave.type = "button";
         btnSave.className = "primary-btn";
-        btnSave.textContent = createMode
+        const saveDefaultLabel = createMode
           ? isEn
             ? "Create and add components"
             : "Создать и добавить компоненты"
           : isEn
             ? "Save"
             : "Сохранить";
+        const saveBusyLabel = createMode
+          ? isEn
+            ? "Creating..."
+            : "Создание..."
+          : isEn
+            ? "Saving..."
+            : "Сохранение...";
+        btnSave.textContent = saveDefaultLabel;
+        let isSavingProduct = false;
         function syncSaveEnabled() {
-          btnSave.disabled = inpName.value.trim() === "";
+          btnSave.disabled = isSavingProduct || inpName.value.trim() === "";
         }
         inpName.addEventListener("input", syncSaveEnabled);
         syncSaveEnabled();
         btnSave.addEventListener("click", async () => {
+          if (isSavingProduct) return;
+          isSavingProduct = true;
+          btnSave.textContent = saveBusyLabel;
+          syncSaveEnabled();
           const body = {
             name: inpName.value.trim(),
             description: taDesc.value.trim(),
@@ -4533,9 +4623,15 @@
             if (!Number.isFinite(n) || n < 0) {
               setCatalogStatus(
                 "admin-products-status",
-                "Встроенные AP: неотрицательное целое или пусто.",
+                catT(
+                  "Встроенные AP: неотрицательное целое или пусто.",
+                  "Built-in AP: enter a non-negative integer or leave empty."
+                ),
                 "error"
               );
+              isSavingProduct = false;
+              btnSave.textContent = saveDefaultLabel;
+              syncSaveEnabled();
               return;
             }
             body.built_in_license_units = n;
@@ -4550,9 +4646,15 @@
             if (!Number.isFinite(m) || m < 0) {
               setCatalogStatus(
                 "admin-products-status",
-                "Макс. модулей: неотрицательное целое или пусто.",
+                catT(
+                  "Макс. модулей: неотрицательное целое или пусто.",
+                  "Max modules: enter a non-negative integer or leave empty."
+                ),
                 "error"
               );
+              isSavingProduct = false;
+              btnSave.textContent = saveDefaultLabel;
+              syncSaveEnabled();
               return;
             }
             body.max_module_slots = m;
@@ -4569,9 +4671,15 @@
               } catch (e) {
                 setCatalogStatus(
                   "admin-products-status",
-                  "Правила (JSON): невалидный JSON.",
+                  catT(
+                    "Правила (JSON): невалидный JSON.",
+                    "Rules (JSON): invalid JSON."
+                  ),
                   "error"
                 );
+                isSavingProduct = false;
+                btnSave.textContent = saveDefaultLabel;
+                syncSaveEnabled();
                 return;
               }
             }
@@ -4596,8 +4704,14 @@
             body.rules_json =
               built.rules.length > 0 ? JSON.stringify(built.rules) : null;
           }
-          if (createMode) await createAdminProductFromDrawer(body);
-          else await patchAdminProduct(p.id, body);
+          try {
+            if (createMode) await createAdminProductFromDrawer(body);
+            else await patchAdminProduct(p.id, body);
+          } finally {
+            isSavingProduct = false;
+            btnSave.textContent = saveDefaultLabel;
+            syncSaveEnabled();
+          }
         });
         const btnCancel = document.createElement("button");
         btnCancel.type = "button";
@@ -4633,10 +4747,14 @@
           closeAdminProductDrawer();
           await loadProducts();
           setCatalogStatus("admin-products-status", "", "info");
-          showToast("Продукт сохранён", "success");
+          showToast(catT("Продукт сохранён", "Product saved"), "success");
         } catch (e) {
           console.error(e);
-          setCatalogStatus("admin-products-status", "Сеть.", "error");
+          setCatalogStatus(
+            "admin-products-status",
+            catT("Сеть.", "Network error."),
+            "error"
+          );
         }
       }
 
@@ -4660,10 +4778,14 @@
           adminEditingProductId = data && data.id != null ? Number(data.id) : null;
           await loadProducts();
           setCatalogStatus("admin-products-status", "", "info");
-          showToast("Продукт добавлен", "success");
+          showToast(catT("Продукт добавлен", "Product added"), "success");
         } catch (e) {
           console.error(e);
-          setCatalogStatus("admin-products-status", "Сеть.", "error");
+          setCatalogStatus(
+            "admin-products-status",
+            catT("Сеть.", "Network error."),
+            "error"
+          );
         }
       }
 
@@ -4693,10 +4815,14 @@
           }
           await loadProducts();
           setCatalogStatus("admin-products-status", "", "info");
-          showToast("Продукт удалён", "success");
+          showToast(catT("Продукт удалён", "Product deleted"), "success");
         } catch (e) {
           console.error(e);
-          setCatalogStatus("admin-products-status", "Сеть.", "error");
+          setCatalogStatus(
+            "admin-products-status",
+            catT("Сеть.", "Network error."),
+            "error"
+          );
         }
       }
 
@@ -4709,7 +4835,11 @@
             : ""
         ).trim();
         if (!name) {
-          setCatalogStatus("admin-products-status", "Укажите название.", "error");
+          setCatalogStatus(
+            "admin-products-status",
+            catT("Укажите название.", "Enter product name."),
+            "error"
+          );
           return;
         }
 
@@ -4720,7 +4850,10 @@
           if (!Number.isFinite(n) || n < 0) {
             setCatalogStatus(
               "admin-products-status",
-              "Встроенные AP: неотрицательное целое или пусто.",
+              catT(
+                "Встроенные AP: неотрицательное целое или пусто.",
+                "Built-in AP: enter a non-negative integer or leave empty."
+              ),
               "error"
             );
             return;
@@ -4735,7 +4868,10 @@
           if (!Number.isFinite(m) || m < 0) {
             setCatalogStatus(
               "admin-products-status",
-              "Макс. модулей: неотрицательное целое или пусто.",
+              catT(
+                "Макс. модулей: неотрицательное целое или пусто.",
+                "Max modules: enter a non-negative integer or leave empty."
+              ),
               "error"
             );
             return;
@@ -4787,10 +4923,14 @@
           refreshAdminProductUserPreview();
           await loadProducts();
           setCatalogStatus("admin-products-status", "", "info");
-          showToast("Продукт добавлен", "success");
+          showToast(catT("Продукт добавлен", "Product added"), "success");
         } catch (e) {
           console.error(e);
-          setCatalogStatus("admin-products-status", "Сеть.", "error");
+          setCatalogStatus(
+            "admin-products-status",
+            catT("Сеть.", "Network error."),
+            "error"
+          );
         }
       }
 
@@ -5356,6 +5496,7 @@
           return d.toLocaleString(uiLang === "en" ? "en-GB" : "ru-RU", {
             dateStyle: "short",
             timeStyle: "short",
+            timeZone: "Europe/Moscow",
           });
         } catch {
           return String(iso);
@@ -5430,13 +5571,24 @@
             const details = document.createElement("div");
             details.className = "recent-config-details";
             details.hidden = true;
-            fillRecentConfigDetails(details, row);
+            let hydratedRow = row;
+            let triedHydrate = false;
+            fillRecentConfigDetails(details, hydratedRow);
             li.appendChild(details);
-            toggleBtn.addEventListener("click", () => {
+            toggleBtn.addEventListener("click", async () => {
               details.hidden = !details.hidden;
               toggleBtn.textContent = details.hidden
                 ? catT("Раскрыть", "Expand")
                 : catT("Свернуть", "Collapse");
+              if (details.hidden) return;
+              if (!triedHydrate && getRecentConfigLines(hydratedRow).length === 0) {
+                triedHydrate = true;
+                const loaded = await fetchRecentConfigurationDetails(row.id);
+                if (loaded) {
+                  hydratedRow = { ...row, ...loaded };
+                }
+                fillRecentConfigDetails(details, hydratedRow);
+              }
             });
             elements.recentConfigurationsList.appendChild(li);
           }
@@ -5611,6 +5763,21 @@
         return [];
       }
 
+      async function fetchRecentConfigurationDetails(configId) {
+        if (!configId) return null;
+        try {
+          const res = await apiFetch("/configurations/" + encodeURIComponent(String(configId)), {
+            method: "GET",
+            __globalLoading: false,
+          });
+          if (!res.ok) return null;
+          const data = await res.json().catch(() => null);
+          return data && typeof data === "object" ? data : null;
+        } catch {
+          return null;
+        }
+      }
+
       function lineCaptionFromRecentConfig(line) {
         if (typeof line === "string") return line;
         if (!line || typeof line !== "object") return "—";
@@ -5663,8 +5830,8 @@
           const muted = document.createElement("div");
           muted.className = "recent-config-meta";
           muted.textContent = catT(
-            "Нет детальных данных по составу в этом элементе истории.",
-            "No line details available in this history item."
+            "Состав пока загружается или недоступен.",
+            "Contents are loading or unavailable."
           );
           host.appendChild(muted);
           return;
@@ -5845,26 +6012,6 @@
             return;
           }
 
-          let message = catT(
-            "Конфигурация успешно сохранена.",
-            "Configuration saved successfully."
-          );
-          if (json && json.configuration_id != null) {
-            message += " ID: " + json.configuration_id + ".";
-          }
-          if (json && json.specification && json.specification.length) {
-            message += catT(
-              " Строк спецификации: " + json.specification.length + ".",
-              " Specification lines: " + json.specification.length + "."
-            );
-          }
-          if (json && json.submitted_to_sales) {
-            message += catT(
-              " Заявка отправлена в отдел продаж.",
-              " Request sent to sales."
-            );
-          }
-          setStatus(message, "success");
           if (getCurrentRoleId() !== 1) {
             void loadRecentConfigurations();
           }
