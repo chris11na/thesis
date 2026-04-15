@@ -230,6 +230,36 @@
         line-height: 1.45;
       }
 
+      .recent-config-row-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .recent-config-row-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #0f172a;
+      }
+
+      .recent-config-toggle-btn {
+        flex-shrink: 0;
+      }
+
+      .recent-config-details {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #e2e8f0;
+        font-size: 12px;
+        color: #334155;
+      }
+
+      .recent-config-details ul {
+        margin: 6px 0 0;
+        padding-left: 1.1em;
+      }
+
       .recent-config-meta {
         font-size: 11px;
         color: #64748b;
@@ -310,6 +340,18 @@
         overflow-y: auto;
         padding-right: 2px;
         padding-bottom: 32px;
+      }
+
+      .config-section-scroll {
+        max-height: min(30vh, 260px);
+        overflow-y: auto;
+        padding-right: 4px;
+      }
+
+      .config-section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #0f172a;
       }
 
       .configurator-ops-footer {
@@ -749,7 +791,11 @@
       }
 
       .confirm-submit-dialog {
+        position: fixed;
+        inset: 0;
+        margin: auto;
         max-width: min(520px, 92vw);
+        width: min(520px, 92vw);
         padding: 0;
         border: none;
         border-radius: 12px;
@@ -804,6 +850,12 @@
         flex-wrap: wrap;
         gap: 10px;
         justify-content: flex-end;
+      }
+
+      .required-mark {
+        color: #dc2626;
+        font-weight: 700;
+        margin-left: 2px;
       }
 
       .pill {
@@ -1608,7 +1660,6 @@
             <div>
               <div class="card-title" id="configuration-card-title">Configuration</div>
               <div class="card-subtitle">
-                <span class="product-only" id="configuration-card-lead"></span>
                 <span class="debug-only"
                   >Тело запроса: структура <code>lines</code> (см. подсказку ниже).</span
                 >
@@ -1650,10 +1701,10 @@
               </div>
 
               <div class="field-group">
-                <div class="field-label field-label-with-meta">
+                <div class="field-label field-label-with-meta config-section-title">
                   <span>
                     <span class="product-only" id="selected-items-heading"
-                      >Выбранные позиции</span
+                      >Выбранные товары</span
                     >
                     <span class="debug-only"
                       >Selected items <span class="debug-tag">debug</span></span
@@ -1671,51 +1722,55 @@
                   <code>target_ap_count</code>, <code>addons[]</code> (legacy:
                   <code>items</code>).
                 </div>
-                <div class="pill-selected" id="selected-items-pills"></div>
+                <div class="config-section-scroll">
+                  <div class="pill-selected" id="selected-items-pills"></div>
+                </div>
               </div>
 
               <div class="field-group">
-                <div class="field-label" id="project-info-label">Информация о проекте (для отдела продаж)</div>
-                <div class="field-description" id="project-info-description">
-                  Эти данные сохраняются вместе со спецификацией и попадают в список
-                  отправленных заявок.
+                <div class="field-label config-section-title" id="project-info-label">
+                  Информация о проекте (для отдела продаж)
                 </div>
-                <div class="field-input" style="display: grid; gap: 8px">
-                  <input
-                    type="text"
-                    id="project-name-input"
-                    placeholder="Название проекта"
-                    maxlength="200"
-                    required
-                  />
-                  <p
-                    class="field-description"
-                    id="project-name-required-note"
-                    style="margin: 0"
-                  ></p>
-                  <input
-                    type="text"
-                    id="project-contact-name-input"
-                    placeholder="Контактное лицо"
-                    maxlength="200"
-                  />
-                  <input
-                    type="email"
-                    id="project-contact-email-input"
-                    placeholder="Контактный email"
-                    maxlength="255"
-                  />
-                  <p
-                    class="field-description"
-                    id="project-contact-fallback-note"
-                    style="margin: 0"
-                  ></p>
-                  <textarea
-                    id="project-notes-input"
-                    placeholder="Комментарий / примечание для отдела продаж"
-                    maxlength="4000"
-                    style="min-height: 80px; resize: vertical; padding: 8px 10px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 14px"
-                  ></textarea>
+                <div class="config-section-scroll">
+                  <div class="field-description" id="project-info-description">
+                    Эти данные сохраняются вместе со спецификацией и попадают в список
+                    отправленных заявок.
+                  </div>
+                  <div class="field-input" style="display: grid; gap: 8px">
+                    <div class="field-label" id="project-name-field-label">
+                      Название проекта<span class="required-mark" aria-hidden="true">*</span>
+                    </div>
+                    <input
+                      type="text"
+                      id="project-name-input"
+                      placeholder="Название проекта"
+                      maxlength="200"
+                      required
+                    />
+                    <input
+                      type="text"
+                      id="project-contact-name-input"
+                      placeholder="Контактное лицо"
+                      maxlength="200"
+                    />
+                    <input
+                      type="email"
+                      id="project-contact-email-input"
+                      placeholder="Контактный email"
+                      maxlength="255"
+                    />
+                    <p
+                      class="field-description"
+                      id="project-contact-fallback-note"
+                      style="margin: 0"
+                    ></p>
+                    <textarea
+                      id="project-notes-input"
+                      placeholder="Комментарий / примечание для отдела продаж"
+                      maxlength="4000"
+                      style="min-height: 80px; resize: vertical; padding: 8px 10px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 14px"
+                    ></textarea>
+                  </div>
                 </div>
               </div>
 
@@ -1896,7 +1951,7 @@
                     <tr>
                       <th id="th-products-id">ID</th>
                       <th id="th-products-name">Название</th>
-                      <th id="th-products-category">Категория (метка)</th>
+                      <th id="th-products-category">Категория</th>
                       <th></th>
                     </tr>
                   </thead>
@@ -2036,9 +2091,7 @@
         recentConfigurationsEmpty: document.getElementById(
           "recent-configurations-empty"
         ),
-        projectNameRequiredNote: document.getElementById(
-          "project-name-required-note"
-        ),
+        projectNameFieldLabel: document.getElementById("project-name-field-label"),
         projectContactFallbackNote: document.getElementById(
           "project-contact-fallback-note"
         ),
@@ -2125,6 +2178,11 @@
             ? "Project name is required. Other fields are saved with the specification and appear in submitted requests."
             : "Название проекта обязательно. Остальные поля сохраняются со спецификацией и попадают в отправленные заявки.";
         }
+        if (elements.projectNameFieldLabel) {
+          elements.projectNameFieldLabel.innerHTML = isEn
+            ? 'Project name<span class="required-mark" aria-hidden="true">*</span>'
+            : 'Название проекта<span class="required-mark" aria-hidden="true">*</span>';
+        }
         if (elements.projectNameInput) {
           elements.projectNameInput.placeholder = isEn ? "Project name" : "Название проекта";
         }
@@ -2158,12 +2216,6 @@
           productsCardSubtitle.textContent = isEn
             ? "Select the lines you need. Available add-ons (modules, license packs) depend on the equipment you choose."
             : "Отметьте нужные позиции. Доступные дополнения (модули, пакеты лицензий) зависят от выбранного оборудования.";
-        }
-        const configurationCardLead = document.getElementById("configuration-card-lead");
-        if (configurationCardLead) {
-          configurationCardLead.textContent = isEn
-            ? "For each line set quantities. If required, set your target number of access points—the system suggests license packs. Then submit for validation."
-            : "Для каждой строки укажите количества. При необходимости задайте целевое число точек доступа — система подберёт пакеты лицензий. Затем отправьте конфигурацию на проверку.";
         }
         if (elements.adminCompanyEditName) {
           elements.adminCompanyEditName.placeholder = isEn ? "Company name" : "Название";
@@ -2250,7 +2302,7 @@
         if (thProductsName) thProductsName.textContent = isEn ? "Name" : "Название";
         const thProductsCategory = document.getElementById("th-products-category");
         if (thProductsCategory) {
-          thProductsCategory.textContent = isEn ? "Category (label)" : "Категория (метка)";
+          thProductsCategory.textContent = isEn ? "Category (label)" : "Категория";
         }
         const drawerTitle = document.getElementById("admin-product-drawer-title");
         if (drawerTitle) {
@@ -2282,17 +2334,12 @@
         }
         const selectedHeading = document.getElementById("selected-items-heading");
         if (selectedHeading) {
-          selectedHeading.textContent = catT("Выбранные позиции", "Selected lines");
+          selectedHeading.textContent = catT("Выбранные товары", "Selected products");
         }
         if (Array.isArray(products) && products.length > 0) {
           renderProducts();
           renderSelectedPills();
           updateCounter();
-        }
-        if (elements.projectNameRequiredNote) {
-          elements.projectNameRequiredNote.textContent = isEn
-            ? "Project name is required before you submit."
-            : "Перед отправкой укажите название проекта.";
         }
         if (elements.projectContactFallbackNote) {
           elements.projectContactFallbackNote.textContent = isEn
@@ -2545,7 +2592,9 @@
         let data;
         try {
           if (!optionsCache[p.id]) {
-            const r = await apiFetch("/products/" + p.id + "/configuration-options");
+            const r = await apiFetch("/products/" + p.id + "/configuration-options", {
+              __globalLoading: false,
+            });
             if (!r.ok) throw new Error("HTTP " + r.status);
             optionsCache[p.id] = await r.json();
           }
@@ -2652,7 +2701,8 @@
                 "/products/" +
                   p.id +
                   "/license-pack-suggestion?target_ap_count=" +
-                  encodeURIComponent(String(st.targetAp))
+                  encodeURIComponent(String(st.targetAp)),
+                { __globalLoading: false }
               );
               const j = await r.json().catch(() => null);
               if (!r.ok) {
@@ -4176,7 +4226,7 @@
         inpCategory.placeholder = "";
         inpCategory.value = p.product_category || "";
         addFieldStack(
-          isEn ? "Category (label)" : "Категория (метка)",
+          isEn ? "Category (label)" : "Категория",
           inpCategory,
           isEn
             ? "Optional short label in the catalog (e.g. type of device)."
@@ -4889,27 +4939,31 @@
       }
 
       async function apiFetch(path, init = {}, retryAfterRefresh = true) {
-        bumpGlobalLoading(1);
+        // Allow local section loaders to opt out from full-screen overlay.
+        const useGlobalLoading = init.__globalLoading !== false;
+        const requestInit = { ...init };
+        delete requestInit.__globalLoading;
+        if (useGlobalLoading) bumpGlobalLoading(1);
         try {
-          const headers = new Headers(init.headers || {});
+          const headers = new Headers(requestInit.headers || {});
           if (accessToken) {
             headers.set("Authorization", "Bearer " + accessToken);
           }
 
           const response = await fetch(API_BASE + path, {
-            ...init,
+            ...requestInit,
             headers,
           });
 
           if (response.status === 401 && retryAfterRefresh && refreshToken) {
             const refreshed = await refreshAccessToken();
             if (refreshed) {
-              return await apiFetch(path, init, false);
+              return await apiFetch(path, requestInit, false);
             }
           }
           return response;
         } finally {
-          bumpGlobalLoading(-1);
+          if (useGlobalLoading) bumpGlobalLoading(-1);
         }
       }
 
@@ -5327,16 +5381,15 @@
           for (const row of rows) {
             const li = document.createElement("li");
             li.className = "recent-config-row";
+            const header = document.createElement("div");
+            header.className = "recent-config-row-header";
             const titleLine = document.createElement("div");
-            const strong = document.createElement("strong");
-            strong.textContent = "#" + row.id;
-            titleLine.appendChild(strong);
-            titleLine.appendChild(document.createTextNode(" · "));
-            const pnameSpan = document.createElement("span");
-            pnameSpan.textContent =
+            titleLine.className = "recent-config-row-title";
+            const projectName =
               (row.project_name && String(row.project_name).trim()) ||
               catT("без названия проекта", "no project name");
-            titleLine.appendChild(pnameSpan);
+            titleLine.textContent =
+              projectName + " " + formatRecentConfigDate(row.created_at);
             if (row.submitted_to_sales) {
               const badge = document.createElement("span");
               badge.className = "recent-config-badge";
@@ -5344,17 +5397,35 @@
               badge.textContent = catT("В продажах", "Sales");
               titleLine.appendChild(badge);
             }
-            li.appendChild(titleLine);
+            header.appendChild(titleLine);
+            const toggleBtn = document.createElement("button");
+            toggleBtn.type = "button";
+            toggleBtn.className = "secondary-btn recent-config-toggle-btn";
+            toggleBtn.textContent = catT("Раскрыть", "Expand");
+            header.appendChild(toggleBtn);
+            li.appendChild(header);
             const meta = document.createElement("div");
             meta.className = "recent-config-meta";
             meta.textContent =
-              formatRecentConfigDate(row.created_at) +
+              "#" +
+              (row.id ?? "—") +
               " · " +
               catT(
                 "позиций в составе: " + (row.items_count ?? "—"),
                 "lines in spec: " + (row.items_count ?? "—")
               );
             li.appendChild(meta);
+            const details = document.createElement("div");
+            details.className = "recent-config-details";
+            details.hidden = true;
+            fillRecentConfigDetails(details, row);
+            li.appendChild(details);
+            toggleBtn.addEventListener("click", () => {
+              details.hidden = !details.hidden;
+              toggleBtn.textContent = details.hidden
+                ? catT("Раскрыть", "Expand")
+                : catT("Свернуть", "Collapse");
+            });
             elements.recentConfigurationsList.appendChild(li);
           }
         } catch (e) {
@@ -5516,6 +5587,80 @@
           const p = products.find((x) => x.id === pid);
           const li = document.createElement("li");
           li.textContent = p ? selectionPillCaption(p) : "product #" + pid;
+          ul.appendChild(li);
+        }
+        host.appendChild(ul);
+      }
+
+      function getRecentConfigLines(row) {
+        if (Array.isArray(row?.lines)) return row.lines;
+        if (Array.isArray(row?.items)) return row.items;
+        if (Array.isArray(row?.specification)) return row.specification;
+        return [];
+      }
+
+      function lineCaptionFromRecentConfig(line) {
+        if (typeof line === "string") return line;
+        if (!line || typeof line !== "object") return "—";
+        const productName =
+          line.equipment_product_name || line.product_name || line.name || null;
+        const productId =
+          line.equipment_product_id || line.product_id || line.id || null;
+        const quantity = line.quantity != null ? Number(line.quantity) : null;
+        let base = productName
+          ? String(productName)
+          : productId
+            ? "product #" + String(productId)
+            : "—";
+        if (Number.isFinite(quantity) && quantity > 0) {
+          base += " · " + catT("кол-во", "qty") + ": " + quantity;
+        }
+        return base;
+      }
+
+      function fillRecentConfigDetails(host, row) {
+        if (!host) return;
+        host.textContent = "";
+        appendConfirmSummaryRow(
+          host,
+          catT("Проект:", "Project:"),
+          row.project_name
+        );
+        appendConfirmSummaryRow(
+          host,
+          catT("Контакт:", "Contact:"),
+          row.project_contact_name
+        );
+        appendConfirmSummaryRow(
+          host,
+          catT("Email контакта:", "Contact email:"),
+          row.project_contact_email
+        );
+        appendConfirmSummaryRow(
+          host,
+          catT("Заметки:", "Notes:"),
+          row.project_notes
+        );
+        const head = document.createElement("div");
+        head.style.marginTop = "8px";
+        head.style.fontWeight = "600";
+        head.textContent = catT("Состав:", "Contents:");
+        host.appendChild(head);
+        const lines = getRecentConfigLines(row);
+        if (!lines.length) {
+          const muted = document.createElement("div");
+          muted.className = "recent-config-meta";
+          muted.textContent = catT(
+            "Нет детальных данных по составу в этом элементе истории.",
+            "No line details available in this history item."
+          );
+          host.appendChild(muted);
+          return;
+        }
+        const ul = document.createElement("ul");
+        for (const line of lines) {
+          const li = document.createElement("li");
+          li.textContent = lineCaptionFromRecentConfig(line);
           ul.appendChild(li);
         }
         host.appendChild(ul);

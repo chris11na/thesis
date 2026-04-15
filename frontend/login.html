@@ -310,27 +310,7 @@
 
       <div class="status-area" id="auth-status-area"></div>
 
-      <p class="hint" id="login-hint">
-        <!-- <strong>Регистрация:</strong> домен почты должен совпадать с организацией,
-        которую администратор добавил в систему (например, для
-        <code>name@example.com</code> в базе должна быть компания с доменом
-        <code>example.com</code>).  -->
-        Демо-вход:
-        <br /> 
-        <code>admin@example.com</code> / <code>admin123</code> 
-        <br /> 
-        <code>user@example.com</code> / <code>user123</code>.
-        <!-- <strong>OAuth:</strong> кнопки появляются, если на backend в переменных
-        окружения заданы <code>GOOGLE_CLIENT_ID</code> /
-        <code>GOOGLE_CLIENT_SECRET</code> (и/или Microsoft). Домен почты из
-        Google/Microsoft должен совпадать с компанией в базе. В консоли провайдера
-        добавь точный redirect URI: для продакшена —
-        <code>https://&lt;твой-api&gt;.onrender.com/auth/google/callback</code>;
-        локально — <code>http://127.0.0.1:8000/auth/google/callback</code>. На
-        Render также задай <code>PUBLIC_BASE_URL</code> (тот же https-URL API) и
-        <code>FRONTEND_URL</code> (URL статического сайта с
-        <code>login.html</code>). -->
-      </p>
+      <p class="hint" id="login-hint"></p>
     </div>
 
     <script>
@@ -448,6 +428,41 @@
         if (registerNameInput) registerNameInput.placeholder = t.regNamePh;
         if (registerEmailInput) registerEmailInput.placeholder = t.regEmailPh;
         if (registerPasswordInput) registerPasswordInput.placeholder = t.regPasswordPh;
+        const loginHint = document.getElementById("login-hint");
+        if (loginHint) {
+          loginHint.innerHTML =
+            currentLang === "en"
+              ? [
+                  "<strong>Demo sign-in:</strong>",
+                  "<br />",
+                  "Admin",
+                  "<br />",
+                  "Email: <code>admin@example.com</code>",
+                  "<br />",
+                  "Password: <code>admin123</code>",
+                  "<br /><br />",
+                  "User",
+                  "<br />",
+                  "Email: <code>user@example.com</code>",
+                  "<br />",
+                  "Password: <code>user123</code>",
+                ].join("")
+              : [
+                  "<strong>Демо-вход:</strong>",
+                  "<br />",
+                  "Администратор",
+                  "<br />",
+                  "Почта: <code>admin@example.com</code>",
+                  "<br />",
+                  "Пароль: <code>admin123</code>",
+                  "<br /><br />",
+                  "Пользователь",
+                  "<br />",
+                  "Почта: <code>user@example.com</code>",
+                  "<br />",
+                  "Пароль: <code>user123</code>",
+                ].join("");
+        }
         refreshOAuthButtonLabels();
       }
 
