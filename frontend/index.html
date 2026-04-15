@@ -195,10 +195,10 @@
       .layout {
         display: grid;
         grid-template-columns: 2fr 1.5fr;
-        grid-template-rows: minmax(0, 1fr);
+        grid-template-rows: auto;
         gap: 20px;
         align-items: stretch;
-        flex: 1;
+        flex: 0 0 auto;
         min-height: 280px;
         overflow: visible;
       }
@@ -340,11 +340,9 @@
       }
 
       .configurator-ops-scroll {
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
+        overflow: visible;
         padding-right: 2px;
-        padding-bottom: 32px;
+        padding-bottom: 16px;
       }
 
       .config-section-scroll {
@@ -904,6 +902,16 @@
         font-weight: 700;
         cursor: help;
         user-select: none;
+      }
+
+      .field-with-help {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .field-with-help input {
+        flex: 1;
       }
 
       .pill {
@@ -1776,7 +1784,7 @@
               </div>
 
               <div class="field-group">
-                <div class="field-label config-section-title" id="project-info-label">
+                <div class="config-section-title" id="project-info-label">
                   Информация о проекте
                 </div>
                 <div>
@@ -1791,26 +1799,21 @@
                       />
                       <span class="required-input-star" aria-hidden="true">*</span>
                     </div>
-                    <input
-                      type="text"
-                      id="project-contact-name-input"
-                      placeholder="Контактное лицо"
-                      maxlength="200"
-                    />
+                    <div class="field-with-help">
+                      <input
+                        type="text"
+                        id="project-contact-name-input"
+                        placeholder="Контактное лицо"
+                        maxlength="200"
+                      />
+                      <span class="inline-help" id="project-contact-help" aria-label="help">?</span>
+                    </div>
                     <input
                       type="email"
                       id="project-contact-email-input"
                       placeholder="Контактный email"
                       maxlength="255"
                     />
-                    <div
-                      class="field-label field-label-with-meta"
-                      id="project-contact-label"
-                      style="margin: -2px 0 0"
-                    >
-                      <span>Контактное лицо / email</span>
-                      <span class="inline-help" id="project-contact-help" aria-label="help">?</span>
-                    </div>
                     <textarea
                       id="project-notes-input"
                       placeholder="Комментарий / примечание для отдела продаж"
@@ -2234,12 +2237,6 @@
           elements.projectContactEmailInput.placeholder = isEn
             ? "Contact email"
             : "Контактный email";
-        }
-        const projectContactLabel = document.getElementById("project-contact-label");
-        if (projectContactLabel && projectContactLabel.firstElementChild) {
-          projectContactLabel.firstElementChild.textContent = isEn
-            ? "Contact person / email"
-            : "Контактное лицо / email";
         }
         if (elements.projectNotesInput) {
           elements.projectNotesInput.placeholder = isEn
@@ -2786,12 +2783,12 @@
                       "Дискретные пакеты не закрывают цель полностью.") +
                       " Не хватает " +
                       residual +
-                      " AP; подставлен только частичный набор — донастройте вручную.",
+                      " AP; подставлен только частичный набор.",
                     (j.note ||
                       "Discrete packs do not fully meet the target.") +
                       " Short by " +
                       residual +
-                      " AP; partial set applied — adjust manually."
+                      " AP; partial set applied."
                   ),
                   type: "error",
                 });
@@ -2824,14 +2821,50 @@
                   type: "error",
                 });
               } else {
-                licenseSuggestFeedbackByProductId.delete(p.id);
-                showToast(
-                  catT(
-                    "Пакеты лицензий подставлены в форму.",
-                    "License packs filled in."
-                  ),
-                  "success"
-                );
+                const totalAfterSuggest = data.built_in_license_units != null
+                  ? data.built_in_license_units
+                  : 0;
+                let extraAfterSuggest = 0;
+                for (const lic of data.licenses || []) {
+                  const q = Number(st.licenseQty[lic.id]) || 0;
+                  extraAfterSuggest += q * (lic.units_per_pack || 0);
+                }
+                const finalTotal = totalAfterSuggest + extraAfterSuggest;
+                const exceed = st.targetAp > 0 ? Math.max(0, finalTotal - st.targetAp) : 0;
+                if (exceed > 0) {
+                  licenseSuggestFeedbackByProductId.set(p.id, {
+                    message: catT(
+                      "Пакеты лицензий подставлены: получится " +
+                        finalTotal +
+                        " AP при цели " +
+                        st.targetAp +
+                        " AP; запас +" +
+                        exceed +
+                        " AP (exceed by " +
+                        exceed +
+                        ").",
+                      "License packs applied: total " +
+                        finalTotal +
+                        " AP for target " +
+                        st.targetAp +
+                        " AP; surplus +" +
+                        exceed +
+                        " AP (exceed by " +
+                        exceed +
+                        ")."
+                    ),
+                    type: "info",
+                  });
+                } else {
+                  licenseSuggestFeedbackByProductId.delete(p.id);
+                  showToast(
+                    catT(
+                      "Пакеты лицензий подставлены в форму.",
+                      "License packs filled in."
+                    ),
+                    "success"
+                  );
+                }
               }
               renderProducts();
             } catch (e) {
@@ -5216,19 +5249,49 @@
           extra += q * (lic.units_per_pack || 0);
         }
         const total = built + extra;
+        const infoEl = document.createElement("div");
+        infoEl.className = "status-text info";
+        if (total > st.targetAp) {
+          const exceed = total - st.targetAp;
+          infoEl.textContent = catT(
+            "Итого по лицензиям: " +
+              total +
+              " AP при цели " +
+              st.targetAp +
+              " AP; запас +" +
+              exceed +
+              " AP (exceed by " +
+              exceed +
+              ").",
+            "License total: " +
+              total +
+              " AP for target " +
+              st.targetAp +
+              " AP; surplus +" +
+              exceed +
+              " AP (exceed by " +
+              exceed +
+              ")."
+          );
+          warnEl.appendChild(infoEl);
+        }
         if (total < st.targetAp) {
           const msg = catT(
             "По выбранным пакетам и встроенной ёмкости получается " +
               total +
               " AP, а цель " +
               st.targetAp +
-              " AP. Такую цель нельзя закрыть текущим набором — добавьте пакеты или снизьте цель.",
+              " AP. Эту цель нельзя закрыть текущим набором пакетов.",
             "With selected packs and built-in capacity you reach " +
               total +
               " AP, but the target is " +
               st.targetAp +
-              " AP. Add packs or lower the target."
+              " AP. This target cannot be met with the current pack set."
           );
+          const errEl = document.createElement("div");
+          errEl.className = "status-text error";
+          errEl.textContent = msg;
+          warnEl.appendChild(errEl);
           const msgHash = msg;
           if (warnEl.__apTargetWarnHash !== msgHash) {
             warnEl.__apTargetWarnHash = msgHash;
