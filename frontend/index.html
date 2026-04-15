@@ -35,9 +35,7 @@
         display: flex;
         flex-direction: column;
         min-height: 0;
-        max-height: calc(100vh - 48px);
-        max-height: calc(100dvh - 48px);
-        overflow: hidden;
+        overflow: visible;
       }
 
       .app-header {
@@ -190,8 +188,7 @@
         min-height: 0;
         display: flex;
         flex-direction: column;
-        overflow-y: auto;
-        overflow-x: hidden;
+        overflow: visible;
         gap: 0;
       }
 
@@ -203,12 +200,20 @@
         align-items: stretch;
         flex: 1;
         min-height: 280px;
-        overflow: hidden;
+        overflow: visible;
       }
 
       .recent-configs-card {
         margin-top: 12px;
         flex-shrink: 0;
+        min-height: 0;
+      }
+
+      .recent-configs-card .card-body {
+        max-height: min(38vh, 320px);
+        overflow-y: auto;
+        min-height: 0;
+        padding-right: 2px;
       }
 
       .recent-configs-list {
@@ -856,6 +861,40 @@
         color: #dc2626;
         font-weight: 700;
         margin-left: 2px;
+      }
+
+      .required-input-wrap {
+        position: relative;
+      }
+
+      .required-input-wrap input {
+        padding-right: 20px;
+      }
+
+      .required-input-star {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #dc2626;
+        font-weight: 700;
+        pointer-events: none;
+      }
+
+      .inline-help {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        color: #334155;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: help;
+        user-select: none;
       }
 
       .pill {
@@ -1729,24 +1768,20 @@
 
               <div class="field-group">
                 <div class="field-label config-section-title" id="project-info-label">
-                  Информация о проекте (для отдела продаж)
+                  Информация о проекте
                 </div>
                 <div class="config-section-scroll">
-                  <div class="field-description" id="project-info-description">
-                    Эти данные сохраняются вместе со спецификацией и попадают в список
-                    отправленных заявок.
-                  </div>
                   <div class="field-input" style="display: grid; gap: 8px">
-                    <div class="field-label" id="project-name-field-label">
-                      Название проекта<span class="required-mark" aria-hidden="true">*</span>
+                    <div class="required-input-wrap">
+                      <input
+                        type="text"
+                        id="project-name-input"
+                        placeholder="Название проекта"
+                        maxlength="200"
+                        required
+                      />
+                      <span class="required-input-star" aria-hidden="true">*</span>
                     </div>
-                    <input
-                      type="text"
-                      id="project-name-input"
-                      placeholder="Название проекта"
-                      maxlength="200"
-                      required
-                    />
                     <input
                       type="text"
                       id="project-contact-name-input"
@@ -1759,11 +1794,9 @@
                       placeholder="Контактный email"
                       maxlength="255"
                     />
-                    <p
-                      class="field-description"
-                      id="project-contact-fallback-note"
-                      style="margin: 0"
-                    ></p>
+                    <div class="field-description" style="margin: 0">
+                      <span class="inline-help" id="project-contact-help" aria-label="help">?</span>
+                    </div>
                     <textarea
                       id="project-notes-input"
                       placeholder="Комментарий / примечание для отдела продаж"
@@ -2091,10 +2124,7 @@
         recentConfigurationsEmpty: document.getElementById(
           "recent-configurations-empty"
         ),
-        projectNameFieldLabel: document.getElementById("project-name-field-label"),
-        projectContactFallbackNote: document.getElementById(
-          "project-contact-fallback-note"
-        ),
+        projectContactHelp: document.getElementById("project-contact-help"),
         confirmSubmitDialog: document.getElementById("confirm-submit-dialog"),
         confirmSubmitTitle: document.getElementById("confirm-submit-title"),
         confirmSubmitScroll: document.getElementById("confirm-submit-scroll"),
@@ -2169,19 +2199,8 @@
         const projectInfoLabel = document.getElementById("project-info-label");
         if (projectInfoLabel) {
           projectInfoLabel.textContent = isEn
-            ? "Project details (for sales team)"
-            : "Информация о проекте (для отдела продаж)";
-        }
-        const projectInfoDescription = document.getElementById("project-info-description");
-        if (projectInfoDescription) {
-          projectInfoDescription.textContent = isEn
-            ? "Project name is required. Other fields are saved with the specification and appear in submitted requests."
-            : "Название проекта обязательно. Остальные поля сохраняются со спецификацией и попадают в отправленные заявки.";
-        }
-        if (elements.projectNameFieldLabel) {
-          elements.projectNameFieldLabel.innerHTML = isEn
-            ? 'Project name<span class="required-mark" aria-hidden="true">*</span>'
-            : 'Название проекта<span class="required-mark" aria-hidden="true">*</span>';
+            ? "Project details"
+            : "Информация о проекте";
         }
         if (elements.projectNameInput) {
           elements.projectNameInput.placeholder = isEn ? "Project name" : "Название проекта";
@@ -2341,8 +2360,8 @@
           renderSelectedPills();
           updateCounter();
         }
-        if (elements.projectContactFallbackNote) {
-          elements.projectContactFallbackNote.textContent = isEn
+        if (elements.projectContactHelp) {
+          elements.projectContactHelp.title = isEn
             ? "Contact person and email for the project are optional. If you leave them blank, sales will use the email on your account (the one you signed in with)."
             : "Имя и почта контакта по проекту необязательны. Если их не указать, отдел продаж свяжется по адресу вашей учётной записи (той, с которой вы вошли в систему).";
         }
@@ -5390,13 +5409,6 @@
               catT("без названия проекта", "no project name");
             titleLine.textContent =
               projectName + " " + formatRecentConfigDate(row.created_at);
-            if (row.submitted_to_sales) {
-              const badge = document.createElement("span");
-              badge.className = "recent-config-badge";
-              badge.style.marginLeft = "8px";
-              badge.textContent = catT("В продажах", "Sales");
-              titleLine.appendChild(badge);
-            }
             header.appendChild(titleLine);
             const toggleBtn = document.createElement("button");
             toggleBtn.type = "button";
