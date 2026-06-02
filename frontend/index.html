@@ -1653,6 +1653,32 @@
       .products-search-wrap {
         margin-bottom: 10px;
       }
+
+      .products-spec-filter {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .products-spec-filter select,
+      .products-spec-filter input[type="search"] {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .products-spec-filter-clear {
+        white-space: nowrap;
+        padding: 8px 10px;
+        font-size: 12px;
+      }
+
+      @media (max-width: 640px) {
+        .products-spec-filter {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
 
@@ -1714,6 +1740,25 @@
                 placeholder="Поиск по названию или параметрам"
                 autocomplete="off"
               />
+            </div>
+            <div class="products-spec-filter" id="products-spec-filter">
+              <select id="products-spec-param-select" aria-label="Параметр характеристики">
+                <option value="">Все параметры</option>
+              </select>
+              <input
+                type="search"
+                id="products-spec-value-input"
+                placeholder="Значение характеристики"
+                autocomplete="off"
+              />
+              <button
+                type="button"
+                class="secondary-btn products-spec-filter-clear"
+                id="products-spec-filter-clear"
+                hidden
+              >
+                Сбросить
+              </button>
             </div>
             <ul class="products-list" id="products-list"></ul>
             <div class="scroll-hint debug-only">
@@ -2124,6 +2169,9 @@
         appPageTitle: document.getElementById("app-page-title"),
         productsList: document.getElementById("products-list"),
         productsSearchInput: document.getElementById("products-search-input"),
+        productsSpecParamSelect: document.getElementById("products-spec-param-select"),
+        productsSpecValueInput: document.getElementById("products-spec-value-input"),
+        productsSpecFilterClear: document.getElementById("products-spec-filter-clear"),
         productsCounter: document.getElementById("products-counter"),
         productsSource: document.getElementById("products-source"),
         productsStatusArea: document.getElementById("products-status-area"),
@@ -2259,6 +2307,17 @@
           elements.productsSearchInput.placeholder = isEn
             ? "Search by name or specs"
             : "Поиск по названию или параметрам";
+        }
+        if (elements.productsSpecValueInput) {
+          elements.productsSpecValueInput.placeholder = isEn
+            ? "Characteristic value"
+            : "Значение характеристики";
+        }
+        if (elements.productsSpecFilterClear) {
+          elements.productsSpecFilterClear.textContent = isEn ? "Clear" : "Сбросить";
+        }
+        if (elements.productsSpecParamSelect) {
+          renderSpecFilterSelect();
         }
         if (elements.headerBlurbUser) {
           elements.headerBlurbUser.textContent = isEn
@@ -2434,7 +2493,11 @@
 
       let products = [];
       let specParameters = [];
+      /** Active spec parameters for catalog characteristic filter (all roles). */
+      let catalogSpecParameters = [];
       let productSearchTerm = "";
+      let productSpecFilterCode = "";
+      let productSpecFilterValue = "";
       /** @type {object|null} Built POST /configurations body awaiting confirm dialog. */
       let pendingConfigurationPayload = null;
       let adminEditingProductId = null;
@@ -3178,6 +3241,80 @@
           rules_json: "",
         };
         openAdminProductDrawer(draft, { createMode: true });
+      }
+
+      async function loadCatalogSpecParameters() {
+        try {
+          const res = await apiFetch("/products/spec-parameters");
+          const data = await res.json().catch(() => null);
+          if (!res.ok) throw new Error((data && data.detail) || "spec params load failed");
+          catalogSpecParameters = Array.isArray(data) ? data : [];
+        } catch (e) {
+          console.error(e);
+          catalogSpecParameters = [];
+        }
+        renderSpecFilterSelect();
+      }
+
+      function renderSpecFilterSelect() {
+        const sel = elements.productsSpecParamSelect;
+        if (!sel) return;
+        const isEn = uiLang === "en";
+        const prev = productSpecFilterCode || sel.value || "";
+        sel.innerHTML = "";
+        const allOpt = document.createElement("option");
+        allOpt.value = "";
+        allOpt.textContent = isEn ? "All parameters" : "Все параметры";
+        sel.appendChild(allOpt);
+        catalogSpecParameters.forEach((sp) => {
+          if (!sp || !sp.code) return;
+          const opt = document.createElement("option");
+          opt.value = String(sp.code);
+          opt.textContent = sp.name ? String(sp.name) : String(sp.code);
+          sel.appendChild(opt);
+        });
+        if (prev && Array.from(sel.options).some((o) => o.value === prev)) {
+          sel.value = prev;
+        } else {
+          sel.value = "";
+          productSpecFilterCode = "";
+        }
+      }
+
+      function syncProductSpecFilterUi() {
+        const hasFilter =
+          Boolean((productSpecFilterCode || "").trim()) ||
+          Boolean((productSpecFilterValue || "").trim());
+        if (elements.productsSpecFilterClear) {
+          elements.productsSpecFilterClear.hidden = !hasFilter;
+        }
+      }
+
+      function productMatchesSpecFilter(p) {
+        const code = (productSpecFilterCode || "").trim().toLowerCase();
+        const val = (productSpecFilterValue || "").trim().toLowerCase();
+        if (!code && !val) return true;
+        const specs = Array.isArray(p.technical_spec_values)
+          ? p.technical_spec_values
+          : [];
+        if (specs.length === 0) return false;
+        return specs.some((x) => {
+          if (!x) return false;
+          const pc = String(x.parameter_code || "").toLowerCase();
+          const pv = String(x.value || "").toLowerCase();
+          if (code && pc !== code) return false;
+          if (val && !pv.includes(val)) return false;
+          return true;
+        });
+      }
+
+      function clearProductSpecFilter() {
+        productSpecFilterCode = "";
+        productSpecFilterValue = "";
+        if (elements.productsSpecParamSelect) elements.productsSpecParamSelect.value = "";
+        if (elements.productsSpecValueInput) elements.productsSpecValueInput.value = "";
+        syncProductSpecFilterUi();
+        renderProducts();
       }
 
       async function loadSpecParametersForAdmin() {
@@ -5483,7 +5620,11 @@
       function renderProducts() {
         elements.productsList.innerHTML = "";
         const normalizedSearch = productSearchTerm.trim().toLowerCase();
+        const hasSpecFilter =
+          Boolean((productSpecFilterCode || "").trim()) ||
+          Boolean((productSpecFilterValue || "").trim());
         const visibleProducts = products.filter((p) => {
+          if (!productMatchesSpecFilter(p)) return false;
           if (!normalizedSearch) return true;
           const specValuesText = Array.isArray(p.technical_spec_values)
             ? p.technical_spec_values
@@ -5513,10 +5654,15 @@
           li.className = "product-item";
           li.style.cursor = "default";
           li.style.opacity = "0.85";
-          li.textContent = catT(
-            "Ничего не найдено. Попробуйте другой запрос.",
-            "No matches found. Try another search."
-          );
+          li.textContent = hasSpecFilter
+            ? catT(
+                "Нет товаров с такими характеристиками. Измените фильтр или сбросьте его.",
+                "No products match these characteristics. Change or clear the filter."
+              )
+            : catT(
+                "Ничего не найдено. Попробуйте другой запрос.",
+                "No matches found. Try another search."
+              );
           elements.productsList.appendChild(li);
           requestAnimationFrame(syncProductsSectionHeight);
           return;
@@ -5957,7 +6103,8 @@
         licenseSuggestFeedbackByProductId.clear();
         optionsCache = {};
         productCardExpandedIds.clear();
-        await loadSpecParametersForAdmin();
+        await Promise.all([loadCatalogSpecParameters(), loadSpecParametersForAdmin()]);
+        syncProductSpecFilterUi();
         renderProducts();
         renderSelectedPills();
         updateCounter();
@@ -6354,6 +6501,25 @@
           elements.productsSearchInput.addEventListener("input", () => {
             productSearchTerm = elements.productsSearchInput.value || "";
             renderProducts();
+          });
+        }
+        if (elements.productsSpecParamSelect) {
+          elements.productsSpecParamSelect.addEventListener("change", () => {
+            productSpecFilterCode = elements.productsSpecParamSelect.value || "";
+            syncProductSpecFilterUi();
+            renderProducts();
+          });
+        }
+        if (elements.productsSpecValueInput) {
+          elements.productsSpecValueInput.addEventListener("input", () => {
+            productSpecFilterValue = elements.productsSpecValueInput.value || "";
+            syncProductSpecFilterUi();
+            renderProducts();
+          });
+        }
+        if (elements.productsSpecFilterClear) {
+          elements.productsSpecFilterClear.addEventListener("click", () => {
+            clearProductSpecFilter();
           });
         }
         if (elements.confirmSubmitDialog) {
