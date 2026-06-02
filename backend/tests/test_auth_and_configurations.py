@@ -731,3 +731,54 @@ def test_admin_catalog_editor_and_module_license_crud() -> None:
     assert r2.json()["licenses"] == []
 
     assert client.delete(f"/products/{pid}", headers=headers).status_code == 200
+
+
+def test_admin_can_manage_spec_parameters_and_product_spec_values() -> None:
+    headers = _admin_headers()
+
+    created_param = client.post(
+        "/products/spec-parameters",
+        json={"code": "uplink_speed", "name": "Uplink speed", "sort_order": 5},
+        headers=headers,
+    )
+    assert created_param.status_code == 200, created_param.text
+    param_id = created_param.json()["id"]
+
+    product = client.post(
+        "/products",
+        json={
+            "name": "Spec Value Product",
+            "description": "x",
+            "technical_spec_values": [
+                {"parameter_id": param_id, "value": "2 x 100GE"},
+            ],
+        },
+        headers=headers,
+    )
+    assert product.status_code == 200, product.text
+    pid = product.json()["id"]
+    assert len(product.json().get("technical_spec_values", [])) == 1
+
+    listed = client.get(
+        "/products",
+        params={"spec_parameter_code": "uplink_speed", "spec_value": "100ge"},
+        headers=headers,
+    )
+    assert listed.status_code == 200, listed.text
+    assert any(x["id"] == pid for x in listed.json())
+
+    blocked_delete = client.delete(f"/products/spec-parameters/{param_id}", headers=headers)
+    assert blocked_delete.status_code == 400
+
+    clear_specs = client.patch(
+        f"/products/{pid}",
+        json={"technical_spec_values": []},
+        headers=headers,
+    )
+    assert clear_specs.status_code == 200
+    assert clear_specs.json().get("technical_spec_values") == []
+
+    free_delete = client.delete(f"/products/spec-parameters/{param_id}", headers=headers)
+    assert free_delete.status_code == 200
+
+    assert client.delete(f"/products/{pid}", headers=headers).status_code == 200

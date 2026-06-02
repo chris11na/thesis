@@ -11,6 +11,8 @@ from app.models import (
     Product,
     Module,
     License,
+    SpecParameter,
+    ProductSpecValue,
     Company,
     User,
     CompatibilityRule,
@@ -92,6 +94,23 @@ def setup_admin(app: FastAPI) -> None:
     class LicenseAdmin(ModelView, model=License):
         column_list = [License.id, License.name, License.product_id]
 
+    class SpecParameterAdmin(ModelView, model=SpecParameter):
+        column_list = [
+            SpecParameter.id,
+            SpecParameter.code,
+            SpecParameter.name,
+            SpecParameter.sort_order,
+            SpecParameter.is_active,
+        ]
+
+    class ProductSpecValueAdmin(ModelView, model=ProductSpecValue):
+        column_list = [
+            ProductSpecValue.id,
+            ProductSpecValue.product_id,
+            ProductSpecValue.parameter_id,
+            ProductSpecValue.value,
+        ]
+
     class CompanyAdmin(ModelView, model=Company):
         column_list = [Company.id, Company.name, Company.domain]
 
@@ -130,6 +149,8 @@ def setup_admin(app: FastAPI) -> None:
     admin.add_view(ProductAdmin)
     admin.add_view(ModuleAdmin)
     admin.add_view(LicenseAdmin)
+    admin.add_view(SpecParameterAdmin)
+    admin.add_view(ProductSpecValueAdmin)
     admin.add_view(CompanyAdmin)
     admin.add_view(UserAdmin)
     admin.add_view(CompatibilityRuleAdmin)

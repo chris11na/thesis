@@ -9,8 +9,10 @@ from app.models.configuration_item import ConfigurationItem
 from app.models.license import License
 from app.models.module import Module
 from app.models.product import Product
+from app.models.product_spec_value import ProductSpecValue
 from app.models.product_incompatible_pair import ProductIncompatiblePair
 from app.models.role import Role
+from app.models.spec_parameter import SpecParameter
 from app.models.user import User
 from app.core.security import hash_password, is_supported_password_hash
 
@@ -221,6 +223,56 @@ def _seed_demo_equipment(db: Session) -> None:
     _dedupe_demo_products_by_canonical_name(db)
 
 
+def _ensure_spec_parameter(db: Session, code: str, name: str, sort_order: int) -> int:
+    row = db.query(SpecParameter).filter(SpecParameter.code == code).first()
+    if row is None:
+        row = SpecParameter(
+            code=code,
+            name=name,
+            sort_order=sort_order,
+            is_active=True,
+        )
+        db.add(row)
+        db.flush()
+    return row.id
+
+
+def _seed_demo_spec_values(db: Session) -> None:
+    p_wireless = _ensure_spec_parameter(db, "wireless_standard", "Wireless standard", 10)
+    p_ports = _ensure_spec_parameter(db, "ports", "Ports", 20)
+    p_throughput = _ensure_spec_parameter(db, "throughput", "Throughput", 30)
+    p_slots = _ensure_spec_parameter(db, "slots", "Slots", 40)
+
+    demo_values: list[tuple[int, int, str]] = [
+        (501, p_wireless, "802.11ax"),
+        (501, p_throughput, "Up to 10 Gbps"),
+        (502, p_ports, "48x GE + 4x 10GE"),
+        (502, p_slots, "8 SFP/SFP+ slots"),
+        (503, p_wireless, "802.11ax"),
+        (503, p_throughput, "Up to 10 Gbps"),
+        (504, p_ports, "48x GE + 4x 10GE"),
+        (504, p_slots, "8 SFP/SFP+ slots"),
+    ]
+    for product_id, parameter_id, value in demo_values:
+        exists = (
+            db.query(ProductSpecValue)
+            .filter(
+                ProductSpecValue.product_id == product_id,
+                ProductSpecValue.parameter_id == parameter_id,
+            )
+            .first()
+        )
+        if exists is None:
+            db.add(
+                ProductSpecValue(
+                    product_id=product_id,
+                    parameter_id=parameter_id,
+                    value=value,
+                    value_search=value.lower()[:512],
+                )
+            )
+
+
 def seed_initial_data(db: Session) -> None:
     """
     Seed minimal data for the frontend prototype.
@@ -303,6 +355,7 @@ def seed_initial_data(db: Session) -> None:
             )
 
     _seed_demo_equipment(db)
+    _seed_demo_spec_values(db)
 
     db.commit()
 

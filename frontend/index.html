@@ -1649,6 +1649,10 @@
         margin-bottom: 14px;
         max-width: 52rem;
       }
+
+      .products-search-wrap {
+        margin-bottom: 10px;
+      }
     </style>
   </head>
 
@@ -1703,6 +1707,14 @@
               <div class="divider"></div>
             </div>
 
+            <div class="products-search-wrap">
+              <input
+                type="search"
+                id="products-search-input"
+                placeholder="Поиск по названию или параметрам"
+                autocomplete="off"
+              />
+            </div>
             <ul class="products-list" id="products-list"></ul>
             <div class="scroll-hint debug-only">
               Если продуктов станет много — блок можно прокручивать.
@@ -2111,6 +2123,7 @@
         langToggleBtn: document.getElementById("lang-toggle-btn"),
         appPageTitle: document.getElementById("app-page-title"),
         productsList: document.getElementById("products-list"),
+        productsSearchInput: document.getElementById("products-search-input"),
         productsCounter: document.getElementById("products-counter"),
         productsSource: document.getElementById("products-source"),
         productsStatusArea: document.getElementById("products-status-area"),
@@ -2241,6 +2254,11 @@
           elements.projectNotesInput.placeholder = isEn
             ? "Comment / note for sales team"
             : "Комментарий / примечание для отдела продаж";
+        }
+        if (elements.productsSearchInput) {
+          elements.productsSearchInput.placeholder = isEn
+            ? "Search by name or specs"
+            : "Поиск по названию или параметрам";
         }
         if (elements.headerBlurbUser) {
           elements.headerBlurbUser.textContent = isEn
@@ -2382,6 +2400,7 @@
           renderSelectedPills();
           updateCounter();
         }
+        requestAnimationFrame(syncProductsSectionHeight);
         if (elements.projectContactHelp) {
           elements.projectContactHelp.title = isEn
             ? "Contact person and email for the project are optional. If you leave them blank, sales will use the email on your account (the one you signed in with)."
@@ -2414,6 +2433,8 @@
       }
 
       let products = [];
+      let specParameters = [];
+      let productSearchTerm = "";
       /** @type {object|null} Built POST /configurations body awaiting confirm dialog. */
       let pendingConfigurationPayload = null;
       let adminEditingProductId = null;
@@ -3145,6 +3166,7 @@
             (elements.adminProductDesc && elements.adminProductDesc.value) || "",
           technical_specs:
             (elements.adminProductSpecs && elements.adminProductSpecs.value) || "",
+          technical_spec_values: [],
           product_category:
             (elements.adminProductCategory && elements.adminProductCategory.value) || "",
           built_in_license_units:
@@ -3156,6 +3178,19 @@
           rules_json: "",
         };
         openAdminProductDrawer(draft, { createMode: true });
+      }
+
+      async function loadSpecParametersForAdmin() {
+        if (getCurrentRoleId() !== 1) return;
+        try {
+          const res = await apiFetch("/products/spec-parameters?include_inactive=true");
+          const data = await res.json().catch(() => null);
+          if (!res.ok) throw new Error((data && data.detail) || "spec params load failed");
+          specParameters = Array.isArray(data) ? data : [];
+        } catch (e) {
+          console.error(e);
+          specParameters = [];
+        }
       }
 
       function refreshAdminProductUserPreview() {
@@ -4343,11 +4378,102 @@
         taDesc.value = p.description || "";
         addFieldWide(isEn ? "Description" : "Описание", taDesc);
 
-        const taSpecs = document.createElement("textarea");
-        taSpecs.className = "admin-textarea-specs";
-        taSpecs.rows = 10;
-        taSpecs.value = p.technical_specs || "";
-        addFieldWide(isEn ? "Technical specifications" : "Технические характеристики", taSpecs);
+        const specValuesBlock = document.createElement("div");
+        specValuesBlock.className = "edit-grid-cell-wide";
+        const specValuesLabel = document.createElement("label");
+        specValuesLabel.textContent = isEn
+          ? "Technical parameters"
+          : "Технические параметры";
+        specValuesBlock.appendChild(specValuesLabel);
+        const specValuesHint = document.createElement("div");
+        specValuesHint.className = "field-description";
+        specValuesHint.style.marginBottom = "8px";
+        specValuesHint.textContent = isEn
+          ? "Choose a parameter and set its value. Parameter list is managed by admin."
+          : "Выберите параметр и задайте его значение. Список параметров настраивается администратором.";
+        specValuesBlock.appendChild(specValuesHint);
+        const specValuesRows = document.createElement("div");
+        specValuesRows.style.display = "grid";
+        specValuesRows.style.gap = "8px";
+        specValuesBlock.appendChild(specValuesRows);
+        const fallbackSpecs = document.createElement("textarea");
+        fallbackSpecs.className = "admin-textarea-specs";
+        fallbackSpecs.rows = 4;
+        fallbackSpecs.placeholder = isEn
+          ? "Legacy plain text specs (optional)"
+          : "Устаревший текст характеристик (необязательно)";
+        fallbackSpecs.value = p.technical_specs || "";
+        specValuesBlock.appendChild(fallbackSpecs);
+        const addSpecRowBtn = document.createElement("button");
+        addSpecRowBtn.type = "button";
+        addSpecRowBtn.className = "secondary-btn";
+        addSpecRowBtn.style.width = "fit-content";
+        addSpecRowBtn.textContent = isEn ? "Add parameter" : "Добавить параметр";
+        specValuesBlock.appendChild(addSpecRowBtn);
+        grid.appendChild(specValuesBlock);
+
+        function collectSpecValuesFromEditor() {
+          const rows = [];
+          const used = new Set();
+          const rowEls = specValuesRows.querySelectorAll("[data-spec-row='1']");
+          for (const rowEl of rowEls) {
+            const sel = rowEl.querySelector("select");
+            const inp = rowEl.querySelector("input");
+            if (!sel || !inp) continue;
+            const pid = parseInt(sel.value, 10);
+            const value = (inp.value || "").trim();
+            if (!Number.isFinite(pid) || !value) continue;
+            if (used.has(pid)) continue;
+            used.add(pid);
+            rows.push({ parameter_id: pid, value });
+          }
+          return rows;
+        }
+
+        function addSpecRow(initialParameterId, initialValue) {
+          const row = document.createElement("div");
+          row.dataset.specRow = "1";
+          row.style.display = "grid";
+          row.style.gridTemplateColumns = "minmax(200px, 260px) minmax(220px, 1fr) auto";
+          row.style.gap = "8px";
+          const sel = document.createElement("select");
+          const emptyOpt = document.createElement("option");
+          emptyOpt.value = "";
+          emptyOpt.textContent = isEn ? "Select parameter" : "Выберите параметр";
+          sel.appendChild(emptyOpt);
+          specParameters.forEach((sp) => {
+            const opt = document.createElement("option");
+            opt.value = String(sp.id);
+            opt.textContent = sp.name || sp.code || ("#" + sp.id);
+            sel.appendChild(opt);
+          });
+          if (initialParameterId != null) sel.value = String(initialParameterId);
+          const inp = document.createElement("input");
+          inp.type = "text";
+          inp.placeholder = isEn ? "Value" : "Значение";
+          inp.value = initialValue || "";
+          const delBtn = document.createElement("button");
+          delBtn.type = "button";
+          delBtn.className = "danger-btn";
+          delBtn.textContent = isEn ? "Delete" : "Удалить";
+          delBtn.addEventListener("click", () => row.remove());
+          row.appendChild(sel);
+          row.appendChild(inp);
+          row.appendChild(delBtn);
+          specValuesRows.appendChild(row);
+        }
+
+        const initialSpecValues = Array.isArray(p.technical_spec_values)
+          ? p.technical_spec_values
+          : [];
+        if (initialSpecValues.length > 0) {
+          initialSpecValues.forEach((x) =>
+            addSpecRow(x.parameter_id, x.value != null ? String(x.value) : "")
+          );
+        } else {
+          addSpecRow(null, "");
+        }
+        addSpecRowBtn.addEventListener("click", () => addSpecRow(null, ""));
 
         const inpCategory = document.createElement("input");
         inpCategory.type = "text";
@@ -4640,7 +4766,8 @@
           const body = {
             name: inpName.value.trim(),
             description: taDesc.value.trim(),
-            technical_specs: (taSpecs.value || "").trim() || "—",
+            technical_specs: (fallbackSpecs.value || "").trim() || "—",
+            technical_spec_values: collectSpecValuesFromEditor(),
             product_kind: "equipment",
             product_category:
               inpCategory.value.trim() === ""
@@ -5339,9 +5466,63 @@
           nothingSelected || hasBlockingWarning || !projectNameOk;
       }
 
+      function syncProductsSectionHeight() {
+        const productsSection = document.getElementById("products-section");
+        const configSection = document.querySelector(".configurator-ops-card");
+        if (!productsSection || !configSection) return;
+        if (window.matchMedia("(max-width: 800px)").matches) {
+          productsSection.style.height = "";
+          return;
+        }
+        const configHeight = Math.ceil(configSection.getBoundingClientRect().height);
+        if (configHeight > 0) {
+          productsSection.style.height = configHeight + "px";
+        }
+      }
+
       function renderProducts() {
         elements.productsList.innerHTML = "";
-        products.forEach((p) => {
+        const normalizedSearch = productSearchTerm.trim().toLowerCase();
+        const visibleProducts = products.filter((p) => {
+          if (!normalizedSearch) return true;
+          const specValuesText = Array.isArray(p.technical_spec_values)
+            ? p.technical_spec_values
+                .map((x) => {
+                  const name = x && x.parameter_name ? String(x.parameter_name) : "";
+                  const value = x && x.value ? String(x.value) : "";
+                  return `${name} ${value}`.trim();
+                })
+                .join(" ")
+            : "";
+          const haystack = [
+            p.name,
+            p.description,
+            p.technical_specs,
+            p.product_category,
+            p.product_kind,
+            specValuesText,
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+          return haystack.includes(normalizedSearch);
+        });
+
+        if (visibleProducts.length === 0) {
+          const li = document.createElement("li");
+          li.className = "product-item";
+          li.style.cursor = "default";
+          li.style.opacity = "0.85";
+          li.textContent = catT(
+            "Ничего не найдено. Попробуйте другой запрос.",
+            "No matches found. Try another search."
+          );
+          elements.productsList.appendChild(li);
+          requestAnimationFrame(syncProductsSectionHeight);
+          return;
+        }
+
+        visibleProducts.forEach((p) => {
           const li = document.createElement("li");
           li.className =
             "product-item" + (isProductSelected(p.id) ? " selected" : "");
@@ -5363,8 +5544,19 @@
 
           const descText = (p.description ?? "").trim();
           const specsText = (p.technical_specs ?? "").trim();
+          const specValues = Array.isArray(p.technical_spec_values)
+            ? p.technical_spec_values.filter(
+                (x) =>
+                  x &&
+                  x.parameter_name &&
+                  String(x.parameter_name).trim() &&
+                  x.value &&
+                  String(x.value).trim()
+              )
+            : [];
           const expanded = productCardExpandedIds.has(p.id);
-          const hasAnyText = descText.length > 0 || specsText.length > 0;
+          const hasAnyText =
+            descText.length > 0 || specsText.length > 0 || specValues.length > 0;
           let descInnerEl = null;
           let specInnerEl = null;
 
@@ -5379,7 +5571,30 @@
             desc.appendChild(descInner);
             descInnerEl = descInner;
           }
-          if (specsText) {
+          if (specValues.length > 0) {
+            const specWrap = document.createElement("div");
+            specWrap.className = "product-specs-block";
+            const specLab = document.createElement("div");
+            specLab.style.fontWeight = "600";
+            specLab.style.fontSize = "11px";
+            specLab.style.color = "#64748b";
+            specLab.style.marginBottom = "2px";
+            specLab.textContent = catT(
+              "Технические параметры",
+              "Technical parameters"
+            );
+            const specInner = document.createElement("div");
+            specInner.className = expanded
+              ? "product-text-expanded"
+              : "product-text-clamp";
+            specInner.textContent = specValues
+              .map((x) => `${x.parameter_name}: ${x.value}`)
+              .join(" · ");
+            specWrap.appendChild(specLab);
+            specWrap.appendChild(specInner);
+            desc.appendChild(specWrap);
+            specInnerEl = specInner;
+          } else if (specsText) {
             const specWrap = document.createElement("div");
             specWrap.className = "product-specs-block";
             const specLab = document.createElement("div");
@@ -5494,6 +5709,7 @@
             });
           }
         });
+        requestAnimationFrame(syncProductsSectionHeight);
       }
 
       function renderSelectedPills() {
@@ -5741,6 +5957,7 @@
         licenseSuggestFeedbackByProductId.clear();
         optionsCache = {};
         productCardExpandedIds.clear();
+        await loadSpecParametersForAdmin();
         renderProducts();
         renderSelectedPills();
         updateCounter();
@@ -6133,6 +6350,12 @@
             updateCreateConfigBtnState();
           });
         }
+        if (elements.productsSearchInput) {
+          elements.productsSearchInput.addEventListener("input", () => {
+            productSearchTerm = elements.productsSearchInput.value || "";
+            renderProducts();
+          });
+        }
         if (elements.confirmSubmitDialog) {
           elements.confirmSubmitDialog.addEventListener("close", () => {
             pendingConfigurationPayload = null;
@@ -6189,6 +6412,9 @@
             applyUiLanguage(uiLang === "ru" ? "en" : "ru");
           });
         }
+        window.addEventListener("resize", () => {
+          syncProductsSectionHeight();
+        });
         if (elements.adminProductDrawerClose) {
           elements.adminProductDrawerClose.addEventListener("click", () => {
             adminEditingProductId = null;
@@ -6214,6 +6440,7 @@
           rpv();
         }
 
+        syncProductsSectionHeight();
         loadProducts();
       }
 

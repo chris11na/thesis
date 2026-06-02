@@ -12,6 +12,8 @@ from app.models.configuration_item import ConfigurationItem
 from app.models.license import License
 from app.models.module import Module
 from app.models.product import Product
+from app.models.product_spec_value import ProductSpecValue
+from app.models.spec_parameter import SpecParameter
 from app.models.product_incompatible_pair import ProductIncompatiblePair
 from app.services.config_validation import suggest_license_packs
 from app.services.product_rules_runtime import (
@@ -80,6 +82,7 @@ class ProductCreate(BaseModel):
     module_speeds_json: str | None = None
     max_module_slots: int | None = None
     rules_json: str | None = None
+    technical_spec_values: list[dict] | None = None
 
 
 class ProductUpdate(BaseModel):
@@ -92,11 +95,245 @@ class ProductUpdate(BaseModel):
     module_speeds_json: str | None = None
     max_module_slots: int | None = None
     rules_json: str | None = None
+    technical_spec_values: list[dict] | None = None
+
+
+class SpecParameterCreate(BaseModel):
+    code: str
+    name: str
+    sort_order: int = 0
+    is_active: bool = True
+
+
+class SpecParameterUpdate(BaseModel):
+    code: str | None = None
+    name: str | None = None
+    sort_order: int | None = None
+    is_active: bool | None = None
+
+
+def _normalize_spec_values_payload(values: list[dict] | None) -> list[dict]:
+    if values is None:
+        return []
+    out: list[dict] = []
+    seen_param_ids: set[int] = set()
+    for row in values:
+        if not isinstance(row, dict):
+            raise HTTPException(
+                status_code=400, detail="technical_spec_values rows must be objects"
+            )
+        pid_raw = row.get("parameter_id")
+        val_raw = row.get("value")
+        if pid_raw is None:
+            raise HTTPException(status_code=400, detail="parameter_id is required")
+        try:
+            pid = int(pid_raw)
+        except Exception:
+            raise HTTPException(status_code=400, detail="parameter_id must be integer")
+        if pid in seen_param_ids:
+            raise HTTPException(
+                status_code=400, detail="parameter_id must be unique per product"
+            )
+        seen_param_ids.add(pid)
+        val = "" if val_raw is None else str(val_raw).strip()
+        if not val:
+            continue
+        out.append({"parameter_id": pid, "value": val, "value_search": val.lower()[:512]})
+    return out
+
+
+def _load_product_spec_values(db: Session, product_ids: list[int]) -> dict[int, list[dict]]:
+    out: dict[int, list[dict]] = {pid: [] for pid in product_ids}
+    if not product_ids:
+        return out
+    rows = (
+        db.query(ProductSpecValue, SpecParameter)
+        .join(SpecParameter, SpecParameter.id == ProductSpecValue.parameter_id)
+        .filter(ProductSpecValue.product_id.in_(product_ids))
+        .order_by(SpecParameter.sort_order, SpecParameter.id, ProductSpecValue.id)
+        .all()
+    )
+    for spec_val, param in rows:
+        out.setdefault(spec_val.product_id, []).append(
+            {
+                "parameter_id": param.id,
+                "parameter_code": param.code,
+                "parameter_name": param.name,
+                "value": spec_val.value,
+            }
+        )
+    return out
+
+
+def _set_product_spec_values(db: Session, product_id: int, values: list[dict]) -> None:
+    db.query(ProductSpecValue).filter(ProductSpecValue.product_id == product_id).delete(
+        synchronize_session=False
+    )
+    if not values:
+        return
+    allowed_ids = {
+        pid
+        for (pid,) in db.query(SpecParameter.id)
+        .filter(SpecParameter.id.in_([x["parameter_id"] for x in values]))
+        .all()
+    }
+    for row in values:
+        if row["parameter_id"] not in allowed_ids:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Spec parameter id={row['parameter_id']} does not exist",
+            )
+        db.add(
+            ProductSpecValue(
+                product_id=product_id,
+                parameter_id=row["parameter_id"],
+                value=row["value"],
+                value_search=row["value_search"],
+            )
+        )
+
+
+@router.get("/spec-parameters")
+def list_spec_parameters(
+    include_inactive: bool = Query(False),
+    db: Session = Depends(get_db),
+):
+    q = db.query(SpecParameter)
+    if not include_inactive:
+        q = q.filter(SpecParameter.is_active == True)  # noqa: E712
+    rows = q.order_by(SpecParameter.sort_order, SpecParameter.id).all()
+    return [
+        {
+            "id": x.id,
+            "code": x.code,
+            "name": x.name,
+            "sort_order": x.sort_order,
+            "is_active": x.is_active,
+        }
+        for x in rows
+    ]
+
+
+@router.post("/spec-parameters")
+def create_spec_parameter(
+    payload: SpecParameterCreate,
+    db: Session = Depends(get_db),
+    _: dict = Depends(require_roles(1)),
+):
+    code = (payload.code or "").strip().lower()
+    name = (payload.name or "").strip()
+    if not code:
+        raise HTTPException(status_code=400, detail="code is required")
+    if not name:
+        raise HTTPException(status_code=400, detail="name is required")
+    exists = db.query(SpecParameter).filter(SpecParameter.code == code).first()
+    if exists:
+        raise HTTPException(status_code=409, detail="Spec parameter code already exists")
+    row = SpecParameter(
+        code=code,
+        name=name,
+        sort_order=payload.sort_order,
+        is_active=payload.is_active,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return {
+        "id": row.id,
+        "code": row.code,
+        "name": row.name,
+        "sort_order": row.sort_order,
+        "is_active": row.is_active,
+    }
+
+
+@router.patch("/spec-parameters/{parameter_id}")
+def update_spec_parameter(
+    parameter_id: int,
+    payload: SpecParameterUpdate,
+    db: Session = Depends(get_db),
+    _: dict = Depends(require_roles(1)),
+):
+    row = db.query(SpecParameter).filter(SpecParameter.id == parameter_id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Spec parameter not found")
+    data = payload.model_dump(exclude_unset=True)
+    if "code" in data and data["code"] is not None:
+        code = str(data["code"]).strip().lower()
+        if not code:
+            raise HTTPException(status_code=400, detail="code cannot be empty")
+        exists = (
+            db.query(SpecParameter)
+            .filter(SpecParameter.code == code, SpecParameter.id != parameter_id)
+            .first()
+        )
+        if exists:
+            raise HTTPException(status_code=409, detail="Spec parameter code already exists")
+        row.code = code
+    if "name" in data and data["name"] is not None:
+        name = str(data["name"]).strip()
+        if not name:
+            raise HTTPException(status_code=400, detail="name cannot be empty")
+        row.name = name
+    if "sort_order" in data and data["sort_order"] is not None:
+        row.sort_order = int(data["sort_order"])
+    if "is_active" in data and data["is_active"] is not None:
+        row.is_active = bool(data["is_active"])
+    db.commit()
+    db.refresh(row)
+    return {
+        "id": row.id,
+        "code": row.code,
+        "name": row.name,
+        "sort_order": row.sort_order,
+        "is_active": row.is_active,
+    }
+
+
+@router.delete("/spec-parameters/{parameter_id}")
+def delete_spec_parameter(
+    parameter_id: int,
+    db: Session = Depends(get_db),
+    _: dict = Depends(require_roles(1)),
+):
+    row = db.query(SpecParameter).filter(SpecParameter.id == parameter_id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Spec parameter not found")
+    used = (
+        db.query(ProductSpecValue.id)
+        .filter(ProductSpecValue.parameter_id == parameter_id)
+        .first()
+    )
+    if used:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete spec parameter that is used in products",
+        )
+    db.delete(row)
+    db.commit()
+    return {"status": "ok"}
 
 
 @router.get("")
-def list_products(db: Session = Depends(get_db)):
-    products = db.query(Product).order_by(Product.id).all()
+def list_products(
+    spec_parameter_code: str | None = Query(None),
+    spec_value: str | None = Query(None),
+    db: Session = Depends(get_db),
+):
+    q = db.query(Product)
+    code = (spec_parameter_code or "").strip().lower()
+    value = (spec_value or "").strip().lower()
+    if code and value:
+        q = q.join(ProductSpecValue, ProductSpecValue.product_id == Product.id).join(
+            SpecParameter, SpecParameter.id == ProductSpecValue.parameter_id
+        )
+        q = q.filter(
+            SpecParameter.code == code,
+            ProductSpecValue.value_search.contains(value),
+        )
+        q = q.distinct()
+    products = q.order_by(Product.id).all()
+    specs_by_product = _load_product_spec_values(db, [p.id for p in products])
     out = []
     for p in products:
         row = {
@@ -110,6 +347,7 @@ def list_products(db: Session = Depends(get_db)):
             "module_speeds_json": getattr(p, "module_speeds_json", None),
             "max_module_slots": getattr(p, "max_module_slots", None),
             "rules_json": getattr(p, "rules_json", None),
+            "technical_spec_values": specs_by_product.get(p.id, []),
         }
         mod_n = db.query(Module).filter(Module.product_id == p.id).count()
         lic_n = db.query(License).filter(License.product_id == p.id).count()
@@ -148,6 +386,7 @@ def get_configuration_options(product_id: int, db: Session = Depends(get_db)):
         "built_in_license_units": built_eff,
         "max_module_slots": max_slots_eff,
         "rules_json": getattr(p, "rules_json", None),
+        "technical_spec_values": _load_product_spec_values(db, [p.id]).get(p.id, []),
         "module_speeds_supported": allow,
         "rules_runtime_sources": {
             "speed_allowlist": allow_src,
@@ -327,8 +566,15 @@ def create_product(
         rules_json=rj,
     )
     db.add(row)
+    db.flush()
+    _set_product_spec_values(
+        db,
+        row.id,
+        _normalize_spec_values_payload(payload.technical_spec_values),
+    )
     db.commit()
     db.refresh(row)
+    spec_values = _load_product_spec_values(db, [row.id]).get(row.id, [])
     return {
         "id": row.id,
         "name": row.name,
@@ -340,6 +586,7 @@ def create_product(
         "module_speeds_json": getattr(row, "module_speeds_json", None),
         "max_module_slots": getattr(row, "max_module_slots", None),
         "rules_json": getattr(row, "rules_json", None),
+        "technical_spec_values": spec_values,
     }
 
 
@@ -396,9 +643,16 @@ def update_product(
 
     if "rules_json" in data:
         row.rules_json = _parse_rules_json_field(data["rules_json"])
+    if "technical_spec_values" in data:
+        _set_product_spec_values(
+            db,
+            row.id,
+            _normalize_spec_values_payload(data["technical_spec_values"]),
+        )
 
     db.commit()
     db.refresh(row)
+    spec_values = _load_product_spec_values(db, [row.id]).get(row.id, [])
     return {
         "id": row.id,
         "name": row.name,
@@ -410,6 +664,7 @@ def update_product(
         "module_speeds_json": getattr(row, "module_speeds_json", None),
         "max_module_slots": getattr(row, "max_module_slots", None),
         "rules_json": getattr(row, "rules_json", None),
+        "technical_spec_values": spec_values,
     }
 
 
@@ -454,6 +709,9 @@ def _admin_delete_product_cascade(db: Session, product_id: int) -> None:
         synchronize_session=False
     )
     db.query(License).filter(License.product_id == product_id).delete(
+        synchronize_session=False
+    )
+    db.query(ProductSpecValue).filter(ProductSpecValue.product_id == product_id).delete(
         synchronize_session=False
     )
     db.query(Product).filter(Product.id == product_id).delete(synchronize_session=False)
