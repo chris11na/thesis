@@ -2429,9 +2429,9 @@
                       <th id="th-products-category">Категория</th>
                       <th id="th-products-kind">Тип</th>
                       <th id="th-products-desc">Описание</th>
-                      <th id="th-products-specs">Характеристики</th>
-                      <th id="th-products-slots">Слоты</th>
-                      <th id="th-products-ap">AP</th>
+                      <th id="th-products-section">Раздел</th>
+                      <th id="th-products-legacy-specs">Текст. характеристики</th>
+                      <th id="th-products-extra-params">Доп. параметры</th>
                       <th id="th-products-actions">Действия</th>
                     </tr>
                   </thead>
@@ -2886,12 +2886,18 @@
         if (thProductsKind) thProductsKind.textContent = isEn ? "Kind" : "Тип";
         const thProductsDesc = document.getElementById("th-products-desc");
         if (thProductsDesc) thProductsDesc.textContent = isEn ? "Description" : "Описание";
-        const thProductsSpecs = document.getElementById("th-products-specs");
-        if (thProductsSpecs) thProductsSpecs.textContent = isEn ? "Specs" : "Характеристики";
-        const thProductsSlots = document.getElementById("th-products-slots");
-        if (thProductsSlots) thProductsSlots.textContent = isEn ? "Slots" : "Слоты";
-        const thProductsAp = document.getElementById("th-products-ap");
-        if (thProductsAp) thProductsAp.textContent = isEn ? "Built-in AP" : "AP";
+        const thProductsSection = document.getElementById("th-products-section");
+        if (thProductsSection) thProductsSection.textContent = isEn ? "Section" : "Раздел";
+        const thProductsLegacySpecs = document.getElementById("th-products-legacy-specs");
+        if (thProductsLegacySpecs) {
+          thProductsLegacySpecs.textContent = isEn
+            ? "Text characteristics"
+            : "Текст. характеристики";
+        }
+        const thProductsExtraParams = document.getElementById("th-products-extra-params");
+        if (thProductsExtraParams) {
+          thProductsExtraParams.textContent = isEn ? "Extra parameters" : "Доп. параметры";
+        }
         const thProductsActions = document.getElementById("th-products-actions");
         if (thProductsActions) thProductsActions.textContent = isEn ? "Actions" : "Действия";
         const drawerTitle = document.getElementById("admin-product-drawer-title");
@@ -4687,18 +4693,55 @@
         }
       }
 
-      function formatProductSpecsSummary(p) {
-        const parts = [];
+      function getProductCatalogMeta(p) {
+        if (!p || p.rules_json == null || p.rules_json === "") return {};
+        try {
+          const rules =
+            typeof p.rules_json === "string" ? JSON.parse(p.rules_json) : p.rules_json;
+          if (!rules || typeof rules !== "object" || Array.isArray(rules)) return {};
+          return rules.catalog && typeof rules.catalog === "object" ? rules.catalog : {};
+        } catch {
+          return {};
+        }
+      }
+
+      function getProductSectionTitle(p) {
+        const meta = getProductCatalogMeta(p);
+        if (meta.section_title && String(meta.section_title).trim()) {
+          return String(meta.section_title).trim();
+        }
         const legacy = p.technical_specs && String(p.technical_specs).trim();
-        if (legacy && legacy !== "—") parts.push(legacy);
+        if (!legacy || legacy === "—") return "—";
+        const dot = legacy.indexOf(". ");
+        if (dot >= 0 && dot < legacy.length - 2) {
+          return legacy.slice(dot + 2).trim();
+        }
+        return "—";
+      }
+
+      function formatProductExtraParams(p) {
+        const parts = [];
         const specs = Array.isArray(p.technical_spec_values)
           ? p.technical_spec_values
           : [];
         specs.forEach((x) => {
           if (!x) return;
-          const label = x.parameter_name || x.parameter_code || "spec";
+          const code = String(x.parameter_code || "").toLowerCase();
+          if (code === "equipment_type") return;
+          const label = x.parameter_name || x.parameter_code || "param";
           parts.push(label + ": " + (x.value || "—"));
         });
+        if (p.built_in_license_units != null && p.built_in_license_units !== "") {
+          parts.push(
+            catT("Встроенные AP", "Built-in AP") + ": " + String(p.built_in_license_units)
+          );
+        }
+        if (p.max_module_slots != null && p.max_module_slots !== "") {
+          parts.push(catT("Слоты модулей", "Module slots") + ": " + String(p.max_module_slots));
+        }
+        if (Number(p.addon_options_count) > 0) {
+          parts.push(catT("Опции", "Add-ons") + ": " + String(p.addon_options_count));
+        }
         return parts.length ? parts.join("; ") : "—";
       }
 
@@ -4724,7 +4767,12 @@
             p.description && String(p.description).trim()
               ? String(p.description).trim()
               : "—";
-          const specsText = formatProductSpecsSummary(p);
+          const sectionText = getProductSectionTitle(p);
+          const legacySpecs =
+            p.technical_specs && String(p.technical_specs).trim()
+              ? String(p.technical_specs).trim()
+              : "—";
+          const extraParamsText = formatProductExtraParams(p);
 
           function addCell(text, opts) {
             const td = document.createElement("td");
@@ -4742,24 +4790,22 @@
               : "—"
           );
           addCell(p.product_kind || "equipment");
-          addCell(truncateCellText(descText, 120), {
+          addCell(truncateCellText(descText, 100), {
             className: "cell-wrap cell-muted",
             title: descText !== "—" ? descText : "",
           });
-          addCell(truncateCellText(specsText, 140), {
+          addCell(truncateCellText(sectionText, 80), {
             className: "cell-wrap cell-muted",
-            title: specsText !== "—" ? specsText : "",
+            title: sectionText !== "—" ? sectionText : "",
           });
-          addCell(
-            p.max_module_slots != null && p.max_module_slots !== ""
-              ? String(p.max_module_slots)
-              : "—"
-          );
-          addCell(
-            p.built_in_license_units != null && p.built_in_license_units !== ""
-              ? String(p.built_in_license_units)
-              : "—"
-          );
+          addCell(truncateCellText(legacySpecs, 100), {
+            className: "cell-wrap cell-muted",
+            title: legacySpecs !== "—" ? legacySpecs : "",
+          });
+          addCell(truncateCellText(extraParamsText, 120), {
+            className: "cell-wrap cell-muted",
+            title: extraParamsText !== "—" ? extraParamsText : "",
+          });
 
           const tdAct = document.createElement("td");
           tdAct.style.whiteSpace = "nowrap";
