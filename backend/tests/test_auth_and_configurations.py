@@ -251,7 +251,7 @@ def test_product_incompatible_pair_blocks_configuration() -> None:
     client.delete(f"/products/{id_b}", headers=headers)
 
 
-def test_register_returns_tokens_and_login_works() -> None:
+def test_register_returns_pending_until_admin_approves() -> None:
     email = f"reg-{uuid4().hex[:8]}@example.com"
     reg = client.post(
         "/auth/register",
@@ -259,13 +259,34 @@ def test_register_returns_tokens_and_login_works() -> None:
     )
     assert reg.status_code == 200
     body = reg.json()
-    assert body.get("access_token")
-    assert body.get("refresh_token")
+    assert body.get("status") == "pending"
+    assert body.get("is_approved") is False
+    assert not body.get("access_token")
+
+    login_pending = client.post(
+        "/auth/login",
+        json={"email": email, "password": "regpass1"},
+    )
+    assert login_pending.status_code == 403
+
+    admin_tok = client.post(
+        "/auth/login",
+        json={"email": "admin@example.com", "password": "admin123"},
+    ).json()["access_token"]
+    user_id = body["user_id"]
+    approve = client.patch(
+        f"/users/{user_id}",
+        json={"is_approved": True},
+        headers={"Authorization": f"Bearer {admin_tok}"},
+    )
+    assert approve.status_code == 200
+
     login = client.post(
         "/auth/login",
         json={"email": email, "password": "regpass1"},
     )
     assert login.status_code == 200
+    assert login.json().get("access_token")
 
 
 def test_register_rejects_unknown_domain() -> None:
@@ -531,7 +552,7 @@ def test_license_pack_suggestion_endpoint() -> None:
 
 
 def test_license_pack_suggestion_merges_duplicate_license_rows() -> None:
-    """need=17 with x16 packs: greedy 1 + remainder 1 => one row qty 2, not two rows."""
+    """need=17: prefer one x32 pack instead of two x16 packs."""
     tok = _user_token()
     r = client.get(
         "/products/501/license-pack-suggestion",
@@ -543,8 +564,10 @@ def test_license_pack_suggestion_merges_duplicate_license_rows() -> None:
     assert data.get("needed_extra_units") == 17
     assert data.get("residual_units_short") == 0
     rows_521 = [x for x in data["suggestion"] if x["license_id"] == 521]
-    assert len(rows_521) == 1
-    assert rows_521[0]["quantity"] == 2
+    rows_522 = [x for x in data["suggestion"] if x["license_id"] == 522]
+    assert len(rows_521) == 0
+    assert len(rows_522) == 1
+    assert rows_522[0]["quantity"] == 1
 
 
 def test_configuration_sales_handoff_metadata_and_admin_submission_list() -> None:
@@ -765,7 +788,9 @@ def test_admin_can_manage_spec_parameters_and_product_spec_values() -> None:
         headers=headers,
     )
     assert listed.status_code == 200, listed.text
-    assert any(x["id"] == pid for x in listed.json())
+    payload = listed.json()
+    items = payload["items"] if isinstance(payload, dict) and "items" in payload else payload
+    assert any(x["id"] == pid for x in items)
 
     blocked_delete = client.delete(f"/products/spec-parameters/{param_id}", headers=headers)
     assert blocked_delete.status_code == 400

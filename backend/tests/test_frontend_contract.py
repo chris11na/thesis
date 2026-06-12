@@ -14,6 +14,8 @@ def test_login_page_has_login_controls() -> None:
     assert "/auth/login" in html
     assert "/auth/register" in html
     assert 'id="register-btn"' in html
+    assert 'assets/logo.svg' in html
+    assert "registerPending" in html
 
 
 def test_index_has_session_logout_and_auth_status() -> None:
@@ -27,6 +29,9 @@ def test_frontend_contains_role_badge_and_admin_block() -> None:
     html = _read("frontend/index.html")
     assert 'id="role-badge"' in html
     assert 'id="admin-catalog-block"' in html
+    assert 'assets/logo.svg' in html
+    assert 'id="products-pagination"' in html
+    assert 'id="admin-spec-params-tbody"' in html
 
 
 def test_frontend_contains_token_refresh_and_logout_flow() -> None:
@@ -40,6 +45,6 @@ def test_frontend_contains_token_refresh_and_logout_flow() -> None:
 
 def test_frontend_contains_configuration_guard_for_missing_login() -> None:
     html = _read("frontend/index.html")
-    assert "async function createConfiguration()" in html
+    assert "function beginCreateConfigurationFlow()" in html
     assert "if (!accessToken)" in html
     assert "/configurations" in html

@@ -141,6 +141,11 @@ def _oauth_error_redirect(detail: str) -> RedirectResponse:
 
 
 def _issue_app_token(user: User, db: Session) -> dict:
+    if user.role_id != 1 and not getattr(user, "is_approved", False):
+        raise HTTPException(
+            status_code=403,
+            detail="Account is pending administrator approval",
+        )
     access_token = create_access_token(
         data={
             "sub": str(user.id),
@@ -215,6 +220,7 @@ def _provision_or_get_user_for_domain(db: Session, email: str, display_name: str
         password_hash="oauth_not_used",
         role_id=role_id,
         company_id=company.id,
+        is_approved=False,
     )
     db.add(user)
     db.commit()
@@ -266,6 +272,11 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
             raise HTTPException(
                 status_code=403,
                 detail="Email domain does not match registered organization",
+            )
+        if not getattr(user, "is_approved", False):
+            raise HTTPException(
+                status_code=403,
+                detail="Account is pending administrator approval",
             )
 
     return _issue_app_token(user, db)
@@ -319,11 +330,18 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
         password_hash=hash_password(payload.password),
         role_id=role_id,
         company_id=company.id,
+        is_approved=False,
     )
     db.add(user)
     db.commit()
     db.refresh(user)
-    return _issue_app_token(user, db)
+    return {
+        "status": "pending",
+        "message": "Registration submitted. An administrator must approve your account before you can sign in.",
+        "user_id": user.id,
+        "email": user.email,
+        "is_approved": False,
+    }
 
 
 @router.post("/refresh")

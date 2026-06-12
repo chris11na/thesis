@@ -47,6 +47,17 @@
         color: #111827;
         line-height: 1.25;
       }
+      .brand-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+      .brand-logo {
+        width: 40px;
+        height: 40px;
+        flex-shrink: 0;
+      }
       .lang-toggle-btn {
         flex-shrink: 0;
         padding: 6px 10px;
@@ -238,9 +249,12 @@
   </head>
   <body>
     <div class="card">
-      <div class="card-header-row">
-        <h1 id="login-title">Вход и регистрация</h1>
-        <button type="button" class="lang-toggle-btn" id="lang-toggle-btn">RU</button>
+      <div class="brand-row">
+        <img class="brand-logo" src="assets/logo.svg" alt="" width="40" height="40" />
+        <div class="card-header-row" style="margin-bottom:0;flex:1">
+          <h1 id="login-title">Вход и регистрация</h1>
+          <button type="button" class="lang-toggle-btn" id="lang-toggle-btn">RU</button>
+        </div>
       </div>
       <p class="subtitle" id="login-subtitle">
         Конфигуратор откроется после успешного входа или регистрации.
@@ -360,6 +374,8 @@
           regEmailPh: "you@yourcompany.com",
           regPasswordPh: "Не менее 6 символов",
           registerProgress: "Создаём аккаунт…",
+          registerPending:
+            "Регистрация отправлена. Дождитесь одобрения администратором, затем войдите.",
           loginProgress: "Входим…",
           oauthChecking: "Проверяем способы входа…",
           signInGoogle: "Войти через Google",
@@ -395,6 +411,8 @@
           regEmailPh: "you@yourcompany.com",
           regPasswordPh: "At least 6 characters",
           registerProgress: "Creating your account…",
+          registerPending:
+            "Registration submitted. Wait for administrator approval, then sign in.",
           loginProgress: "Signing in…",
           oauthChecking: "Checking sign-in options…",
           signInGoogle: "Sign in with Google",
@@ -702,6 +720,11 @@
                 i18n[currentLang].registerErrorFallback,
               "error"
             );
+            return;
+          }
+          if (json && json.status === "pending") {
+            setAuthStatus(i18n[currentLang].registerPending, "success");
+            showPanel("login");
             return;
           }
           storeTokensAndGo(json);

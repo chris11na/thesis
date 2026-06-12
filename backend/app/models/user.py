@@ -1,4 +1,4 @@
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import String, ForeignKey, Boolean, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -14,6 +14,8 @@ class User(Base):
 
     role_id: Mapped[int] = mapped_column(ForeignKey("roles.id"))
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
+    is_approved: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    admin_comment: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     role = relationship("Role")
     company = relationship("Company")

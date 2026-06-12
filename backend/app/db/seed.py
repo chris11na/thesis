@@ -307,6 +307,7 @@ def seed_initial_data(db: Session) -> None:
                 password_hash=hash_password("admin123"),
                 role_id=1,
                 company_id=1,
+                is_approved=True,
             )
         )
     elif not is_supported_password_hash(admin_user.password_hash):
@@ -332,6 +333,7 @@ def seed_initial_data(db: Session) -> None:
             by_email.password_hash = hash_password("user123")
             by_email.role_id = 2
             by_email.company_id = 1
+            by_email.is_approved = True
             by_email.name = by_email.name or "Prototype User"
             em = by_email.email.strip().lower()
             if by_email.email != em:
@@ -342,6 +344,7 @@ def seed_initial_data(db: Session) -> None:
             by_id2.password_hash = hash_password("user123")
             by_id2.role_id = 2
             by_id2.company_id = 1
+            by_id2.is_approved = True
         else:
             db.add(
                 User(
@@ -351,11 +354,16 @@ def seed_initial_data(db: Session) -> None:
                     password_hash=hash_password("user123"),
                     role_id=2,
                     company_id=1,
+                    is_approved=True,
                 )
             )
 
     _seed_demo_equipment(db)
     _seed_demo_spec_values(db)
+
+    from app.services.equipment_catalog_loader import maybe_seed_equipment_catalog
+
+    maybe_seed_equipment_catalog(db)
 
     db.commit()
 

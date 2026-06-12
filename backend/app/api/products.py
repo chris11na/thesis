@@ -2,7 +2,7 @@ import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_roles
@@ -16,6 +16,11 @@ from app.models.product_spec_value import ProductSpecValue
 from app.models.spec_parameter import SpecParameter
 from app.models.product_incompatible_pair import ProductIncompatiblePair
 from app.services.config_validation import suggest_license_packs
+from app.services.service_catalog import (
+    find_service_products_for_equipment,
+    is_service_attachable,
+    parse_catalog_meta,
+)
 from app.services.product_rules_runtime import (
     effective_built_in_license_units,
     effective_max_module_slots,
@@ -316,26 +321,65 @@ def delete_spec_parameter(
 
 @router.get("")
 def list_products(
+    q: str | None = Query(None, description="Search by name, description, specs"),
+    product_kind: str | None = Query(None),
+    product_category: str | None = Query(None, description="Equipment type code, e.g. VA"),
     spec_parameter_code: str | None = Query(None),
     spec_value: str | None = Query(None),
+    configurator_only: bool = Query(False),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
 ):
-    q = db.query(Product)
+    query = db.query(Product)
+
+    kind = (product_kind or "").strip().lower()
+    if kind:
+        query = query.filter(func.lower(Product.product_kind) == kind)
+
+    category = (product_category or "").strip().upper()
+    if category:
+        query = query.filter(func.upper(Product.product_category) == category)
+
+    if configurator_only:
+        query = query.filter(func.lower(Product.product_kind) == "equipment")
+
     code = (spec_parameter_code or "").strip().lower()
     value = (spec_value or "").strip().lower()
     if code and value:
-        q = q.join(ProductSpecValue, ProductSpecValue.product_id == Product.id).join(
+        query = query.join(ProductSpecValue, ProductSpecValue.product_id == Product.id).join(
             SpecParameter, SpecParameter.id == ProductSpecValue.parameter_id
         )
-        q = q.filter(
+        query = query.filter(
             SpecParameter.code == code,
             ProductSpecValue.value_search.contains(value),
         )
-        q = q.distinct()
-    products = q.order_by(Product.id).all()
-    specs_by_product = _load_product_spec_values(db, [p.id for p in products])
-    out = []
-    for p in products:
+
+    search = (q or "").strip().lower()
+    if search:
+        like = f"%{search}%"
+        query = query.filter(
+            or_(
+                func.lower(Product.name).like(like),
+                func.lower(Product.description).like(like),
+                func.lower(Product.technical_specs).like(like),
+                func.lower(func.coalesce(Product.product_category, "")).like(like),
+            )
+        )
+
+    if code and value:
+        query = query.distinct()
+
+    total = query.count()
+    rows = (
+        query.order_by(Product.name, Product.id)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+    specs_by_product = _load_product_spec_values(db, [p.id for p in rows])
+    items = []
+    for p in rows:
         row = {
             "id": p.id,
             "name": p.name,
@@ -348,12 +392,88 @@ def list_products(
             "max_module_slots": getattr(p, "max_module_slots", None),
             "rules_json": getattr(p, "rules_json", None),
             "technical_spec_values": specs_by_product.get(p.id, []),
+            "service_attachable": is_service_attachable(p),
         }
         mod_n = db.query(Module).filter(Module.product_id == p.id).count()
         lic_n = db.query(License).filter(License.product_id == p.id).count()
         row["addon_options_count"] = mod_n + lic_n
-        out.append(row)
-    return out
+        items.append(row)
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "pages": max(1, (total + page_size - 1) // page_size) if total else 1,
+    }
+
+
+@router.get("/equipment-types")
+def list_equipment_types(db: Session = Depends(get_db)):
+    rows = (
+        db.query(Product.product_category, func.count(Product.id))
+        .filter(Product.product_category.isnot(None))
+        .group_by(Product.product_category)
+        .order_by(Product.product_category)
+        .all()
+    )
+    labels = {
+        "VA": "Коммутатор доступа",
+        "VC": "Коммутатор ядра",
+        "VI": "Коммутатор промышленный",
+        "VNC": "Контроллер Wi-Fi",
+        "VAP": "Точка доступа Wi-Fi",
+        "VO": "SFP модули и DAC-кабели",
+        "VPS": "Сервис стандартный",
+        "VPSN": "Сервис расширенный",
+        "VLB": "Балансировщик приложений",
+        "VS": "Система управления V-Sense",
+        "VFW": "Межсетевой экран",
+        "VSERVER": "Сервер",
+        "VCM": "IP-АТС",
+        "VP": "IP-телефон",
+    }
+    return [
+        {
+            "code": code,
+            "label_ru": labels.get(code, code),
+            "count": count,
+        }
+        for code, count in rows
+        if code
+    ]
+
+
+@router.get("/{product_id}/service-options")
+def get_service_options(product_id: int, db: Session = Depends(get_db)):
+    p = db.query(Product).filter(Product.id == product_id).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="Product not found")
+    attachable = is_service_attachable(p)
+    services = find_service_products_for_equipment(db, p) if attachable else {
+        "standard": None,
+        "extended": None,
+    }
+
+    def _svc_row(prod: Product | None) -> dict | None:
+        if prod is None:
+            return None
+        return {
+            "product_id": prod.id,
+            "article": prod.name,
+            "description": prod.description,
+            "service_tier": parse_catalog_meta(prod).get("service_tier")
+            if parse_catalog_meta(prod)
+            else None,
+        }
+
+    return {
+        "product_id": p.id,
+        "attachable": attachable,
+        "default_tier": "standard" if services.get("standard") else "none",
+        "standard": _svc_row(services.get("standard")),
+        "extended": _svc_row(services.get("extended")),
+    }
 
 
 @router.get("/{product_id}/configuration-options")
@@ -387,6 +507,7 @@ def get_configuration_options(product_id: int, db: Session = Depends(get_db)):
         "max_module_slots": max_slots_eff,
         "rules_json": getattr(p, "rules_json", None),
         "technical_spec_values": _load_product_spec_values(db, [p.id]).get(p.id, []),
+        "service_attachable": is_service_attachable(p),
         "module_speeds_supported": allow,
         "rules_runtime_sources": {
             "speed_allowlist": allow_src,

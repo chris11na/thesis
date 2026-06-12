@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -23,6 +24,11 @@ from app.services.config_validation import (
     EquipmentLineData,
     validate_structured_lines,
 )
+from app.services.specification_export import (
+    build_specification_from_configuration,
+    specification_to_csv_bytes,
+    specification_to_xlsx_bytes,
+)
 
 router = APIRouter(prefix="/configurations", tags=["configurations"])
 
@@ -30,6 +36,7 @@ router = APIRouter(prefix="/configurations", tags=["configurations"])
 class ConfigurationAddonIn(BaseModel):
     module_id: Optional[int] = None
     license_id: Optional[int] = None
+    service_product_id: Optional[int] = Field(default=None, ge=1)
     quantity: int = Field(default=1, ge=1)
 
 
@@ -67,6 +74,7 @@ def _addon_to_data(a: ConfigurationAddonIn) -> AddonLineData:
         module_id=a.module_id,
         license_id=a.license_id,
         quantity=a.quantity,
+        service_product_id=a.service_product_id,
     )
 
 
@@ -77,10 +85,11 @@ def _lines_to_data(lines: List[ConfigurationLineIn]) -> List[EquipmentLineData]:
         for a in ln.addons:
             has_m = a.module_id is not None
             has_l = a.license_id is not None
-            if has_m == has_l:
+            has_s = a.service_product_id is not None
+            if sum((has_m, has_l, has_s)) != 1:
                 raise HTTPException(
                     status_code=400,
-                    detail="Each addon must have exactly one of module_id or license_id",
+                    detail="Each addon must have exactly one of module_id, license_id, or service_product_id",
                 )
             addons.append(_addon_to_data(a))
         out.append(
@@ -119,7 +128,7 @@ def _build_specification(db: Session, line_data: List[EquipmentLineData]) -> Lis
                         "quantity": ad.quantity,
                     }
                 )
-            else:
+            elif ad.license_id is not None:
                 lic = db.query(License).filter(License.id == ad.license_id).first()
                 rows.append(
                     {
@@ -129,6 +138,17 @@ def _build_specification(db: Session, line_data: List[EquipmentLineData]) -> Lis
                         "parent_product_id": line.equipment_product_id,
                         "quantity": ad.quantity,
                         "units_per_pack": lic.units_per_pack if lic else None,
+                    }
+                )
+            elif ad.service_product_id is not None:
+                svc = db.query(Product).filter(Product.id == ad.service_product_id).first()
+                rows.append(
+                    {
+                        "kind": "service",
+                        "product_id": ad.service_product_id,
+                        "name": svc.name if svc else f"service#{ad.service_product_id}",
+                        "parent_product_id": line.equipment_product_id,
+                        "quantity": ad.quantity,
                     }
                 )
     return rows
@@ -281,13 +301,24 @@ def create_configuration(
                         quantity=addon.quantity,
                     )
                 )
-            else:
+            elif addon.license_id is not None:
                 db.add(
                     ConfigurationItem(
                         configuration_id=config.id,
                         product_id=None,
                         module_id=None,
                         license_id=addon.license_id,
+                        parent_product_id=line.equipment_product_id,
+                        quantity=addon.quantity,
+                    )
+                )
+            elif addon.service_product_id is not None:
+                db.add(
+                    ConfigurationItem(
+                        configuration_id=config.id,
+                        product_id=addon.service_product_id,
+                        module_id=None,
+                        license_id=None,
                         parent_product_id=line.equipment_product_id,
                         quantity=addon.quantity,
                     )
@@ -317,6 +348,7 @@ def create_configuration(
                     {
                         "module_id": a.module_id,
                         "license_id": a.license_id,
+                        "service_product_id": a.service_product_id,
                         "quantity": a.quantity,
                     }
                     for a in ln.addons
@@ -468,6 +500,64 @@ def list_my_recent_configurations(
             }
         )
     return out
+
+
+def _get_configuration_for_export(
+    db: Session,
+    configuration_id: int,
+    claims: dict,
+) -> Configuration:
+    conf = db.query(Configuration).filter(Configuration.id == configuration_id).first()
+    if not conf:
+        raise HTTPException(status_code=404, detail="Configuration not found")
+    token_user_id = int(claims.get("sub"))
+    token_role_id = claims.get("role_id")
+    if token_role_id != 1 and conf.user_id != token_user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="RBAC: cannot export another user's configuration",
+        )
+    return conf
+
+
+def _export_filename(configuration_id: int, ext: str) -> str:
+    return f"configuration-{configuration_id}-spec.{ext}"
+
+
+@router.get("/{configuration_id}/specification.xlsx")
+def export_configuration_specification_xlsx(
+    configuration_id: int,
+    db: Session = Depends(get_db),
+    claims: dict = Depends(get_current_user_claims),
+):
+    conf = _get_configuration_for_export(db, configuration_id, claims)
+    specification = build_specification_from_configuration(db, configuration_id)
+    content = specification_to_xlsx_bytes(conf=conf, specification=specification)
+    return Response(
+        content=content,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": f'attachment; filename="{_export_filename(configuration_id, "xlsx")}"'
+        },
+    )
+
+
+@router.get("/{configuration_id}/specification.csv")
+def export_configuration_specification_csv(
+    configuration_id: int,
+    db: Session = Depends(get_db),
+    claims: dict = Depends(get_current_user_claims),
+):
+    conf = _get_configuration_for_export(db, configuration_id, claims)
+    specification = build_specification_from_configuration(db, configuration_id)
+    content = specification_to_csv_bytes(conf=conf, specification=specification)
+    return Response(
+        content=content,
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": f'attachment; filename="{_export_filename(configuration_id, "csv")}"'
+        },
+    )
 
 
 @router.get("/submissions")
