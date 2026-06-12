@@ -54,9 +54,12 @@
         margin-bottom: 6px;
       }
       .brand-logo {
-        width: 40px;
         height: 40px;
+        width: auto;
+        max-width: 200px;
+        object-fit: contain;
         flex-shrink: 0;
+        display: block;
       }
       .lang-toggle-btn {
         flex-shrink: 0;
@@ -260,7 +263,7 @@
   <body>
     <div class="card">
       <div class="brand-row">
-        <img class="brand-logo" src="assets/logo.png" alt="" width="40" height="40" />
+        <img class="brand-logo" src="assets/logo.png" alt="" />
         <div class="card-header-row" style="margin-bottom:0;flex:1">
           <h1 id="login-title">Вход и регистрация</h1>
           <button type="button" class="lang-toggle-btn" id="lang-toggle-btn">RU</button>
@@ -693,8 +696,8 @@
             hint.style.marginTop = "4px";
             hint.textContent =
               currentLang === "en"
-                ? "Yandex: add YANDEX_CLIENT_ID and YANDEX_CLIENT_SECRET to backend .env, then restart API."
-                : "Яндекс: добавьте YANDEX_CLIENT_ID и YANDEX_CLIENT_SECRET в backend/.env и перезапустите API.";
+                ? "Yandex!"
+                : "Яндекс!: ";
             extraWrap.appendChild(hint);
           }
         } catch (e) {

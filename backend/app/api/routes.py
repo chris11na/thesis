@@ -1,6 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.core.email_domain import email_domain
@@ -71,14 +72,24 @@ def create_user(
 @router.get("/users", response_model=list[UserAdminRead])
 def list_users(
     company_id: Optional[int] = Query(None, ge=1),
+    q: str | None = Query(None, description="Search by name or email"),
     db: Session = Depends(get_db),
     _: dict = Depends(require_roles(1)),
 ):
     """List registered users; optional filter by company (for admin / sales handoff visibility)."""
-    q = db.query(User).order_by(User.company_id, User.id)
+    query = db.query(User).order_by(User.company_id, User.id)
     if company_id is not None:
-        q = q.filter(User.company_id == company_id)
-    return q.all()
+        query = query.filter(User.company_id == company_id)
+    search = (q or "").strip().lower()
+    if search:
+        like = f"%{search}%"
+        query = query.filter(
+            or_(
+                func.lower(User.name).like(like),
+                func.lower(User.email).like(like),
+            )
+        )
+    return query.all()
 
 
 @router.patch("/users/{user_id}", response_model=UserAdminRead)

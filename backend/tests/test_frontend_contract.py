@@ -33,6 +33,10 @@ def test_frontend_contains_role_badge_and_admin_block() -> None:
     assert 'id="admin-catalog-block"' in html
     assert 'assets/logo.png' in html
     assert 'id="products-pagination"' in html
+    assert 'id="admin-products-search-input"' in html
+    assert 'id="admin-users-search-input"' in html
+    assert 'id="admin-companies-search-input"' in html
+    assert 'id="admin-products-type-select"' in html
     assert 'id="admin-spec-params-tbody"' in html
 
 

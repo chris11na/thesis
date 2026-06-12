@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, field_validator
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_roles
@@ -59,11 +59,21 @@ class CompanyRead(BaseModel):
 
 @router.get("", response_model=list[CompanyRead])
 def list_companies(
+    q: str | None = Query(None, description="Search by company name or email domain"),
     db: Session = Depends(get_db),
     _: dict = Depends(require_roles(1)),
 ):
-    rows = db.query(Company).order_by(Company.id).all()
-    return rows
+    query = db.query(Company).order_by(Company.id)
+    search = (q or "").strip().lower()
+    if search:
+        like = f"%{search}%"
+        query = query.filter(
+            or_(
+                func.lower(Company.name).like(like),
+                func.lower(Company.domain).like(like),
+            )
+        )
+    return query.all()
 
 
 @router.post("", response_model=CompanyRead)

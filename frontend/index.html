@@ -1718,9 +1718,12 @@
       }
 
       .app-brand-logo {
-        width: 44px;
-        height: 44px;
+        height: 40px;
+        width: auto;
+        max-width: 220px;
+        object-fit: contain;
         flex-shrink: 0;
+        display: block;
       }
 
       .products-type-filter {
@@ -1794,6 +1797,15 @@
           grid-template-columns: 1fr;
         }
       }
+
+      .admin-catalog-toolbar {
+        margin-bottom: 12px;
+      }
+
+      .admin-catalog-toolbar .products-pagination {
+        margin-top: 10px;
+        margin-bottom: 0;
+      }
     </style>
   </head>
 
@@ -1814,8 +1826,6 @@
             class="app-brand-logo"
             src="assets/logo.png"
             alt=""
-            width="44"
-            height="44"
           />
           <div>
             <h1 id="app-page-title">Конфигуратор</h1>
@@ -2106,6 +2116,14 @@
                 Разрешённый домен почты (например <code>aaa.ru</code>): регистрация и
                 вход пользователей привязаны к компании с этим доменом.
               </p>
+              <div class="products-search-wrap">
+                <input
+                  type="search"
+                  id="admin-companies-search-input"
+                  placeholder="Поиск по названию или домену"
+                  autocomplete="off"
+                />
+              </div>
               <div class="admin-table-scroll">
                 <table class="admin-table" id="admin-companies-table">
                   <thead>
@@ -2207,6 +2225,14 @@
             <summary class="admin-fold-summary" id="admin-fold-users">Пользователи</summary>
             <div class="admin-fold-body">
               <div class="admin-above-table admin-above-table--compact">
+                <div class="products-search-wrap">
+                  <input
+                    type="search"
+                    id="admin-users-search-input"
+                    placeholder="Поиск по имени или email"
+                    autocomplete="off"
+                  />
+                </div>
                 <div class="admin-inline">
                   <div class="field-group">
                     <div class="field-label" id="users-company-filter-label">Компания</div>
@@ -2241,6 +2267,54 @@
           <details class="admin-fold" open>
             <summary class="admin-fold-summary" id="admin-fold-catalog">Каталог: оборудование</summary>
             <div class="admin-fold-body">
+              <div class="admin-catalog-toolbar">
+                <div class="products-search-wrap">
+                  <input
+                    type="search"
+                    id="admin-products-search-input"
+                    placeholder="Поиск по названию или параметрам"
+                    autocomplete="off"
+                  />
+                </div>
+                <div class="products-spec-filter">
+                  <select
+                    id="admin-products-spec-param-select"
+                    aria-label="Параметр характеристики"
+                  >
+                    <option value="">Все параметры</option>
+                  </select>
+                  <input
+                    type="search"
+                    id="admin-products-spec-value-input"
+                    placeholder="Значение характеристики"
+                    autocomplete="off"
+                  />
+                  <button
+                    type="button"
+                    class="secondary-btn products-spec-filter-clear"
+                    id="admin-products-spec-filter-clear"
+                    hidden
+                  >
+                    Сбросить
+                  </button>
+                </div>
+                <div class="products-type-filter">
+                  <select id="admin-products-type-select" aria-label="Тип оборудования">
+                    <option value="">Все типы оборудования</option>
+                  </select>
+                </div>
+                <div class="products-pagination" id="admin-products-pagination" hidden>
+                  <span id="admin-products-page-info"></span>
+                  <div class="products-pagination-actions">
+                    <button type="button" class="secondary-btn" id="admin-products-page-prev">
+                      Назад
+                    </button>
+                    <button type="button" class="secondary-btn" id="admin-products-page-next">
+                      Далее
+                    </button>
+                  </div>
+                </div>
+              </div>
               <div class="admin-table-scroll">
                 <table class="admin-table" id="admin-products-table">
                   <thead>
@@ -2367,6 +2441,21 @@
         productsPageInfo: document.getElementById("products-page-info"),
         productsPagePrev: document.getElementById("products-page-prev"),
         productsPageNext: document.getElementById("products-page-next"),
+        adminProductsSearchInput: document.getElementById("admin-products-search-input"),
+        adminProductsSpecParamSelect: document.getElementById(
+          "admin-products-spec-param-select"
+        ),
+        adminProductsSpecValueInput: document.getElementById(
+          "admin-products-spec-value-input"
+        ),
+        adminProductsSpecFilterClear: document.getElementById(
+          "admin-products-spec-filter-clear"
+        ),
+        adminProductsTypeSelect: document.getElementById("admin-products-type-select"),
+        adminProductsPagination: document.getElementById("admin-products-pagination"),
+        adminProductsPageInfo: document.getElementById("admin-products-page-info"),
+        adminProductsPagePrev: document.getElementById("admin-products-page-prev"),
+        adminProductsPageNext: document.getElementById("admin-products-page-next"),
         productsCounter: document.getElementById("products-counter"),
         productsSource: document.getElementById("products-source"),
         productsStatusArea: document.getElementById("products-status-area"),
@@ -2418,6 +2507,7 @@
           "admin-users-company-select"
         ),
         adminUsersRefreshBtn: document.getElementById("admin-users-refresh-btn"),
+        adminUsersSearchInput: document.getElementById("admin-users-search-input"),
         adminUsersTbody: document.getElementById("admin-users-tbody"),
         adminSpecParamsTbody: document.getElementById("admin-spec-params-tbody"),
         adminSpecParamCode: document.getElementById("admin-spec-param-code"),
@@ -2427,6 +2517,7 @@
         adminCompanyName: document.getElementById("admin-company-name"),
         adminCompanyDomain: document.getElementById("admin-company-domain"),
         adminAddCompanyBtn: document.getElementById("admin-add-company-btn"),
+        adminCompaniesSearchInput: document.getElementById("admin-companies-search-input"),
         adminCompaniesTbody: document.getElementById("admin-companies-tbody"),
         adminCompanyEditWrap: document.getElementById("admin-company-edit-wrap"),
         adminCompanyEditId: document.getElementById("admin-company-edit-id"),
@@ -2515,13 +2606,26 @@
             ? "Search by name or specs"
             : "Поиск по названию или параметрам";
         }
+        if (elements.adminProductsSearchInput) {
+          elements.adminProductsSearchInput.placeholder = isEn
+            ? "Search by name or specs"
+            : "Поиск по названию или параметрам";
+        }
         if (elements.productsSpecValueInput) {
           elements.productsSpecValueInput.placeholder = isEn
             ? "Characteristic value"
             : "Значение характеристики";
         }
+        if (elements.adminProductsSpecValueInput) {
+          elements.adminProductsSpecValueInput.placeholder = isEn
+            ? "Characteristic value"
+            : "Значение характеристики";
+        }
         if (elements.productsSpecFilterClear) {
           elements.productsSpecFilterClear.textContent = isEn ? "Clear" : "Сбросить";
+        }
+        if (elements.adminProductsSpecFilterClear) {
+          elements.adminProductsSpecFilterClear.textContent = isEn ? "Clear" : "Сбросить";
         }
         if (elements.productsSpecParamSelect) {
           renderSpecFilterSelect();
@@ -2638,10 +2742,20 @@
             ? "Refresh list"
             : "Обновить список";
         }
+        if (elements.adminUsersSearchInput) {
+          elements.adminUsersSearchInput.placeholder = isEn
+            ? "Search by name or email"
+            : "Поиск по имени или email";
+        }
         if (elements.adminAddCompanyBtn) {
           elements.adminAddCompanyBtn.textContent = isEn
             ? "Add company"
             : "Добавить организацию";
+        }
+        if (elements.adminCompaniesSearchInput) {
+          elements.adminCompaniesSearchInput.placeholder = isEn
+            ? "Search by name or domain"
+            : "Поиск по названию или домену";
         }
         if (elements.adminAddProductBtn) {
           elements.adminAddProductBtn.textContent = isEn
@@ -2728,7 +2842,12 @@
       /** Expanded product cards (description / specs) — user UI */
       let productCardExpandedIds = new Set();
       let companiesList = [];
+      let adminCompaniesTableList = [];
+      let adminCompaniesSearchTerm = "";
+      let adminCompaniesReloadTimer = null;
       let adminUsersList = [];
+      let adminUsersSearchTerm = "";
+      let adminUsersReloadTimer = null;
 
       function defaultLineState() {
         return {
@@ -3572,8 +3691,7 @@
         renderSpecFilterSelect();
       }
 
-      function renderSpecFilterSelect() {
-        const sel = elements.productsSpecParamSelect;
+      function populateSpecFilterSelect(sel) {
         if (!sel) return;
         const isEn = uiLang === "en";
         const prev = productSpecFilterCode || sel.value || "";
@@ -3591,18 +3709,60 @@
         });
         if (prev && Array.from(sel.options).some((o) => o.value === prev)) {
           sel.value = prev;
-        } else {
+        } else if (sel === elements.productsSpecParamSelect) {
           sel.value = "";
           productSpecFilterCode = "";
+        } else {
+          sel.value = "";
+        }
+      }
+
+      function renderSpecFilterSelect() {
+        populateSpecFilterSelect(elements.productsSpecParamSelect);
+        populateSpecFilterSelect(elements.adminProductsSpecParamSelect);
+      }
+
+      function syncProductFilterInputsFromState() {
+        const searchVal = productSearchTerm || "";
+        if (elements.productsSearchInput) {
+          elements.productsSearchInput.value = searchVal;
+        }
+        if (elements.adminProductsSearchInput) {
+          elements.adminProductsSearchInput.value = searchVal;
+        }
+        const specCode = productSpecFilterCode || "";
+        if (elements.productsSpecParamSelect) {
+          elements.productsSpecParamSelect.value = specCode;
+        }
+        if (elements.adminProductsSpecParamSelect) {
+          elements.adminProductsSpecParamSelect.value = specCode;
+        }
+        const specVal = productSpecFilterValue || "";
+        if (elements.productsSpecValueInput) {
+          elements.productsSpecValueInput.value = specVal;
+        }
+        if (elements.adminProductsSpecValueInput) {
+          elements.adminProductsSpecValueInput.value = specVal;
+        }
+        const typeVal = productTypeFilter || "";
+        if (elements.productsTypeSelect) {
+          elements.productsTypeSelect.value = typeVal;
+        }
+        if (elements.adminProductsTypeSelect) {
+          elements.adminProductsTypeSelect.value = typeVal;
         }
       }
 
       function syncProductSpecFilterUi() {
         const hasFilter =
           Boolean((productSpecFilterCode || "").trim()) ||
-          Boolean((productSpecFilterValue || "").trim());
+          Boolean((productSpecFilterValue || "").trim()) ||
+          Boolean((productTypeFilter || "").trim());
         if (elements.productsSpecFilterClear) {
           elements.productsSpecFilterClear.hidden = !hasFilter;
+        }
+        if (elements.adminProductsSpecFilterClear) {
+          elements.adminProductsSpecFilterClear.hidden = !hasFilter;
         }
       }
 
@@ -3628,9 +3788,7 @@
         productSpecFilterCode = "";
         productSpecFilterValue = "";
         productTypeFilter = "";
-        if (elements.productsSpecParamSelect) elements.productsSpecParamSelect.value = "";
-        if (elements.productsSpecValueInput) elements.productsSpecValueInput.value = "";
-        if (elements.productsTypeSelect) elements.productsTypeSelect.value = "";
+        syncProductFilterInputsFromState();
         syncProductSpecFilterUi();
         scheduleProductsReload(true);
       }
@@ -3659,8 +3817,7 @@
         renderEquipmentTypeSelect();
       }
 
-      function renderEquipmentTypeSelect() {
-        const sel = elements.productsTypeSelect;
+      function populateEquipmentTypeSelect(sel) {
         if (!sel) return;
         const prev = productTypeFilter || sel.value || "";
         sel.innerHTML = "";
@@ -3679,22 +3836,28 @@
         });
         if (prev && Array.from(sel.options).some((o) => o.value === prev)) {
           sel.value = prev;
-        } else {
+        } else if (sel === elements.productsTypeSelect) {
           sel.value = "";
           productTypeFilter = "";
+        } else {
+          sel.value = "";
         }
       }
 
-      function renderProductsPagination() {
-        const bar = elements.productsPagination;
+      function renderEquipmentTypeSelect() {
+        populateEquipmentTypeSelect(elements.productsTypeSelect);
+        populateEquipmentTypeSelect(elements.adminProductsTypeSelect);
+      }
+
+      function renderProductsPaginationBar(bar, pageInfoEl, prevBtn, nextBtn) {
         if (!bar) return;
         if (productsTotal <= productsPageSize) {
           bar.hidden = true;
           return;
         }
         bar.hidden = false;
-        if (elements.productsPageInfo) {
-          elements.productsPageInfo.textContent = catT(
+        if (pageInfoEl) {
+          pageInfoEl.textContent = catT(
             "Страница " +
               productsPage +
               " из " +
@@ -3710,12 +3873,27 @@
               " total"
           );
         }
-        if (elements.productsPagePrev) {
-          elements.productsPagePrev.disabled = productsPage <= 1;
+        if (prevBtn) {
+          prevBtn.disabled = productsPage <= 1;
         }
-        if (elements.productsPageNext) {
-          elements.productsPageNext.disabled = productsPage >= productsPages;
+        if (nextBtn) {
+          nextBtn.disabled = productsPage >= productsPages;
         }
+      }
+
+      function renderProductsPagination() {
+        renderProductsPaginationBar(
+          elements.productsPagination,
+          elements.productsPageInfo,
+          elements.productsPagePrev,
+          elements.productsPageNext
+        );
+        renderProductsPaginationBar(
+          elements.adminProductsPagination,
+          elements.adminProductsPageInfo,
+          elements.adminProductsPagePrev,
+          elements.adminProductsPageNext
+        );
       }
 
       async function loadSpecParametersForAdmin() {
@@ -3821,7 +3999,19 @@
         const tb = elements.adminCompaniesTbody;
         if (!tb) return;
         tb.innerHTML = "";
-        companiesList.forEach((c) => {
+        if (!adminCompaniesTableList.length) {
+          const tr = document.createElement("tr");
+          const td = document.createElement("td");
+          td.colSpan = 4;
+          td.textContent = catT(
+            "Организации не найдены.",
+            "No companies match your search."
+          );
+          tr.appendChild(td);
+          tb.appendChild(tr);
+          return;
+        }
+        adminCompaniesTableList.forEach((c) => {
           const tr = document.createElement("tr");
           tr.innerHTML =
             "<td>" +
@@ -3856,10 +4046,27 @@
         return d.innerHTML;
       }
 
-      async function loadAdminCompanies() {
+      async function refreshCompaniesListForSelect() {
         if (getCurrentRoleId() !== 1) return;
         try {
           const res = await apiFetch("/companies", { method: "GET" });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) return;
+          companiesList = Array.isArray(data) ? data : [];
+          fillAdminUsersCompanySelect();
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      async function loadAdminCompanies() {
+        if (getCurrentRoleId() !== 1) return;
+        const params = new URLSearchParams();
+        const search = (adminCompaniesSearchTerm || "").trim();
+        if (search) params.set("q", search);
+        const q = params.toString() ? "?" + params.toString() : "";
+        try {
+          const res = await apiFetch("/companies" + q, { method: "GET" });
           const data = await res.json().catch(() => null);
           if (!res.ok) {
             setCatalogStatus(
@@ -3869,8 +4076,11 @@
             );
             return;
           }
-          companiesList = Array.isArray(data) ? data : [];
-          fillAdminUsersCompanySelect();
+          adminCompaniesTableList = Array.isArray(data) ? data : [];
+          if (!search) {
+            companiesList = adminCompaniesTableList;
+            fillAdminUsersCompanySelect();
+          }
           renderAdminCompaniesTable();
           setCatalogStatus("admin-companies-status", "", "info");
         } catch (e) {
@@ -3883,14 +4093,25 @@
         }
       }
 
+      function scheduleAdminCompaniesReload() {
+        if (adminCompaniesReloadTimer) clearTimeout(adminCompaniesReloadTimer);
+        adminCompaniesReloadTimer = setTimeout(() => {
+          adminCompaniesReloadTimer = null;
+          void loadAdminCompanies();
+        }, 300);
+      }
+
       async function loadAdminUsers(options) {
         if (getCurrentRoleId() !== 1) return;
         const toastOnSuccess = options && options.toastOnSuccess;
         const sel = elements.adminUsersCompanySelect;
-        const q =
-          sel && sel.value && sel.value !== ""
-            ? "?company_id=" + encodeURIComponent(sel.value)
-            : "";
+        const params = new URLSearchParams();
+        if (sel && sel.value && sel.value !== "") {
+          params.set("company_id", sel.value);
+        }
+        const search = (adminUsersSearchTerm || "").trim();
+        if (search) params.set("q", search);
+        const q = params.toString() ? "?" + params.toString() : "";
         try {
           const res = await apiFetch("/users" + q, { method: "GET" });
           const data = await res.json().catch(() => null);
@@ -3921,10 +4142,30 @@
         }
       }
 
+      function scheduleAdminUsersReload() {
+        if (adminUsersReloadTimer) clearTimeout(adminUsersReloadTimer);
+        adminUsersReloadTimer = setTimeout(() => {
+          adminUsersReloadTimer = null;
+          void loadAdminUsers();
+        }, 300);
+      }
+
       function renderAdminUsersTable() {
         const tb = elements.adminUsersTbody;
         if (!tb) return;
         tb.innerHTML = "";
+        if (!adminUsersList.length) {
+          const tr = document.createElement("tr");
+          const td = document.createElement("td");
+          td.colSpan = 8;
+          td.textContent = catT(
+            "Пользователи не найдены.",
+            "No users match your search."
+          );
+          tr.appendChild(td);
+          tb.appendChild(tr);
+          return;
+        }
         adminUsersList.forEach((u) => {
           const tr = document.createElement("tr");
 
@@ -4146,6 +4387,7 @@
             hideAdminCompanyEdit();
           }
           await loadAdminCompanies();
+          await refreshCompaniesListForSelect();
           await loadAdminUsers();
           setCatalogStatus("admin-companies-status", "", "info");
           showToast(catT("Организация удалена", "Company deleted"), "success");
@@ -4196,6 +4438,7 @@
           }
           hideAdminCompanyEdit();
           await loadAdminCompanies();
+          await refreshCompaniesListForSelect();
           await loadAdminUsers();
           setCatalogStatus("admin-companies-status", "", "info");
           showToast(catT("Организация обновлена", "Company updated"), "success");
@@ -4238,6 +4481,7 @@
           elements.adminCompanyName.value = "";
           elements.adminCompanyDomain.value = "";
           await loadAdminCompanies();
+          await refreshCompaniesListForSelect();
           await loadAdminUsers();
           setCatalogStatus("admin-companies-status", "", "info");
           showToast(catT("Организация добавлена", "Company added"), "success");
@@ -4255,6 +4499,18 @@
         const tb = elements.adminProductsTbody;
         if (!tb) return;
         tb.innerHTML = "";
+        if (!products.length) {
+          const tr = document.createElement("tr");
+          const td = document.createElement("td");
+          td.colSpan = 4;
+          td.textContent = catT(
+            "Каталог пуст или ничего не найдено по фильтрам.",
+            "Catalog is empty or no matches for current filters."
+          );
+          tr.appendChild(td);
+          tb.appendChild(tr);
+          return;
+        }
         products.forEach((p) => {
           const tr = document.createElement("tr");
           const tdId = document.createElement("td");
@@ -5808,6 +6064,7 @@
       function refreshAdminProductUi() {
         if (getCurrentRoleId() !== 1) return;
         renderAdminProductsTable();
+        renderProductsPagination();
         syncAdminProductDrawer();
       }
 
@@ -6690,6 +6947,7 @@
           loadSpecParametersForAdmin(),
           loadEquipmentTypes(),
         ]);
+        syncProductFilterInputsFromState();
         syncProductSpecFilterUi();
         renderProducts();
         renderSelectedPills();
@@ -7291,12 +7549,29 @@
         if (elements.productsSearchInput) {
           elements.productsSearchInput.addEventListener("input", () => {
             productSearchTerm = elements.productsSearchInput.value || "";
+            syncProductFilterInputsFromState();
+            scheduleProductsReload(true);
+          });
+        }
+        if (elements.adminProductsSearchInput) {
+          elements.adminProductsSearchInput.addEventListener("input", () => {
+            productSearchTerm = elements.adminProductsSearchInput.value || "";
+            syncProductFilterInputsFromState();
             scheduleProductsReload(true);
           });
         }
         if (elements.productsSpecParamSelect) {
           elements.productsSpecParamSelect.addEventListener("change", () => {
             productSpecFilterCode = elements.productsSpecParamSelect.value || "";
+            syncProductFilterInputsFromState();
+            syncProductSpecFilterUi();
+            scheduleProductsReload(true);
+          });
+        }
+        if (elements.adminProductsSpecParamSelect) {
+          elements.adminProductsSpecParamSelect.addEventListener("change", () => {
+            productSpecFilterCode = elements.adminProductsSpecParamSelect.value || "";
+            syncProductFilterInputsFromState();
             syncProductSpecFilterUi();
             scheduleProductsReload(true);
           });
@@ -7304,6 +7579,15 @@
         if (elements.productsSpecValueInput) {
           elements.productsSpecValueInput.addEventListener("input", () => {
             productSpecFilterValue = elements.productsSpecValueInput.value || "";
+            syncProductFilterInputsFromState();
+            syncProductSpecFilterUi();
+            scheduleProductsReload(true);
+          });
+        }
+        if (elements.adminProductsSpecValueInput) {
+          elements.adminProductsSpecValueInput.addEventListener("input", () => {
+            productSpecFilterValue = elements.adminProductsSpecValueInput.value || "";
+            syncProductFilterInputsFromState();
             syncProductSpecFilterUi();
             scheduleProductsReload(true);
           });
@@ -7311,11 +7595,29 @@
         if (elements.productsTypeSelect) {
           elements.productsTypeSelect.addEventListener("change", () => {
             productTypeFilter = elements.productsTypeSelect.value || "";
+            syncProductFilterInputsFromState();
+            syncProductSpecFilterUi();
+            scheduleProductsReload(true);
+          });
+        }
+        if (elements.adminProductsTypeSelect) {
+          elements.adminProductsTypeSelect.addEventListener("change", () => {
+            productTypeFilter = elements.adminProductsTypeSelect.value || "";
+            syncProductFilterInputsFromState();
+            syncProductSpecFilterUi();
             scheduleProductsReload(true);
           });
         }
         if (elements.productsPagePrev) {
           elements.productsPagePrev.addEventListener("click", () => {
+            if (productsPage > 1) {
+              productsPage -= 1;
+              void loadProducts();
+            }
+          });
+        }
+        if (elements.adminProductsPagePrev) {
+          elements.adminProductsPagePrev.addEventListener("click", () => {
             if (productsPage > 1) {
               productsPage -= 1;
               void loadProducts();
@@ -7330,6 +7632,14 @@
             }
           });
         }
+        if (elements.adminProductsPageNext) {
+          elements.adminProductsPageNext.addEventListener("click", () => {
+            if (productsPage < productsPages) {
+              productsPage += 1;
+              void loadProducts();
+            }
+          });
+        }
         if (elements.adminSpecParamAddBtn) {
           elements.adminSpecParamAddBtn.addEventListener("click", () => {
             void createAdminSpecParameter();
@@ -7337,6 +7647,11 @@
         }
         if (elements.productsSpecFilterClear) {
           elements.productsSpecFilterClear.addEventListener("click", () => {
+            clearProductSpecFilter();
+          });
+        }
+        if (elements.adminProductsSpecFilterClear) {
+          elements.adminProductsSpecFilterClear.addEventListener("click", () => {
             clearProductSpecFilter();
           });
         }
@@ -7395,6 +7710,12 @@
             loadAdminUsers({ toastOnSuccess: true });
           });
         }
+        if (elements.adminUsersSearchInput) {
+          elements.adminUsersSearchInput.addEventListener("input", () => {
+            adminUsersSearchTerm = elements.adminUsersSearchInput.value || "";
+            scheduleAdminUsersReload();
+          });
+        }
         if (elements.adminUsersCompanySelect) {
           elements.adminUsersCompanySelect.addEventListener("change", () => {
             loadAdminUsers();
@@ -7404,6 +7725,12 @@
         if (elements.adminAddCompanyBtn) {
           elements.adminAddCompanyBtn.addEventListener("click", () => {
             addAdminCompany();
+          });
+        }
+        if (elements.adminCompaniesSearchInput) {
+          elements.adminCompaniesSearchInput.addEventListener("input", () => {
+            adminCompaniesSearchTerm = elements.adminCompaniesSearchInput.value || "";
+            scheduleAdminCompaniesReload();
           });
         }
         if (elements.adminSaveCompanyBtn) {

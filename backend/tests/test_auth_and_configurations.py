@@ -143,6 +143,55 @@ def test_admin_can_list_users_for_company() -> None:
         assert row["company_id"] == 1
 
 
+def test_admin_can_search_users_by_name_or_email() -> None:
+    login = client.post(
+        "/auth/login",
+        json={"email": "admin@example.com", "password": "admin123"},
+    )
+    token = login.json()["access_token"]
+    by_email = client.get(
+        "/users?q=admin@example",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert by_email.status_code == 200
+    assert any(row["email"] == "admin@example.com" for row in by_email.json())
+
+    by_name = client.get(
+        "/users?q=prototype",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert by_name.status_code == 200
+    assert any("Prototype" in (row.get("name") or "") for row in by_name.json())
+
+    empty = client.get(
+        "/users?q=zzzz-no-such-user-qqqq",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert empty.status_code == 200
+    assert empty.json() == []
+
+
+def test_admin_can_search_companies_by_name_or_domain() -> None:
+    login = client.post(
+        "/auth/login",
+        json={"email": "admin@example.com", "password": "admin123"},
+    )
+    token = login.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    by_name = client.get("/companies?q=default", headers=headers)
+    assert by_name.status_code == 200
+    assert any("Default Company" in row.get("name", "") for row in by_name.json())
+
+    by_domain = client.get("/companies?q=example.com", headers=headers)
+    assert by_domain.status_code == 200
+    assert any(row.get("domain") == "example.com" for row in by_domain.json())
+
+    empty = client.get("/companies?q=zzzz-no-such-company-qqqq", headers=headers)
+    assert empty.status_code == 200
+    assert empty.json() == []
+
+
 def test_non_admin_cannot_list_users() -> None:
     login = client.post(
         "/auth/login",
