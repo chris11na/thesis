@@ -220,6 +220,16 @@
         border-color: #9ca3af;
       }
 
+      .oauth-btn--yandex {
+        border-color: #fc3f1d;
+        color: #111827;
+      }
+
+      .oauth-btn--yandex:hover {
+        background: #fff5f2;
+        border-color: #fc3f1d;
+      }
+
       .oauth-loading {
         display: flex;
         align-items: center;
@@ -380,6 +390,7 @@
           oauthChecking: "Проверяем способы входа…",
           signInGoogle: "Войти через Google",
           signInMicrosoft: "Войти через Microsoft",
+          signInYandex: "Войти через Яндекс",
           loginSuccessRedirect: "Успешно. Переход…",
           genericError: "Ошибка",
           missingTokenPair: "Сервер не вернул пару токенов.",
@@ -417,6 +428,7 @@
           oauthChecking: "Checking sign-in options…",
           signInGoogle: "Sign in with Google",
           signInMicrosoft: "Sign in with Microsoft",
+          signInYandex: "Sign in with Yandex",
           loginSuccessRedirect: "Success. Redirecting…",
           genericError: "Error",
           missingTokenPair: "Server did not return the token pair.",
@@ -439,6 +451,9 @@
         });
         row.querySelectorAll('a.oauth-btn[data-oauth-provider="microsoft"]').forEach((a) => {
           a.textContent = t.signInMicrosoft;
+        });
+        row.querySelectorAll('a.oauth-btn[data-oauth-provider="yandex"]').forEach((a) => {
+          a.textContent = t.signInYandex;
         });
       }
 
@@ -615,7 +630,7 @@
           const r = await fetch(API_BASE + "/auth/oauth/providers");
           const j = await r.json().catch(() => ({}));
           row.innerHTML = "";
-          if (!j.google && !j.microsoft) {
+          if (!j.google && !j.microsoft && !j.yandex) {
             row.remove();
             if (divider) divider.remove();
             return;
@@ -634,6 +649,14 @@
             a.href = API_BASE + "/auth/microsoft/login";
             a.dataset.oauthProvider = "microsoft";
             a.textContent = i18n[currentLang].signInMicrosoft;
+            row.appendChild(a);
+          }
+          if (j.yandex) {
+            const a = document.createElement("a");
+            a.className = "oauth-btn oauth-btn--yandex";
+            a.href = API_BASE + "/auth/yandex/login";
+            a.dataset.oauthProvider = "yandex";
+            a.textContent = i18n[currentLang].signInYandex;
             row.appendChild(a);
           }
         } catch (_) {

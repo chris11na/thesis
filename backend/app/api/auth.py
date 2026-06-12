@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 _OAUTH_CALLBACK_PATHS = {
     "google_callback": "/auth/google/callback",
     "microsoft_callback": "/auth/microsoft/callback",
+    "yandex_callback": "/auth/yandex/callback",
 }
 
 
@@ -60,6 +61,18 @@ if settings.microsoft_client_id and settings.microsoft_client_secret:
         client_secret=settings.microsoft_client_secret,
         server_metadata_url="https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration",
         client_kwargs={"scope": "openid email profile"},
+    )
+
+if settings.yandex_client_id and settings.yandex_client_secret:
+    oauth.register(
+        name="yandex",
+        client_id=settings.yandex_client_id,
+        client_secret=settings.yandex_client_secret,
+        access_token_url="https://oauth.yandex.ru/token",
+        authorize_url="https://oauth.yandex.ru/authorize",
+        api_base_url="https://login.yandex.ru/",
+        client_kwargs={"scope": "login:email login:info"},
+        token_endpoint_auth_method="client_secret_post",
     )
 
 
@@ -231,6 +244,18 @@ def _provision_or_get_user_for_domain(db: Session, email: str, display_name: str
 def _extract_oauth_identity(provider: str, token: dict) -> tuple[str, str]:
     userinfo = token.get("userinfo") or {}
 
+    if provider == "yandex":
+        email = userinfo.get("default_email") or userinfo.get("email")
+        if not email:
+            raise HTTPException(status_code=400, detail="Yandex did not return email")
+        name = (
+            userinfo.get("real_name")
+            or userinfo.get("display_name")
+            or userinfo.get("login")
+            or email.split("@")[0]
+        )
+        return str(email).lower(), str(name)
+
     # Google and Microsoft may use slightly different email fields.
     email = (
         userinfo.get("email")
@@ -242,6 +267,12 @@ def _extract_oauth_identity(provider: str, token: dict) -> tuple[str, str]:
 
     name = userinfo.get("name") or email.split("@")[0]
     return str(email), str(name)
+
+
+async def _fetch_yandex_userinfo(client, token: dict) -> dict:
+    resp = await client.get("info", params={"format": "json"}, token=token)
+    resp.raise_for_status()
+    return resp.json()
 
 
 @router.post("/login")
@@ -408,6 +439,7 @@ def oauth_providers():
         "microsoft": bool(
             settings.microsoft_client_id and settings.microsoft_client_secret
         ),
+        "yandex": bool(settings.yandex_client_id and settings.yandex_client_secret),
     }
 
 
@@ -475,6 +507,46 @@ async def microsoft_callback(request: Request, db: Session = Depends(get_db)):
 
     try:
         email, name = _extract_oauth_identity("microsoft", token)
+        user = _provision_or_get_user_for_domain(db, email=email, display_name=name)
+        payload = _issue_app_token(user, db)
+    except HTTPException as he:
+        d = he.detail
+        if not isinstance(d, str):
+            d = str(d)
+        return _oauth_error_redirect(d)
+
+    return _oauth_bridge_response(payload)
+
+
+@router.get("/yandex/login")
+async def yandex_login(request: Request):
+    client = oauth.create_client("yandex")
+    if not client:
+        return _oauth_error_redirect(
+            "Yandex OAuth is not configured (set YANDEX_CLIENT_ID/SECRET in .env)."
+        )
+    redirect_uri = _oauth_redirect_uri(request, "yandex_callback")
+    return await client.authorize_redirect(request, redirect_uri)
+
+
+@router.get("/yandex/callback")
+async def yandex_callback(request: Request, db: Session = Depends(get_db)):
+    client = oauth.create_client("yandex")
+    if not client:
+        return _oauth_error_redirect("Yandex OAuth is not configured.")
+
+    try:
+        token = await client.authorize_access_token(request)
+        token["userinfo"] = await _fetch_yandex_userinfo(client, token)
+    except Exception as e:
+        logger.warning("Yandex OAuth failed: %s", e)
+        return _oauth_error_redirect(
+            "Yandex sign-in failed. Check Redirect URI in Yandex OAuth "
+            "(must match this server's /auth/yandex/callback URL exactly)."
+        )
+
+    try:
+        email, name = _extract_oauth_identity("yandex", token)
         user = _provision_or_get_user_for_domain(db, email=email, display_name=name)
         payload = _issue_app_token(user, db)
     except HTTPException as he:

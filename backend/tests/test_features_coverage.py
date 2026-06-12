@@ -159,6 +159,14 @@ def test_configuration_accepts_service_product_addon() -> None:
     assert any(row.get("kind") == "service" for row in spec)
 
 
+def test_oauth_providers_includes_yandex_flag() -> None:
+    r = client.get("/auth/oauth/providers")
+    assert r.status_code == 200
+    body = r.json()
+    assert "yandex" in body
+    assert isinstance(body["yandex"], bool)
+
+
 def test_license_pack_prefers_single_x32_for_need_17() -> None:
     tok = _user_token()
     r = client.get(

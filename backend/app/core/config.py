@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     google_client_secret: str | None = None
     microsoft_client_id: str | None = None
     microsoft_client_secret: str | None = None
+    yandex_client_id: str | None = None
+    yandex_client_secret: str | None = None
 
     class Config:
         env_file = ".env"
