@@ -163,6 +163,13 @@ def test_admin_can_search_users_by_name_or_email() -> None:
     assert by_name.status_code == 200
     assert any("Prototype" in (row.get("name") or "") for row in by_name.json())
 
+    by_company = client.get(
+        "/users?q=default company",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert by_company.status_code == 200
+    assert any(row.get("company_id") == 1 for row in by_company.json())
+
     empty = client.get(
         "/users?q=zzzz-no-such-user-qqqq",
         headers={"Authorization": f"Bearer {token}"},

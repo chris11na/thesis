@@ -67,6 +67,28 @@ def test_list_products_search_by_name() -> None:
     assert any("wlan" in (x.get("name") or "").lower() for x in items)
 
 
+def test_list_products_search_by_numeric_id() -> None:
+    tok = _user_token()
+    listed = client.get(
+        "/products",
+        params={"configurator_only": True, "page_size": 1},
+        headers={"Authorization": f"Bearer {tok}"},
+    )
+    assert listed.status_code == 200, listed.text
+    items = listed.json().get("items") or []
+    assert items, "expected at least one product in seed/catalog"
+    product_id = items[0]["id"]
+
+    by_id = client.get(
+        "/products",
+        params={"q": str(product_id), "configurator_only": True},
+        headers={"Authorization": f"Bearer {tok}"},
+    )
+    assert by_id.status_code == 200, by_id.text
+    ids = [row["id"] for row in by_id.json().get("items") or []]
+    assert product_id in ids
+
+
 def test_equipment_types_endpoint() -> None:
     tok = _admin_token()
     r = client.get("/products/equipment-types", headers={"Authorization": f"Bearer {tok}"})

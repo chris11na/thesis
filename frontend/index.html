@@ -1375,6 +1375,84 @@
         margin-top: 4px;
       }
 
+      .admin-table-scroll.admin-table-scroll--flat {
+        max-height: none;
+        overflow: visible;
+      }
+
+      .catalog-panel {
+        position: relative;
+      }
+
+      .catalog-panel-loading-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.72);
+        border-radius: 8px;
+        font-size: 12px;
+        color: #64748b;
+        pointer-events: none;
+      }
+
+      .catalog-panel-loading-overlay[hidden] {
+        display: none !important;
+      }
+
+      .catalog-toolbar-row {
+        display: grid;
+        grid-template-columns: minmax(160px, 1fr) minmax(0, 2.4fr);
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .catalog-toolbar-row > input[type="search"] {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .catalog-toolbar-filters {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .catalog-toolbar-filters select,
+      .catalog-toolbar-filters input[type="search"] {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .catalog-toolbar-filters--users {
+        grid-template-columns: minmax(0, 1.4fr) auto;
+      }
+
+      .admin-table.admin-table--catalog td {
+        font-size: 12px;
+        vertical-align: top;
+      }
+
+      .admin-table.admin-table--catalog .cell-wrap {
+        max-width: 240px;
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.35;
+      }
+
+      .admin-table.admin-table--catalog .cell-muted {
+        color: #64748b;
+      }
+
+      #products-section .products-list.products-list--paginated {
+        overflow-y: visible;
+        flex: 0 0 auto;
+      }
+
       .admin-table-scroll .admin-table {
         margin-top: 0;
       }
@@ -1796,6 +1874,14 @@
         .products-spec-filter {
           grid-template-columns: 1fr;
         }
+
+        .catalog-toolbar-row {
+          grid-template-columns: 1fr;
+        }
+
+        .catalog-toolbar-filters {
+          grid-template-columns: 1fr;
+        }
       }
 
       .admin-catalog-toolbar {
@@ -1867,48 +1953,55 @@
               <div class="divider"></div>
             </div>
 
-            <div class="products-search-wrap">
+            <div class="catalog-toolbar-row">
               <input
                 type="search"
                 id="products-search-input"
-                placeholder="Поиск по названию или параметрам"
+                placeholder="Поиск по ID, названию или параметрам (Enter)"
                 autocomplete="off"
               />
+              <div class="catalog-toolbar-filters products-spec-filter" id="products-spec-filter">
+                <select id="products-spec-param-select" aria-label="Параметр характеристики">
+                  <option value="">Все параметры</option>
+                </select>
+                <input
+                  type="search"
+                  id="products-spec-value-input"
+                  placeholder="Значение (Enter)"
+                  autocomplete="off"
+                />
+                <select id="products-type-select" aria-label="Тип оборудования">
+                  <option value="">Все типы оборудования</option>
+                </select>
+                <button
+                  type="button"
+                  class="secondary-btn products-spec-filter-clear"
+                  id="products-spec-filter-clear"
+                  hidden
+                >
+                  Сбросить
+                </button>
+              </div>
             </div>
-            <div class="products-spec-filter" id="products-spec-filter">
-              <select id="products-spec-param-select" aria-label="Параметр характеристики">
-                <option value="">Все параметры</option>
-              </select>
-              <input
-                type="search"
-                id="products-spec-value-input"
-                placeholder="Значение характеристики"
-                autocomplete="off"
-              />
-              <button
-                type="button"
-                class="secondary-btn products-spec-filter-clear"
-                id="products-spec-filter-clear"
+            <div class="catalog-panel" id="user-products-panel">
+              <div
+                class="catalog-panel-loading-overlay"
+                id="user-products-loading"
                 hidden
               >
-                Сбросить
-              </button>
-            </div>
-            <div class="products-type-filter">
-              <select id="products-type-select" aria-label="Тип оборудования">
-                <option value="">Все типы оборудования</option>
-              </select>
-            </div>
-            <ul class="products-list" id="products-list"></ul>
-            <div class="products-pagination" id="products-pagination" hidden>
-              <span id="products-page-info"></span>
-              <div class="products-pagination-actions">
-                <button type="button" class="secondary-btn" id="products-page-prev">
-                  Назад
-                </button>
-                <button type="button" class="secondary-btn" id="products-page-next">
-                  Далее
-                </button>
+                Загрузка…
+              </div>
+              <ul class="products-list" id="products-list"></ul>
+              <div class="products-pagination" id="products-pagination" hidden>
+                <span id="products-page-info"></span>
+                <div class="products-pagination-actions">
+                  <button type="button" class="secondary-btn" id="products-page-prev">
+                    Назад
+                  </button>
+                  <button type="button" class="secondary-btn" id="products-page-next">
+                    Далее
+                  </button>
+                </div>
               </div>
             </div>
             <div class="scroll-hint debug-only">
@@ -2116,15 +2209,23 @@
                 Разрешённый домен почты (например <code>aaa.ru</code>): регистрация и
                 вход пользователей привязаны к компании с этим доменом.
               </p>
-              <div class="products-search-wrap">
+              <div class="catalog-toolbar-row">
                 <input
                   type="search"
                   id="admin-companies-search-input"
-                  placeholder="Поиск по названию или домену"
+                  placeholder="Поиск по названию или домену (Enter)"
                   autocomplete="off"
                 />
               </div>
-              <div class="admin-table-scroll">
+              <div class="catalog-panel" id="admin-companies-panel">
+                <div
+                  class="catalog-panel-loading-overlay"
+                  id="admin-companies-loading"
+                  hidden
+                >
+                  Загрузка…
+                </div>
+                <div class="admin-table-scroll admin-table-scroll--flat">
                 <table class="admin-table" id="admin-companies-table">
                   <thead>
                     <tr>
@@ -2136,6 +2237,7 @@
                   </thead>
                   <tbody id="admin-companies-tbody"></tbody>
                 </table>
+              </div>
               </div>
               <div
                 id="admin-company-edit-wrap"
@@ -2225,26 +2327,35 @@
             <summary class="admin-fold-summary" id="admin-fold-users">Пользователи</summary>
             <div class="admin-fold-body">
               <div class="admin-above-table admin-above-table--compact">
-                <div class="products-search-wrap">
+                <div class="catalog-toolbar-row">
                   <input
                     type="search"
                     id="admin-users-search-input"
-                    placeholder="Поиск по имени или email"
+                    placeholder="Поиск по имени, email или компании (Enter)"
                     autocomplete="off"
                   />
-                </div>
-                <div class="admin-inline">
-                  <div class="field-group">
-                    <div class="field-label" id="users-company-filter-label">Компания</div>
-                    <select class="admin-select" id="admin-users-company-select"></select>
+                  <div class="catalog-toolbar-filters catalog-toolbar-filters--users">
+                    <select
+                      class="admin-select"
+                      id="admin-users-company-select"
+                      aria-label="Компания"
+                    ></select>
+                    <button type="button" class="secondary-btn" id="admin-users-refresh-btn">
+                      Обновить список
+                    </button>
                   </div>
-                  <button type="button" class="secondary-btn" id="admin-users-refresh-btn">
-                    Обновить список
-                  </button>
                 </div>
                 <div id="admin-users-status" class="status-area"></div>
               </div>
-              <div class="admin-table-scroll">
+              <div class="catalog-panel" id="admin-users-panel">
+                <div
+                  class="catalog-panel-loading-overlay"
+                  id="admin-users-loading"
+                  hidden
+                >
+                  Загрузка…
+                </div>
+                <div class="admin-table-scroll admin-table-scroll--flat">
                 <table class="admin-table">
                   <thead>
                     <tr>
@@ -2261,22 +2372,21 @@
                   <tbody id="admin-users-tbody"></tbody>
                 </table>
               </div>
+              </div>
             </div>
           </details>
 
           <details class="admin-fold" open>
             <summary class="admin-fold-summary" id="admin-fold-catalog">Каталог: оборудование</summary>
             <div class="admin-fold-body">
-              <div class="admin-catalog-toolbar">
-                <div class="products-search-wrap">
-                  <input
-                    type="search"
-                    id="admin-products-search-input"
-                    placeholder="Поиск по названию или параметрам"
-                    autocomplete="off"
-                  />
-                </div>
-                <div class="products-spec-filter">
+              <div class="catalog-toolbar-row admin-catalog-toolbar">
+                <input
+                  type="search"
+                  id="admin-products-search-input"
+                  placeholder="Поиск по ID, названию или параметрам (Enter)"
+                  autocomplete="off"
+                />
+                <div class="catalog-toolbar-filters products-spec-filter">
                   <select
                     id="admin-products-spec-param-select"
                     aria-label="Параметр характеристики"
@@ -2286,9 +2396,12 @@
                   <input
                     type="search"
                     id="admin-products-spec-value-input"
-                    placeholder="Значение характеристики"
+                    placeholder="Значение (Enter)"
                     autocomplete="off"
                   />
+                  <select id="admin-products-type-select" aria-label="Тип оборудования">
+                    <option value="">Все типы оборудования</option>
+                  </select>
                   <button
                     type="button"
                     class="secondary-btn products-spec-filter-clear"
@@ -2298,35 +2411,44 @@
                     Сбросить
                   </button>
                 </div>
-                <div class="products-type-filter">
-                  <select id="admin-products-type-select" aria-label="Тип оборудования">
-                    <option value="">Все типы оборудования</option>
-                  </select>
-                </div>
-                <div class="products-pagination" id="admin-products-pagination" hidden>
-                  <span id="admin-products-page-info"></span>
-                  <div class="products-pagination-actions">
-                    <button type="button" class="secondary-btn" id="admin-products-page-prev">
-                      Назад
-                    </button>
-                    <button type="button" class="secondary-btn" id="admin-products-page-next">
-                      Далее
-                    </button>
-                  </div>
-                </div>
               </div>
-              <div class="admin-table-scroll">
-                <table class="admin-table" id="admin-products-table">
+              <div class="catalog-panel" id="admin-products-panel">
+                <div
+                  class="catalog-panel-loading-overlay"
+                  id="admin-products-loading"
+                  hidden
+                >
+                  Загрузка…
+                </div>
+                <div class="admin-table-scroll admin-table-scroll--flat">
+                <table class="admin-table admin-table--catalog" id="admin-products-table">
                   <thead>
                     <tr>
                       <th id="th-products-id">ID</th>
                       <th id="th-products-name">Название</th>
                       <th id="th-products-category">Категория</th>
-                      <th></th>
+                      <th id="th-products-kind">Тип</th>
+                      <th id="th-products-desc">Описание</th>
+                      <th id="th-products-specs">Характеристики</th>
+                      <th id="th-products-slots">Слоты</th>
+                      <th id="th-products-ap">AP</th>
+                      <th id="th-products-actions">Действия</th>
                     </tr>
                   </thead>
                   <tbody id="admin-products-tbody"></tbody>
                 </table>
+              </div>
+              <div class="products-pagination" id="admin-products-pagination" hidden>
+                <span id="admin-products-page-info"></span>
+                <div class="products-pagination-actions">
+                  <button type="button" class="secondary-btn" id="admin-products-page-prev">
+                    Назад
+                  </button>
+                  <button type="button" class="secondary-btn" id="admin-products-page-next">
+                    Далее
+                  </button>
+                </div>
+              </div>
               </div>
               <div class="admin-below-table">
                 <h4 class="admin-form-block-title admin-form-block-title--compact" id="add-product-title">
@@ -2427,6 +2549,29 @@
         setGlobalLoadingOverlay(globalLoadingCount > 0);
       }
 
+      function setPanelLoading(overlayEl, loading, label) {
+        if (!overlayEl) return;
+        overlayEl.hidden = !loading;
+        if (label) overlayEl.textContent = label;
+      }
+
+      function bindSearchInputOnEnter(inputEl, onSubmit) {
+        if (!inputEl || typeof onSubmit !== "function") return;
+        inputEl.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            onSubmit((inputEl.value || "").trim());
+          }
+        });
+      }
+
+      function truncateCellText(value, maxLen) {
+        const text = value == null ? "" : String(value).trim();
+        if (!text) return "—";
+        if (text.length <= maxLen) return text;
+        return text.slice(0, maxLen - 1) + "…";
+      }
+
       // Fallback when GET /products fails: same demo ids as backend seed (501/502).
       const elements = {
         langToggleBtn: document.getElementById("lang-toggle-btn"),
@@ -2441,6 +2586,7 @@
         productsPageInfo: document.getElementById("products-page-info"),
         productsPagePrev: document.getElementById("products-page-prev"),
         productsPageNext: document.getElementById("products-page-next"),
+        userProductsLoading: document.getElementById("user-products-loading"),
         adminProductsSearchInput: document.getElementById("admin-products-search-input"),
         adminProductsSpecParamSelect: document.getElementById(
           "admin-products-spec-param-select"
@@ -2456,6 +2602,7 @@
         adminProductsPageInfo: document.getElementById("admin-products-page-info"),
         adminProductsPagePrev: document.getElementById("admin-products-page-prev"),
         adminProductsPageNext: document.getElementById("admin-products-page-next"),
+        adminProductsLoading: document.getElementById("admin-products-loading"),
         productsCounter: document.getElementById("products-counter"),
         productsSource: document.getElementById("products-source"),
         productsStatusArea: document.getElementById("products-status-area"),
@@ -2508,6 +2655,7 @@
         ),
         adminUsersRefreshBtn: document.getElementById("admin-users-refresh-btn"),
         adminUsersSearchInput: document.getElementById("admin-users-search-input"),
+        adminUsersLoading: document.getElementById("admin-users-loading"),
         adminUsersTbody: document.getElementById("admin-users-tbody"),
         adminSpecParamsTbody: document.getElementById("admin-spec-params-tbody"),
         adminSpecParamCode: document.getElementById("admin-spec-param-code"),
@@ -2518,6 +2666,7 @@
         adminCompanyDomain: document.getElementById("admin-company-domain"),
         adminAddCompanyBtn: document.getElementById("admin-add-company-btn"),
         adminCompaniesSearchInput: document.getElementById("admin-companies-search-input"),
+        adminCompaniesLoading: document.getElementById("admin-companies-loading"),
         adminCompaniesTbody: document.getElementById("admin-companies-tbody"),
         adminCompanyEditWrap: document.getElementById("admin-company-edit-wrap"),
         adminCompanyEditId: document.getElementById("admin-company-edit-id"),
@@ -2603,23 +2752,23 @@
         }
         if (elements.productsSearchInput) {
           elements.productsSearchInput.placeholder = isEn
-            ? "Search by name or specs"
-            : "Поиск по названию или параметрам";
+            ? "Search by ID, name or specs (Enter)"
+            : "Поиск по ID, названию или параметрам (Enter)";
         }
         if (elements.adminProductsSearchInput) {
           elements.adminProductsSearchInput.placeholder = isEn
-            ? "Search by name or specs"
-            : "Поиск по названию или параметрам";
+            ? "Search by ID, name or specs (Enter)"
+            : "Поиск по ID, названию или параметрам (Enter)";
         }
         if (elements.productsSpecValueInput) {
           elements.productsSpecValueInput.placeholder = isEn
-            ? "Characteristic value"
-            : "Значение характеристики";
+            ? "Value (Enter)"
+            : "Значение (Enter)";
         }
         if (elements.adminProductsSpecValueInput) {
           elements.adminProductsSpecValueInput.placeholder = isEn
-            ? "Characteristic value"
-            : "Значение характеристики";
+            ? "Value (Enter)"
+            : "Значение (Enter)";
         }
         if (elements.productsSpecFilterClear) {
           elements.productsSpecFilterClear.textContent = isEn ? "Clear" : "Сбросить";
@@ -2733,6 +2882,18 @@
         if (thProductsCategory) {
           thProductsCategory.textContent = isEn ? "Category (label)" : "Категория";
         }
+        const thProductsKind = document.getElementById("th-products-kind");
+        if (thProductsKind) thProductsKind.textContent = isEn ? "Kind" : "Тип";
+        const thProductsDesc = document.getElementById("th-products-desc");
+        if (thProductsDesc) thProductsDesc.textContent = isEn ? "Description" : "Описание";
+        const thProductsSpecs = document.getElementById("th-products-specs");
+        if (thProductsSpecs) thProductsSpecs.textContent = isEn ? "Specs" : "Характеристики";
+        const thProductsSlots = document.getElementById("th-products-slots");
+        if (thProductsSlots) thProductsSlots.textContent = isEn ? "Slots" : "Слоты";
+        const thProductsAp = document.getElementById("th-products-ap");
+        if (thProductsAp) thProductsAp.textContent = isEn ? "Built-in AP" : "AP";
+        const thProductsActions = document.getElementById("th-products-actions");
+        if (thProductsActions) thProductsActions.textContent = isEn ? "Actions" : "Действия";
         const drawerTitle = document.getElementById("admin-product-drawer-title");
         if (drawerTitle) {
           drawerTitle.textContent = isEn ? "Product card" : "Карточка продукта";
@@ -2744,8 +2905,8 @@
         }
         if (elements.adminUsersSearchInput) {
           elements.adminUsersSearchInput.placeholder = isEn
-            ? "Search by name or email"
-            : "Поиск по имени или email";
+            ? "Search by name, email or company (Enter)"
+            : "Поиск по имени, email или компании (Enter)";
         }
         if (elements.adminAddCompanyBtn) {
           elements.adminAddCompanyBtn.textContent = isEn
@@ -2754,8 +2915,8 @@
         }
         if (elements.adminCompaniesSearchInput) {
           elements.adminCompaniesSearchInput.placeholder = isEn
-            ? "Search by name or domain"
-            : "Поиск по названию или домену";
+            ? "Search by name or domain (Enter)"
+            : "Поиск по названию или домену (Enter)";
         }
         if (elements.adminAddProductBtn) {
           elements.adminAddProductBtn.textContent = isEn
@@ -2822,10 +2983,9 @@
       let productSpecFilterValue = "";
       let productTypeFilter = "";
       let productsPage = 1;
-      let productsPageSize = 50;
+      let productsPageSize = 20;
       let productsTotal = 0;
       let productsPages = 1;
-      let productsReloadTimer = null;
       let equipmentTypesList = [];
       /** @type {object|null} Built POST /configurations body awaiting confirm dialog. */
       let pendingConfigurationPayload = null;
@@ -2844,10 +3004,8 @@
       let companiesList = [];
       let adminCompaniesTableList = [];
       let adminCompaniesSearchTerm = "";
-      let adminCompaniesReloadTimer = null;
       let adminUsersList = [];
       let adminUsersSearchTerm = "";
-      let adminUsersReloadTimer = null;
 
       function defaultLineState() {
         return {
@@ -3755,6 +3913,7 @@
 
       function syncProductSpecFilterUi() {
         const hasFilter =
+          Boolean((productSearchTerm || "").trim()) ||
           Boolean((productSpecFilterCode || "").trim()) ||
           Boolean((productSpecFilterValue || "").trim()) ||
           Boolean((productTypeFilter || "").trim());
@@ -3766,40 +3925,44 @@
         }
       }
 
-      function productMatchesSpecFilter(p) {
-        const code = (productSpecFilterCode || "").trim().toLowerCase();
-        const val = (productSpecFilterValue || "").trim().toLowerCase();
-        if (!code && !val) return true;
-        const specs = Array.isArray(p.technical_spec_values)
-          ? p.technical_spec_values
-          : [];
-        if (specs.length === 0) return false;
-        return specs.some((x) => {
-          if (!x) return false;
-          const pc = String(x.parameter_code || "").toLowerCase();
-          const pv = String(x.value || "").toLowerCase();
-          if (code && pc !== code) return false;
-          if (val && !pv.includes(val)) return false;
-          return true;
-        });
+      function readProductFiltersFromInputs() {
+        productSearchTerm =
+          (elements.productsSearchInput && elements.productsSearchInput.value) ||
+          (elements.adminProductsSearchInput && elements.adminProductsSearchInput.value) ||
+          "";
+        productSpecFilterCode =
+          (elements.productsSpecParamSelect && elements.productsSpecParamSelect.value) ||
+          (elements.adminProductsSpecParamSelect &&
+            elements.adminProductsSpecParamSelect.value) ||
+          "";
+        productSpecFilterValue =
+          (elements.productsSpecValueInput && elements.productsSpecValueInput.value) ||
+          (elements.adminProductsSpecValueInput &&
+            elements.adminProductsSpecValueInput.value) ||
+          "";
+        productTypeFilter =
+          (elements.productsTypeSelect && elements.productsTypeSelect.value) ||
+          (elements.adminProductsTypeSelect && elements.adminProductsTypeSelect.value) ||
+          "";
+      }
+
+      function applyProductCatalogQuery(resetPage) {
+        readProductFiltersFromInputs();
+        if (resetPage) productsPage = 1;
+        syncProductFilterInputsFromState();
+        syncProductSpecFilterUi();
+        void loadProducts();
       }
 
       function clearProductSpecFilter() {
+        productSearchTerm = "";
         productSpecFilterCode = "";
         productSpecFilterValue = "";
         productTypeFilter = "";
+        productsPage = 1;
         syncProductFilterInputsFromState();
         syncProductSpecFilterUi();
-        scheduleProductsReload(true);
-      }
-
-      function scheduleProductsReload(resetPage) {
-        if (resetPage) productsPage = 1;
-        if (productsReloadTimer) clearTimeout(productsReloadTimer);
-        productsReloadTimer = setTimeout(() => {
-          productsReloadTimer = null;
-          void loadProducts();
-        }, 300);
+        void loadProducts();
       }
 
       async function loadEquipmentTypes() {
@@ -3820,10 +3983,18 @@
       function populateEquipmentTypeSelect(sel) {
         if (!sel) return;
         const prev = productTypeFilter || sel.value || "";
+        const totalCount = equipmentTypesList.reduce(
+          (sum, row) => sum + (Number(row && row.count) || 0),
+          0
+        );
         sel.innerHTML = "";
         const allOpt = document.createElement("option");
         allOpt.value = "";
-        allOpt.textContent = catT("Все типы оборудования", "All equipment types");
+        allOpt.textContent =
+          catT("Все типы оборудования", "All equipment types") +
+          " (" +
+          totalCount +
+          ")";
         sel.appendChild(allOpt);
         equipmentTypesList.forEach((row) => {
           if (!row || !row.code) return;
@@ -3851,7 +4022,7 @@
 
       function renderProductsPaginationBar(bar, pageInfoEl, prevBtn, nextBtn) {
         if (!bar) return;
-        if (productsTotal <= productsPageSize) {
+        if (productsPages <= 1) {
           bar.hidden = true;
           return;
         }
@@ -3862,7 +4033,7 @@
               productsPage +
               " из " +
               productsPages +
-              " · всего " +
+              " · найдено " +
               productsTotal,
             "Page " +
               productsPage +
@@ -4049,7 +4220,10 @@
       async function refreshCompaniesListForSelect() {
         if (getCurrentRoleId() !== 1) return;
         try {
-          const res = await apiFetch("/companies", { method: "GET" });
+          const res = await apiFetch("/companies", {
+            method: "GET",
+            __globalLoading: false,
+          });
           const data = await res.json().catch(() => null);
           if (!res.ok) return;
           companiesList = Array.isArray(data) ? data : [];
@@ -4065,8 +4239,16 @@
         const search = (adminCompaniesSearchTerm || "").trim();
         if (search) params.set("q", search);
         const q = params.toString() ? "?" + params.toString() : "";
+        setPanelLoading(
+          elements.adminCompaniesLoading,
+          true,
+          catT("Загрузка…", "Loading…")
+        );
         try {
-          const res = await apiFetch("/companies" + q, { method: "GET" });
+          const res = await apiFetch("/companies" + q, {
+            method: "GET",
+            __globalLoading: false,
+          });
           const data = await res.json().catch(() => null);
           if (!res.ok) {
             setCatalogStatus(
@@ -4090,15 +4272,16 @@
             "Сеть: не удалось загрузить организации",
             "error"
           );
+        } finally {
+          setPanelLoading(elements.adminCompaniesLoading, false);
         }
       }
 
-      function scheduleAdminCompaniesReload() {
-        if (adminCompaniesReloadTimer) clearTimeout(adminCompaniesReloadTimer);
-        adminCompaniesReloadTimer = setTimeout(() => {
-          adminCompaniesReloadTimer = null;
-          void loadAdminCompanies();
-        }, 300);
+      function applyAdminCompaniesSearch() {
+        adminCompaniesSearchTerm = (
+          elements.adminCompaniesSearchInput?.value || ""
+        ).trim();
+        void loadAdminCompanies();
       }
 
       async function loadAdminUsers(options) {
@@ -4112,8 +4295,16 @@
         const search = (adminUsersSearchTerm || "").trim();
         if (search) params.set("q", search);
         const q = params.toString() ? "?" + params.toString() : "";
+        setPanelLoading(
+          elements.adminUsersLoading,
+          true,
+          catT("Загрузка…", "Loading…")
+        );
         try {
-          const res = await apiFetch("/users" + q, { method: "GET" });
+          const res = await apiFetch("/users" + q, {
+            method: "GET",
+            __globalLoading: false,
+          });
           const data = await res.json().catch(() => null);
           if (!res.ok) {
             setCatalogStatus(
@@ -4139,15 +4330,16 @@
             catT("Сеть.", "Network error."),
             "error"
           );
+        } finally {
+          setPanelLoading(elements.adminUsersLoading, false);
         }
       }
 
-      function scheduleAdminUsersReload() {
-        if (adminUsersReloadTimer) clearTimeout(adminUsersReloadTimer);
-        adminUsersReloadTimer = setTimeout(() => {
-          adminUsersReloadTimer = null;
-          void loadAdminUsers();
-        }, 300);
+      function applyAdminUsersSearch() {
+        adminUsersSearchTerm = (
+          elements.adminUsersSearchInput?.value || ""
+        ).trim();
+        void loadAdminUsers();
       }
 
       function renderAdminUsersTable() {
@@ -4495,6 +4687,21 @@
         }
       }
 
+      function formatProductSpecsSummary(p) {
+        const parts = [];
+        const legacy = p.technical_specs && String(p.technical_specs).trim();
+        if (legacy && legacy !== "—") parts.push(legacy);
+        const specs = Array.isArray(p.technical_spec_values)
+          ? p.technical_spec_values
+          : [];
+        specs.forEach((x) => {
+          if (!x) return;
+          const label = x.parameter_name || x.parameter_code || "spec";
+          parts.push(label + ": " + (x.value || "—"));
+        });
+        return parts.length ? parts.join("; ") : "—";
+      }
+
       function renderAdminProductsTable() {
         const tb = elements.adminProductsTbody;
         if (!tb) return;
@@ -4502,7 +4709,7 @@
         if (!products.length) {
           const tr = document.createElement("tr");
           const td = document.createElement("td");
-          td.colSpan = 4;
+          td.colSpan = 9;
           td.textContent = catT(
             "Каталог пуст или ничего не найдено по фильтрам.",
             "Catalog is empty or no matches for current filters."
@@ -4513,15 +4720,47 @@
         }
         products.forEach((p) => {
           const tr = document.createElement("tr");
-          const tdId = document.createElement("td");
-          tdId.textContent = String(p.id);
-          const tdName = document.createElement("td");
-          tdName.textContent = p.name;
-          const tdCat = document.createElement("td");
-          tdCat.textContent =
+          const descText =
+            p.description && String(p.description).trim()
+              ? String(p.description).trim()
+              : "—";
+          const specsText = formatProductSpecsSummary(p);
+
+          function addCell(text, opts) {
+            const td = document.createElement("td");
+            if (opts && opts.className) td.className = opts.className;
+            if (opts && opts.title) td.title = opts.title;
+            td.textContent = text;
+            tr.appendChild(td);
+          }
+
+          addCell(String(p.id));
+          addCell(p.name || "—", { className: "cell-wrap" });
+          addCell(
             p.product_category && String(p.product_category).trim()
               ? String(p.product_category).trim()
-              : "—";
+              : "—"
+          );
+          addCell(p.product_kind || "equipment");
+          addCell(truncateCellText(descText, 120), {
+            className: "cell-wrap cell-muted",
+            title: descText !== "—" ? descText : "",
+          });
+          addCell(truncateCellText(specsText, 140), {
+            className: "cell-wrap cell-muted",
+            title: specsText !== "—" ? specsText : "",
+          });
+          addCell(
+            p.max_module_slots != null && p.max_module_slots !== ""
+              ? String(p.max_module_slots)
+              : "—"
+          );
+          addCell(
+            p.built_in_license_units != null && p.built_in_license_units !== ""
+              ? String(p.built_in_license_units)
+              : "—"
+          );
+
           const tdAct = document.createElement("td");
           tdAct.style.whiteSpace = "nowrap";
           const btnEdit = document.createElement("button");
@@ -4540,9 +4779,6 @@
           tdAct.appendChild(btnEdit);
           tdAct.appendChild(document.createTextNode(" "));
           tdAct.appendChild(btn);
-          tr.appendChild(tdId);
-          tr.appendChild(tdName);
-          tr.appendChild(tdCat);
           tr.appendChild(tdAct);
           tb.appendChild(tr);
         });
@@ -6450,6 +6686,12 @@
       }
 
       function renderProducts() {
+        if (elements.productsList) {
+          elements.productsList.classList.toggle(
+            "products-list--paginated",
+            productsPages > 1
+          );
+        }
         elements.productsList.innerHTML = "";
         const hasSpecFilter =
           Boolean((productSpecFilterCode || "").trim()) ||
@@ -6865,9 +7107,20 @@
         if (typeCode) params.set("product_category", typeCode);
         if (getCurrentRoleId() !== 1) params.set("configurator_only", "true");
 
+        setPanelLoading(
+          elements.userProductsLoading,
+          true,
+          catT("Загрузка…", "Loading…")
+        );
+        setPanelLoading(
+          elements.adminProductsLoading,
+          true,
+          catT("Загрузка…", "Loading…")
+        );
         try {
           const response = await apiFetch("/products?" + params.toString(), {
             method: "GET",
+            __globalLoading: false,
           });
           httpStatus = response.status;
           const data = await response.json().catch(() => null);
@@ -6892,13 +7145,19 @@
 
           if (data && Array.isArray(data.items)) {
             products = data.items;
-            productsTotal = Number(data.total) || products.length;
+            productsTotal = Number(data.total) || 0;
             productsPage = Number(data.page) || productsPage;
-            productsPages = Number(data.pages) || 1;
+            productsPages = Math.max(
+              1,
+              Math.ceil(productsTotal / productsPageSize) || 1
+            );
           } else {
             products = Array.isArray(data) ? data : [];
             productsTotal = products.length;
-            productsPages = 1;
+            productsPages = Math.max(
+              1,
+              Math.ceil(productsTotal / productsPageSize) || 1
+            );
           }
 
           elements.productsSource.textContent =
@@ -6940,6 +7199,9 @@
           elements.productsSource.textContent =
             catT("GET /products — ошибка", "GET /products — error") +
             (httpStatus != null ? " (" + httpStatus + ")" : "");
+        } finally {
+          setPanelLoading(elements.userProductsLoading, false);
+          setPanelLoading(elements.adminProductsLoading, false);
         }
 
         await Promise.all([
@@ -7546,66 +7808,36 @@
             updateCreateConfigBtnState();
           });
         }
-        if (elements.productsSearchInput) {
-          elements.productsSearchInput.addEventListener("input", () => {
-            productSearchTerm = elements.productsSearchInput.value || "";
-            syncProductFilterInputsFromState();
-            scheduleProductsReload(true);
-          });
-        }
-        if (elements.adminProductsSearchInput) {
-          elements.adminProductsSearchInput.addEventListener("input", () => {
-            productSearchTerm = elements.adminProductsSearchInput.value || "";
-            syncProductFilterInputsFromState();
-            scheduleProductsReload(true);
-          });
-        }
+        bindSearchInputOnEnter(elements.productsSearchInput, () => {
+          applyProductCatalogQuery(true);
+        });
+        bindSearchInputOnEnter(elements.adminProductsSearchInput, () => {
+          applyProductCatalogQuery(true);
+        });
+        bindSearchInputOnEnter(elements.productsSpecValueInput, () => {
+          applyProductCatalogQuery(true);
+        });
+        bindSearchInputOnEnter(elements.adminProductsSpecValueInput, () => {
+          applyProductCatalogQuery(true);
+        });
         if (elements.productsSpecParamSelect) {
           elements.productsSpecParamSelect.addEventListener("change", () => {
-            productSpecFilterCode = elements.productsSpecParamSelect.value || "";
-            syncProductFilterInputsFromState();
-            syncProductSpecFilterUi();
-            scheduleProductsReload(true);
+            applyProductCatalogQuery(true);
           });
         }
         if (elements.adminProductsSpecParamSelect) {
           elements.adminProductsSpecParamSelect.addEventListener("change", () => {
-            productSpecFilterCode = elements.adminProductsSpecParamSelect.value || "";
-            syncProductFilterInputsFromState();
-            syncProductSpecFilterUi();
-            scheduleProductsReload(true);
-          });
-        }
-        if (elements.productsSpecValueInput) {
-          elements.productsSpecValueInput.addEventListener("input", () => {
-            productSpecFilterValue = elements.productsSpecValueInput.value || "";
-            syncProductFilterInputsFromState();
-            syncProductSpecFilterUi();
-            scheduleProductsReload(true);
-          });
-        }
-        if (elements.adminProductsSpecValueInput) {
-          elements.adminProductsSpecValueInput.addEventListener("input", () => {
-            productSpecFilterValue = elements.adminProductsSpecValueInput.value || "";
-            syncProductFilterInputsFromState();
-            syncProductSpecFilterUi();
-            scheduleProductsReload(true);
+            applyProductCatalogQuery(true);
           });
         }
         if (elements.productsTypeSelect) {
           elements.productsTypeSelect.addEventListener("change", () => {
-            productTypeFilter = elements.productsTypeSelect.value || "";
-            syncProductFilterInputsFromState();
-            syncProductSpecFilterUi();
-            scheduleProductsReload(true);
+            applyProductCatalogQuery(true);
           });
         }
         if (elements.adminProductsTypeSelect) {
           elements.adminProductsTypeSelect.addEventListener("change", () => {
-            productTypeFilter = elements.adminProductsTypeSelect.value || "";
-            syncProductFilterInputsFromState();
-            syncProductSpecFilterUi();
-            scheduleProductsReload(true);
+            applyProductCatalogQuery(true);
           });
         }
         if (elements.productsPagePrev) {
@@ -7710,12 +7942,9 @@
             loadAdminUsers({ toastOnSuccess: true });
           });
         }
-        if (elements.adminUsersSearchInput) {
-          elements.adminUsersSearchInput.addEventListener("input", () => {
-            adminUsersSearchTerm = elements.adminUsersSearchInput.value || "";
-            scheduleAdminUsersReload();
-          });
-        }
+        bindSearchInputOnEnter(elements.adminUsersSearchInput, () => {
+          applyAdminUsersSearch();
+        });
         if (elements.adminUsersCompanySelect) {
           elements.adminUsersCompanySelect.addEventListener("change", () => {
             loadAdminUsers();
@@ -7727,12 +7956,9 @@
             addAdminCompany();
           });
         }
-        if (elements.adminCompaniesSearchInput) {
-          elements.adminCompaniesSearchInput.addEventListener("input", () => {
-            adminCompaniesSearchTerm = elements.adminCompaniesSearchInput.value || "";
-            scheduleAdminCompaniesReload();
-          });
-        }
+        bindSearchInputOnEnter(elements.adminCompaniesSearchInput, () => {
+          applyAdminCompaniesSearch();
+        });
         if (elements.adminSaveCompanyBtn) {
           elements.adminSaveCompanyBtn.addEventListener("click", () => {
             saveAdminCompany();

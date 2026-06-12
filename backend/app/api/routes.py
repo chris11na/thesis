@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.core.email_domain import email_domain
 from app.db.session import SessionLocal
-from app.models.company import Company
 from app.models.user import User
+from app.models.company import Company
 from app.schemas.user import UserAdminRead, UserAdminUpdate, UserCreate, UserRead
 from app.api.auth import router as auth_router
 from app.api.products import router as products_router
@@ -72,12 +72,12 @@ def create_user(
 @router.get("/users", response_model=list[UserAdminRead])
 def list_users(
     company_id: Optional[int] = Query(None, ge=1),
-    q: str | None = Query(None, description="Search by name or email"),
+    q: str | None = Query(None, description="Search by name, email, or company"),
     db: Session = Depends(get_db),
     _: dict = Depends(require_roles(1)),
 ):
     """List registered users; optional filter by company (for admin / sales handoff visibility)."""
-    query = db.query(User).order_by(User.company_id, User.id)
+    query = db.query(User).outerjoin(Company, User.company_id == Company.id)
     if company_id is not None:
         query = query.filter(User.company_id == company_id)
     search = (q or "").strip().lower()
@@ -87,9 +87,11 @@ def list_users(
             or_(
                 func.lower(User.name).like(like),
                 func.lower(User.email).like(like),
+                func.lower(func.coalesce(Company.name, "")).like(like),
+                func.lower(func.coalesce(Company.domain, "")).like(like),
             )
         )
-    return query.all()
+    return query.order_by(User.company_id, User.id).all()
 
 
 @router.patch("/users/{user_id}", response_model=UserAdminRead)

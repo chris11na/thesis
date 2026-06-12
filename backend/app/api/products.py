@@ -358,14 +358,15 @@ def list_products(
     search = (q or "").strip().lower()
     if search:
         like = f"%{search}%"
-        query = query.filter(
-            or_(
-                func.lower(Product.name).like(like),
-                func.lower(Product.description).like(like),
-                func.lower(Product.technical_specs).like(like),
-                func.lower(func.coalesce(Product.product_category, "")).like(like),
-            )
-        )
+        search_filters = [
+            func.lower(Product.name).like(like),
+            func.lower(Product.description).like(like),
+            func.lower(Product.technical_specs).like(like),
+            func.lower(func.coalesce(Product.product_category, "")).like(like),
+        ]
+        if search.isdigit():
+            search_filters.append(Product.id == int(search))
+        query = query.filter(or_(*search_filters))
 
     if code and value:
         query = query.distinct()
