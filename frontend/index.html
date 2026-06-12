@@ -1812,7 +1812,7 @@
         <div class="title-group">
           <img
             class="app-brand-logo"
-            src="assets/logo.svg"
+            src="assets/logo.png"
             alt=""
             width="44"
             height="44"
@@ -2327,11 +2327,11 @@
       </aside>
     </div>
 
+    <script src="api-config.js"></script>
     <script>
       // Simple frontend prototype, comments in English
 
-      // Change this if your backend runs on another port or host
-      const API_BASE = "https://thesis-zqvx.onrender.com";
+      const API_BASE = window.APP_API_BASE || "https://thesis-zqvx.onrender.com";
       const UI_LANG_STORAGE_KEY = "ui_lang";
 
       let globalLoadingCount = 0;

@@ -197,7 +197,7 @@
         background: #e5e7eb;
       }
       .oauth-row {
-        display: none;
+        display: flex;
         flex-direction: column;
         gap: 8px;
       }
@@ -260,7 +260,7 @@
   <body>
     <div class="card">
       <div class="brand-row">
-        <img class="brand-logo" src="assets/logo.svg" alt="" width="40" height="40" />
+        <img class="brand-logo" src="assets/logo.png" alt="" width="40" height="40" />
         <div class="card-header-row" style="margin-bottom:0;flex:1">
           <h1 id="login-title">Вход и регистрация</h1>
           <button type="button" class="lang-toggle-btn" id="lang-toggle-btn">RU</button>
@@ -299,7 +299,16 @@
         <button class="primary-btn" id="login-btn" type="button">Войти</button>
 
         <div class="oauth-divider" id="oauth-divider">или</div>
-        <div class="oauth-row" id="oauth-row" aria-label="Вход через провайдера"></div>
+        <div class="oauth-row" id="oauth-row" aria-label="Вход через провайдера">
+          <a
+            class="oauth-btn oauth-btn--yandex"
+            id="oauth-yandex-btn"
+            href="#"
+            data-oauth-provider="yandex"
+          >
+            Войти через Яндекс
+          </a>
+        </div>
       </div>
 
       <div id="panel-register" class="panel">
@@ -337,8 +346,9 @@
       <p class="hint" id="login-hint"></p>
     </div>
 
+    <script src="api-config.js"></script>
     <script>
-      const API_BASE = "https://thesis-zqvx.onrender.com";
+      const API_BASE = window.APP_API_BASE || "http://127.0.0.1:8000";
       const TOKEN_STORAGE_KEY = "access_token";
       const REFRESH_TOKEN_STORAGE_KEY = "refresh_token";
       const UI_LANG_STORAGE_KEY = "ui_lang";
@@ -455,6 +465,7 @@
         row.querySelectorAll('a.oauth-btn[data-oauth-provider="yandex"]').forEach((a) => {
           a.textContent = t.signInYandex;
         });
+        bindYandexOAuthLink();
       }
 
       function applyLanguage(lang) {
@@ -517,6 +528,7 @@
                 ].join("");
         }
         refreshOAuthButtonLabels();
+        bindYandexOAuthLink();
       }
 
       function setAuthStatus(message, type = "info") {
@@ -610,12 +622,40 @@
         window.history.replaceState({}, "", u.pathname + tail);
       }
 
+      function bindYandexOAuthLink() {
+        const link = document.getElementById("oauth-yandex-btn");
+        const divider = document.getElementById("oauth-divider");
+        if (!link) return;
+        link.href = API_BASE + "/auth/yandex/login";
+        link.textContent = i18n[currentLang].signInYandex;
+        link.style.display = "block";
+        const row = document.getElementById("oauth-row");
+        if (row) row.style.display = "flex";
+        if (divider) divider.style.display = "flex";
+      }
+
       async function loadOAuthButtons() {
+        bindYandexOAuthLink();
         const row = document.getElementById("oauth-row");
         if (!row) return;
-        const divider = document.querySelector("#panel-login .oauth-divider");
-        row.innerHTML = "";
+        const divider = document.getElementById("oauth-divider");
+        const yandexBtn = document.getElementById("oauth-yandex-btn");
+        const extraWrap = document.createElement("div");
+        extraWrap.className = "oauth-extra-providers";
+        extraWrap.style.display = "flex";
+        extraWrap.style.flexDirection = "column";
+        extraWrap.style.gap = "8px";
+        extraWrap.style.width = "100%";
+        if (yandexBtn) {
+          row.innerHTML = "";
+          row.appendChild(yandexBtn);
+          row.appendChild(extraWrap);
+        } else {
+          row.innerHTML = "";
+        }
         row.style.display = "flex";
+        if (divider) divider.style.display = "flex";
+
         const loadingWrap = document.createElement("div");
         loadingWrap.className = "oauth-loading";
         const spin = document.createElement("div");
@@ -625,23 +665,18 @@
         loadingLabel.textContent = i18n[currentLang].oauthChecking;
         loadingWrap.appendChild(spin);
         loadingWrap.appendChild(loadingLabel);
-        row.appendChild(loadingWrap);
+        extraWrap.appendChild(loadingWrap);
         try {
           const r = await fetch(API_BASE + "/auth/oauth/providers");
           const j = await r.json().catch(() => ({}));
-          row.innerHTML = "";
-          if (!j.google && !j.microsoft && !j.yandex) {
-            row.remove();
-            if (divider) divider.remove();
-            return;
-          }
+          extraWrap.innerHTML = "";
           if (j.google) {
             const a = document.createElement("a");
             a.className = "oauth-btn";
             a.href = API_BASE + "/auth/google/login";
             a.dataset.oauthProvider = "google";
             a.textContent = i18n[currentLang].signInGoogle;
-            row.appendChild(a);
+            extraWrap.appendChild(a);
           }
           if (j.microsoft) {
             const a = document.createElement("a");
@@ -649,19 +684,30 @@
             a.href = API_BASE + "/auth/microsoft/login";
             a.dataset.oauthProvider = "microsoft";
             a.textContent = i18n[currentLang].signInMicrosoft;
-            row.appendChild(a);
+            extraWrap.appendChild(a);
           }
-          if (j.yandex) {
-            const a = document.createElement("a");
-            a.className = "oauth-btn oauth-btn--yandex";
-            a.href = API_BASE + "/auth/yandex/login";
-            a.dataset.oauthProvider = "yandex";
-            a.textContent = i18n[currentLang].signInYandex;
-            row.appendChild(a);
+          if (!j.yandex) {
+            const hint = document.createElement("div");
+            hint.className = "status-text info";
+            hint.style.fontSize = "12px";
+            hint.style.marginTop = "4px";
+            hint.textContent =
+              currentLang === "en"
+                ? "Yandex: add YANDEX_CLIENT_ID and YANDEX_CLIENT_SECRET to backend .env, then restart API."
+                : "Яндекс: добавьте YANDEX_CLIENT_ID и YANDEX_CLIENT_SECRET в backend/.env и перезапустите API.";
+            extraWrap.appendChild(hint);
           }
-        } catch (_) {
-          row.remove();
-          if (divider) divider.remove();
+        } catch (e) {
+          console.error(e);
+          extraWrap.innerHTML = "";
+          const err = document.createElement("div");
+          err.className = "status-text error";
+          err.style.fontSize = "12px";
+          err.textContent =
+            currentLang === "en"
+              ? "Could not reach API at " + API_BASE
+              : "Не удалось связаться с API: " + API_BASE;
+          extraWrap.appendChild(err);
         }
       }
 

@@ -14,8 +14,10 @@ def test_login_page_has_login_controls() -> None:
     assert "/auth/login" in html
     assert "/auth/register" in html
     assert 'id="register-btn"' in html
-    assert 'assets/logo.svg' in html
-    assert "registerPending" in html
+    assert 'assets/logo.png' in html
+    assert 'signInYandex' in html
+    assert 'oauth-yandex-btn' in html
+    assert 'api-config.js' in html
 
 
 def test_index_has_session_logout_and_auth_status() -> None:
@@ -29,7 +31,7 @@ def test_frontend_contains_role_badge_and_admin_block() -> None:
     html = _read("frontend/index.html")
     assert 'id="role-badge"' in html
     assert 'id="admin-catalog-block"' in html
-    assert 'assets/logo.svg' in html
+    assert 'assets/logo.png' in html
     assert 'id="products-pagination"' in html
     assert 'id="admin-spec-params-tbody"' in html
 
