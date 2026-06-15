@@ -301,13 +301,14 @@
 
         <button class="primary-btn" id="login-btn" type="button">Войти</button>
 
-        <div class="oauth-divider" id="oauth-divider">или</div>
-        <div class="oauth-row" id="oauth-row" aria-label="Вход через провайдера">
+        <div class="oauth-divider" id="oauth-divider" hidden>или</div>
+        <div class="oauth-row" id="oauth-row" aria-label="Вход через провайдера" hidden>
           <a
             class="oauth-btn oauth-btn--yandex"
             id="oauth-yandex-btn"
             href="#"
             data-oauth-provider="yandex"
+            hidden
           >
             Войти через Яндекс
           </a>
@@ -355,6 +356,8 @@
       const TOKEN_STORAGE_KEY = "access_token";
       const REFRESH_TOKEN_STORAGE_KEY = "refresh_token";
       const UI_LANG_STORAGE_KEY = "ui_lang";
+      // Toggle which OAuth providers are shown on the login page.
+      const OAUTH_UI = { google: false, yandex: false, microsoft: true };
 
       const tabLoginBtn = document.getElementById("tab-login-btn");
       const tabRegisterBtn = document.getElementById("tab-register-btn");
@@ -625,16 +628,29 @@
         window.history.replaceState({}, "", u.pathname + tail);
       }
 
+      function syncOAuthSectionVisibility() {
+        const row = document.getElementById("oauth-row");
+        const divider = document.getElementById("oauth-divider");
+        if (!row) return;
+        const hasVisible = Array.from(row.querySelectorAll("a.oauth-btn")).some(
+          (a) => a.style.display !== "none"
+        );
+        row.style.display = hasVisible ? "flex" : "none";
+        if (divider) divider.style.display = hasVisible ? "flex" : "none";
+      }
+
       function bindYandexOAuthLink() {
         const link = document.getElementById("oauth-yandex-btn");
-        const divider = document.getElementById("oauth-divider");
         if (!link) return;
+        if (!OAUTH_UI.yandex) {
+          link.style.display = "none";
+          syncOAuthSectionVisibility();
+          return;
+        }
         link.href = API_BASE + "/auth/yandex/login";
         link.textContent = i18n[currentLang].signInYandex;
         link.style.display = "block";
-        const row = document.getElementById("oauth-row");
-        if (row) row.style.display = "flex";
-        if (divider) divider.style.display = "flex";
+        syncOAuthSectionVisibility();
       }
 
       async function loadOAuthButtons() {
@@ -649,14 +665,11 @@
         extraWrap.style.flexDirection = "column";
         extraWrap.style.gap = "8px";
         extraWrap.style.width = "100%";
-        if (yandexBtn) {
-          row.innerHTML = "";
+        row.innerHTML = "";
+        if (yandexBtn && OAUTH_UI.yandex) {
           row.appendChild(yandexBtn);
-          row.appendChild(extraWrap);
-        } else {
-          row.innerHTML = "";
         }
-        row.style.display = "flex";
+        row.appendChild(extraWrap);
         if (divider) divider.style.display = "flex";
 
         const loadingWrap = document.createElement("div");
@@ -673,7 +686,7 @@
           const r = await fetch(API_BASE + "/auth/oauth/providers");
           const j = await r.json().catch(() => ({}));
           extraWrap.innerHTML = "";
-          if (j.google) {
+          if (j.google && OAUTH_UI.google) {
             const a = document.createElement("a");
             a.className = "oauth-btn";
             a.href = API_BASE + "/auth/google/login";
@@ -681,24 +694,13 @@
             a.textContent = i18n[currentLang].signInGoogle;
             extraWrap.appendChild(a);
           }
-          if (j.microsoft) {
+          if (j.microsoft && OAUTH_UI.microsoft) {
             const a = document.createElement("a");
             a.className = "oauth-btn";
             a.href = API_BASE + "/auth/microsoft/login";
             a.dataset.oauthProvider = "microsoft";
             a.textContent = i18n[currentLang].signInMicrosoft;
             extraWrap.appendChild(a);
-          }
-          if (!j.yandex) {
-            const hint = document.createElement("div");
-            hint.className = "status-text info";
-            hint.style.fontSize = "12px";
-            hint.style.marginTop = "4px";
-            hint.textContent =
-              currentLang === "en"
-                ? "Yandex!"
-                : "Яндекс!: ";
-            extraWrap.appendChild(hint);
           }
         } catch (e) {
           console.error(e);
@@ -712,6 +714,7 @@
               : "Не удалось связаться с API: " + API_BASE;
           extraWrap.appendChild(err);
         }
+        syncOAuthSectionVisibility();
       }
 
       async function boot() {
