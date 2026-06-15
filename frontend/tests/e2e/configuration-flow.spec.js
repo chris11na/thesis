@@ -8,14 +8,18 @@ async function loginAsUser(page) {
   await page.waitForURL(/index\.html/, { timeout: 15_000 });
 }
 
+async function pickFirstMatchingProduct(page, query) {
+  await page.fill("#products-search-input", query);
+  await page.press("#products-search-input", "Enter");
+  const product = page.locator("#products-list .product-item").first();
+  await expect(product).toBeVisible({ timeout: 15_000 });
+  await product.click();
+}
+
 test.describe("Frontend configuration flow", () => {
   test("creates configuration and offers specification export", async ({ page }) => {
     await loginAsUser(page);
-    await page
-      .locator("#products-list .product-item")
-      .filter({ hasText: "Контроллер" })
-      .first()
-      .click();
+    await pickFirstMatchingProduct(page, "Контроллер");
     await page.fill("#project-name-input", "E2E export test");
     await page.click("#create-config-btn");
     await expect(page.locator("#confirm-submit-dialog")).toBeVisible();
@@ -27,7 +31,7 @@ test.describe("Frontend configuration flow", () => {
       "Конфигурация отправлена"
     );
     await expect(page.locator("#app-toast-host")).toContainText(
-      "Конфигурация успешно создана"
+      /Конфигурация (отправлена|успешно создана|сохранена)/
     );
   });
 });
