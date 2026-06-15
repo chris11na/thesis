@@ -19,6 +19,9 @@ class Settings(BaseSettings):
 
     # Sales handoff: inbox for submitted configuration XLSX attachments.
     sales_inbox_email: str = "ohibloom@gmail.com"
+    # Resend HTTPS API — use on Render free tier (SMTP ports 25/465/587 are blocked).
+    resend_api_key: str | None = None
+    resend_from_email: str = "onboarding@resend.dev"
     smtp_host: str | None = None
     smtp_port: int = 587
     smtp_user: str | None = None

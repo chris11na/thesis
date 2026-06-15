@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user_claims, require_roles
+from app.core.datetime_utils import format_utc_as_moscow_iso, utc_now_naive
 from app.db.session import SessionLocal
 from app.models.company import Company
 from app.models.configuration import Configuration
@@ -194,7 +195,7 @@ def _normalized_project_payload(
     stored_contact_email = project_contact_email or account_norm
 
     submitted_to_sales = bool(project_name)
-    submitted_at = datetime.utcnow() if submitted_to_sales else None
+    submitted_at = utc_now_naive() if submitted_to_sales else None
 
     return {
         "project_name": project_name,
@@ -356,7 +357,7 @@ def create_configuration(
         "configuration_id": config.id,
         "user_id": payload.user_id,
         "submitted_to_sales": bool(config.submitted_to_sales),
-        "submitted_at": config.submitted_at.isoformat() if config.submitted_at else None,
+        "submitted_at": format_utc_as_moscow_iso(config.submitted_at),
         **email_meta,
         "project": {
             "project_name": config.project_name,
@@ -471,7 +472,7 @@ def _create_legacy(
         "user_id": user_id,
         "items": selected_item_ids,
         "submitted_to_sales": bool(config.submitted_to_sales),
-        "submitted_at": config.submitted_at.isoformat() if config.submitted_at else None,
+        "submitted_at": format_utc_as_moscow_iso(config.submitted_at),
         **email_meta,
         "project": {
             "project_name": config.project_name,
@@ -519,10 +520,10 @@ def list_my_recent_configurations(
         out.append(
             {
                 "id": conf.id,
-                "created_at": conf.created_at.isoformat() if conf.created_at else None,
+                "created_at": format_utc_as_moscow_iso(conf.created_at),
                 "project_name": conf.project_name,
                 "submitted_to_sales": bool(conf.submitted_to_sales),
-                "submitted_at": conf.submitted_at.isoformat() if conf.submitted_at else None,
+                "submitted_at": format_utc_as_moscow_iso(conf.submitted_at),
                 "items_count": items_count,
             }
         )
@@ -611,8 +612,8 @@ def list_sales_submissions(
         out.append(
             {
                 "configuration_id": conf.id,
-                "submitted_at": conf.submitted_at.isoformat() if conf.submitted_at else None,
-                "created_at": conf.created_at.isoformat() if conf.created_at else None,
+                "submitted_at": format_utc_as_moscow_iso(conf.submitted_at),
+                "created_at": format_utc_as_moscow_iso(conf.created_at),
                 "user": {
                     "id": user.id,
                     "name": user.name,

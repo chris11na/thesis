@@ -709,10 +709,10 @@ def test_configuration_email_sent_on_sales_submit(monkeypatch) -> None:
         captured["conf_id"] = kwargs["conf"].id
 
     monkeypatch.setattr(
-        "app.services.config_email.send_configuration_specification_email",
+        "app.services.config_email.deliver_configuration_specification_email",
         _fake_send,
     )
-    monkeypatch.setattr("app.services.config_email.smtp_is_configured", lambda: True)
+    monkeypatch.setattr("app.services.config_email.email_is_configured", lambda: True)
 
     tok = _user_token()
     r = client.post(
@@ -731,6 +731,37 @@ def test_configuration_email_sent_on_sales_submit(monkeypatch) -> None:
     assert captured.get("to") == "ohibloom@gmail.com"
     assert captured.get("conf_id") == body.get("configuration_id")
     assert isinstance(captured.get("xlsx"), bytes)
+    assert captured["xlsx"][:2] == b"PK"
+
+
+def test_configuration_email_sent_via_resend(monkeypatch) -> None:
+    captured: dict = {}
+
+    def _fake_resend(**kwargs):
+        captured["to"] = kwargs["to_email"]
+        captured["xlsx"] = kwargs["xlsx_bytes"]
+
+    monkeypatch.setattr(
+        "app.services.config_email.send_configuration_via_resend",
+        _fake_resend,
+    )
+    monkeypatch.setattr("app.services.config_email.resend_is_configured", lambda: True)
+    monkeypatch.setattr("app.services.config_email.smtp_is_configured", lambda: False)
+
+    tok = _user_token()
+    r = client.post(
+        "/configurations",
+        json={
+            "user_id": 2,
+            "project_name": "Resend handoff test",
+            "lines": [{"equipment_product_id": 502, "addons": []}],
+        },
+        headers={"Authorization": f"Bearer {tok}"},
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body.get("email_sent") is True
+    assert captured.get("to") == "ohibloom@gmail.com"
     assert captured["xlsx"][:2] == b"PK"
 
 

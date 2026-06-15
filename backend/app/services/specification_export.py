@@ -10,6 +10,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font
 from sqlalchemy.orm import Session
 
+from app.core.datetime_utils import format_utc_as_moscow
 from app.models.configuration import Configuration
 from app.models.configuration_item import ConfigurationItem
 from app.models.license import License
@@ -91,7 +92,7 @@ def _project_meta(conf: Configuration) -> list[tuple[str, str]]:
         ("Notes", conf.project_notes or ""),
         (
             "Submitted at",
-            conf.submitted_at.isoformat() if conf.submitted_at else "",
+            format_utc_as_moscow(conf.submitted_at),
         ),
     ]
 

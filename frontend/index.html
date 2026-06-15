@@ -8590,11 +8590,22 @@
         updateCreateConfigBtnState();
       }
 
+      function parseApiUtcDate(iso) {
+        if (!iso) return null;
+        const s = String(iso).trim();
+        if (!s) return null;
+        // Backend stores UTC; API may return +03:00 or bare UTC without suffix.
+        if (/[zZ]|[+-]\d{2}:\d{2}$/.test(s)) {
+          return new Date(s);
+        }
+        return new Date(s + "Z");
+      }
+
       function formatRecentConfigDate(iso) {
         if (!iso) return "—";
         try {
-          const d = new Date(iso);
-          if (Number.isNaN(d.getTime())) return String(iso);
+          const d = parseApiUtcDate(iso);
+          if (!d || Number.isNaN(d.getTime())) return String(iso);
           return d.toLocaleString(uiLang === "en" ? "en-GB" : "ru-RU", {
             dateStyle: "short",
             timeStyle: "short",
@@ -8901,9 +8912,9 @@
         ul.style.paddingLeft = "1.1em";
         for (const line of payload.lines || []) {
           const pid = line.equipment_product_id;
-          const p = products.find((x) => x.id === pid);
+          const p = productForConfigLine(pid);
           const li = document.createElement("li");
-          li.textContent = p ? selectionPillCaption(p) : "product #" + pid;
+          li.textContent = selectionPillCaption(p);
           ul.appendChild(li);
         }
         host.appendChild(ul);
