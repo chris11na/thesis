@@ -17,6 +17,15 @@ class Settings(BaseSettings):
     yandex_client_id: str | None = None
     yandex_client_secret: str | None = None
 
+    # Sales handoff: inbox for submitted configuration XLSX attachments.
+    sales_inbox_email: str = "ohibloom@gmail.com"
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_user: str | None = None
+    smtp_password: str | None = None
+    smtp_from_email: str | None = None
+    smtp_use_tls: bool = True
+
     class Config:
         env_file = ".env"
 

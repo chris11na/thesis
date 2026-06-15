@@ -700,6 +700,40 @@ def test_license_pack_suggestion_merges_duplicate_license_rows() -> None:
     assert rows_522[0]["quantity"] == 1
 
 
+def test_configuration_email_sent_on_sales_submit(monkeypatch) -> None:
+    captured: dict = {}
+
+    def _fake_send(**kwargs):
+        captured["to"] = kwargs["to_email"]
+        captured["xlsx"] = kwargs["xlsx_bytes"]
+        captured["conf_id"] = kwargs["conf"].id
+
+    monkeypatch.setattr(
+        "app.services.config_email.send_configuration_specification_email",
+        _fake_send,
+    )
+    monkeypatch.setattr("app.services.config_email.smtp_is_configured", lambda: True)
+
+    tok = _user_token()
+    r = client.post(
+        "/configurations",
+        json={
+            "user_id": 2,
+            "project_name": "Email handoff test",
+            "lines": [{"equipment_product_id": 502, "addons": []}],
+        },
+        headers={"Authorization": f"Bearer {tok}"},
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body.get("email_sent") is True
+    assert body.get("email_recipient") == "ohibloom@gmail.com"
+    assert captured.get("to") == "ohibloom@gmail.com"
+    assert captured.get("conf_id") == body.get("configuration_id")
+    assert isinstance(captured.get("xlsx"), bytes)
+    assert captured["xlsx"][:2] == b"PK"
+
+
 def test_configuration_sales_handoff_metadata_and_admin_submission_list() -> None:
     utok = _user_token()
     create = client.post(

@@ -15,6 +15,7 @@ from app.models.license import License
 from app.models.module import Module
 from app.models.product import Product
 from app.models.user import User
+from app.services.config_email import email_handoff_result
 from app.services.compatibility_service import (
     is_configuration_compatible,
     is_configuration_compatible_typed,
@@ -205,6 +206,18 @@ def _normalized_project_payload(
     }
 
 
+def _email_handoff_for_configuration(
+    db: Session,
+    config: Configuration,
+    user: User,
+) -> dict:
+    if not config.submitted_to_sales:
+        return {"email_sent": False}
+    specification = build_specification_from_configuration(db, config.id)
+    xlsx_bytes = specification_to_xlsx_bytes(conf=config, specification=specification)
+    return email_handoff_result(conf=config, xlsx_bytes=xlsx_bytes, user=user)
+
+
 @router.post("")
 def create_configuration(
     payload: ConfigurationCreateRequest,
@@ -247,7 +260,14 @@ def create_configuration(
     project = _normalized_project_payload(payload, account_email=user.email)
 
     if has_items:
-        return _create_legacy(db, payload.user_id, payload.items or [], project=project, company_id=user.company_id)
+        return _create_legacy(
+            db,
+            payload.user_id,
+            payload.items or [],
+            project=project,
+            company_id=user.company_id,
+            user=user,
+        )
 
     line_data = _lines_to_data(payload.lines or [])
     ok, reason = validate_structured_lines(db, line_data)
@@ -329,6 +349,7 @@ def create_configuration(
     db.commit()
     db.refresh(config)
     spec = _build_specification(db, line_data)
+    email_meta = _email_handoff_for_configuration(db, config, user)
 
     return {
         "status": "ok",
@@ -336,6 +357,7 @@ def create_configuration(
         "user_id": payload.user_id,
         "submitted_to_sales": bool(config.submitted_to_sales),
         "submitted_at": config.submitted_at.isoformat() if config.submitted_at else None,
+        **email_meta,
         "project": {
             "project_name": config.project_name,
             "project_contact_name": config.project_contact_name,
@@ -368,6 +390,7 @@ def _create_legacy(
     selected_item_ids: List[int],
     project: dict,
     company_id: Optional[int],
+    user: User,
 ) -> dict:
     selected_item_ids = list(dict.fromkeys(selected_item_ids))
     if not selected_item_ids:
@@ -440,6 +463,7 @@ def _create_legacy(
 
     db.commit()
     db.refresh(config)
+    email_meta = _email_handoff_for_configuration(db, config, user)
 
     return {
         "status": "ok",
@@ -448,6 +472,7 @@ def _create_legacy(
         "items": selected_item_ids,
         "submitted_to_sales": bool(config.submitted_to_sales),
         "submitted_at": config.submitted_at.isoformat() if config.submitted_at else None,
+        **email_meta,
         "project": {
             "project_name": config.project_name,
             "project_contact_name": config.project_contact_name,

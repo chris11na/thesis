@@ -9058,10 +9058,24 @@
         const projectPart = project
           ? (isEn ? "Project: " : "Проект: ") + project
           : "";
+        const emailRecipient =
+          exportCtx &&
+          exportCtx.emailRecipient &&
+          String(exportCtx.emailRecipient).trim();
+        let emailPart = "";
+        if (exportCtx && exportCtx.emailSent && emailRecipient) {
+          emailPart = isEn
+            ? "Specification was emailed to " + emailRecipient
+            : "Спецификация отправлена на " + emailRecipient;
+        } else if (exportCtx && exportCtx.emailError) {
+          emailPart = isEn
+            ? "Email delivery failed: " + exportCtx.emailError
+            : "Не удалось отправить на почту: " + exportCtx.emailError;
+        }
         const intro = isEn
-          ? "Download the specification as Excel or CSV. CSV can be imported into Google Sheets (File → Import)."
-          : "Скачайте спецификацию в Excel или CSV. CSV можно импортировать в Google Таблицы (Файл → Импорт).";
-        return [idPart, projectPart, intro].filter(Boolean).join(". ");
+          ? "You can also download the specification as Excel or CSV."
+          : "При необходимости скачайте спецификацию в Excel или CSV.";
+        return [idPart, projectPart, emailPart, intro].filter(Boolean).join(". ");
       }
 
       function setConfigExportButtonsBusy(busy) {
@@ -9254,13 +9268,39 @@
             return;
           }
 
-          setStatus(
-            catT(
-              "Конфигурация успешно создана.",
-              "Configuration created successfully."
-            ),
-            "success"
-          );
+          const emailSent = !!(json && json.email_sent);
+          const emailRecipient =
+            json && json.email_recipient
+              ? String(json.email_recipient).trim()
+              : "";
+          const emailError =
+            json && json.email_error ? String(json.email_error).trim() : "";
+
+          if (emailSent && emailRecipient) {
+            setStatus(
+              catT(
+                "Конфигурация отправлена. Excel отправлен на " + emailRecipient + ".",
+                "Configuration submitted. Excel was emailed to " + emailRecipient + "."
+              ),
+              "success"
+            );
+          } else if (json && json.submitted_to_sales && emailError) {
+            setStatus(
+              catT(
+                "Конфигурация сохранена, но письмо не отправлено: " + emailError,
+                "Configuration saved, but email was not sent: " + emailError
+              ),
+              "error"
+            );
+          } else {
+            setStatus(
+              catT(
+                "Конфигурация успешно создана.",
+                "Configuration created successfully."
+              ),
+              "success"
+            );
+          }
 
           clearAllConfigurationSelections();
 
@@ -9275,6 +9315,9 @@
             showConfigurationExportDialog({
               configurationId,
               projectName: projectName || payload.project_name || "",
+              emailSent,
+              emailRecipient,
+              emailError,
             });
           }
 
