@@ -1643,10 +1643,46 @@
       }
 
       .catalog-toolbar {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px 10px;
+        align-items: center;
         margin-bottom: 10px;
+      }
+
+      .catalog-toolbar-search {
+        min-width: 0;
+      }
+
+      .catalog-toolbar:not(.has-spec-filters) .catalog-toolbar-search {
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      .catalog-toolbar:not(.has-spec-filters) .catalog-toolbar-clear {
+        grid-column: 2;
+        grid-row: 1;
+      }
+
+      .catalog-toolbar.has-spec-filters .catalog-toolbar-search {
+        grid-column: 1 / -1;
+        grid-row: 1;
+      }
+
+      .catalog-toolbar.has-spec-filters .catalog-toolbar-filters.catalog-switch-filters {
+        grid-column: 1;
+        grid-row: 2;
+      }
+
+      .catalog-toolbar.has-spec-filters .catalog-toolbar-clear {
+        grid-column: 2;
+        grid-row: 2;
+      }
+
+      .catalog-toolbar-clear .secondary-btn {
+        white-space: nowrap;
+        padding: 8px 12px;
+        font-size: 12px;
       }
 
       .catalog-toolbar-search input[type="search"] {
@@ -1692,6 +1728,7 @@
       .catalog-toolbar-clear {
         display: flex;
         justify-content: flex-end;
+        align-items: center;
       }
 
       .catalog-toolbar-filters .secondary-btn,
@@ -2091,6 +2128,41 @@
       .admin-catalog-toolbar {
         margin-bottom: 12px;
       }
+
+      .admin-catalog-toolbar:not(.has-spec-filters) .catalog-toolbar-search {
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      .admin-catalog-toolbar:not(.has-spec-filters) .catalog-toolbar-clear {
+        grid-column: 2;
+        grid-row: 1;
+      }
+
+      .admin-catalog-toolbar:not(.has-spec-filters) .catalog-toolbar-filters--admin-nav {
+        grid-column: 1 / -1;
+        grid-row: 2;
+      }
+
+      .admin-catalog-toolbar.has-spec-filters .catalog-toolbar-search {
+        grid-column: 1 / -1;
+        grid-row: 1;
+      }
+
+      .admin-catalog-toolbar.has-spec-filters .catalog-toolbar-filters--admin-nav {
+        grid-column: 1 / -1;
+        grid-row: 2;
+      }
+
+      .admin-catalog-toolbar.has-spec-filters .catalog-toolbar-filters.catalog-switch-filters {
+        grid-column: 1;
+        grid-row: 3;
+      }
+
+      .admin-catalog-toolbar.has-spec-filters .catalog-toolbar-clear {
+        grid-column: 2;
+        grid-row: 3;
+      }
     </style>
   </head>
 
@@ -2114,7 +2186,6 @@
           />
           <div>
             <h1 id="app-page-title">Конфигуратор</h1>
-            <p id="header-blurb-user"></p>
             <p id="header-blurb-admin" style="display: none"></p>
           </div>
         </div>
@@ -2895,7 +2966,6 @@
         equipmentPickerBody: document.getElementById("equipment-picker-body"),
         equipmentPickerCancel: document.getElementById("equipment-picker-cancel"),
         equipmentPickerConfirm: document.getElementById("equipment-picker-confirm"),
-        headerBlurbUser: document.getElementById("header-blurb-user"),
         headerBlurbAdmin: document.getElementById("header-blurb-admin"),
         adminCatalogBlock: document.getElementById("admin-catalog-block"),
         adminArea: document.getElementById("admin-area"),
@@ -3016,11 +3086,6 @@
         }
         renderCatalogFilterControls();
         syncCatalogFiltersVisibility();
-        if (elements.headerBlurbUser) {
-          elements.headerBlurbUser.textContent = isEn
-            ? "Select equipment on the left. On the right set options, add project details if needed, then submit your configuration."
-            : "Слева выберите оборудование. Справа укажите опции, при необходимости данные проекта и отправьте конфигурацию.";
-        }
         if (elements.headerBlurbAdmin) {
           elements.headerBlurbAdmin.textContent = isEn
             ? "Manage companies, users, and the equipment catalog. Buyers build configurations in their own configurator view."
@@ -3028,9 +3093,7 @@
         }
         const productsCardSubtitle = document.getElementById("products-card-subtitle");
         if (productsCardSubtitle) {
-          productsCardSubtitle.textContent = isEn
-            ? "Select the lines you need. Available add-ons (modules, license packs) depend on the equipment you choose."
-            : "Отметьте нужные позиции. Доступные дополнения (модули, пакеты лицензий) зависят от выбранного оборудования.";
+          productsCardSubtitle.textContent = "";
         }
         if (elements.adminCompanyEditName) {
           elements.adminCompanyEditName.placeholder = isEn ? "Company name" : "Название";
@@ -5011,6 +5074,13 @@
         if (elements.adminSwitchFiltersHost) {
           elements.adminSwitchFiltersHost.hidden = !show;
         }
+        if (elements.catalogProductsToolbar) {
+          elements.catalogProductsToolbar.classList.toggle("has-spec-filters", show);
+        }
+        const adminToolbar = document.querySelector(".admin-catalog-toolbar");
+        if (adminToolbar) {
+          adminToolbar.classList.toggle("has-spec-filters", show);
+        }
       }
 
       function syncProductFilterInputsFromState() {
@@ -5243,13 +5313,18 @@
           title.textContent = group.name || group.code || "#" + group.id;
           const meta = document.createElement("div");
           meta.className = "catalog-nav-card-meta";
-          const subCount = Array.isArray(group.subgroups) ? group.subgroups.length : 0;
+          const visibleSubs = visibleCatalogSubgroups(group);
+          const subCount = visibleSubs.length;
+          const visibleProductCount = visibleSubs.reduce(
+            (sum, sub) => sum + Number(sub.product_count || 0),
+            0
+          );
           meta.textContent =
             catT("Подгрупп: ", "Subgroups: ") +
             subCount +
             " · " +
             catT("товаров: ", "products: ") +
-            (group.product_count != null ? group.product_count : 0);
+            visibleProductCount;
           card.appendChild(title);
           card.appendChild(meta);
           card.addEventListener("click", () => {
@@ -5316,27 +5391,14 @@
         const subtitle = document.getElementById("products-card-subtitle");
         if (subtitle) {
           if (userCatalogGlobalSearchActive() && !catalogGroupId) {
+            subtitle.hidden = false;
             subtitle.textContent = catT(
               "Результаты поиска по всему каталогу",
               "Search results across the catalog"
             );
-          } else if (!catalogGroupId) {
-            subtitle.textContent = catT(
-              "Выберите группу оборудования",
-              "Choose an equipment group"
-            );
           } else {
-            const group = findCatalogGroup(catalogGroupId);
-            if (!catalogSubgroupId) {
-              subtitle.textContent = catT(
-                (group ? group.name : "—") + " — выберите подгруппу",
-                (group ? group.name : "—") + " — choose a subgroup"
-              );
-            } else {
-              const sub = findCatalogSubgroup(catalogGroupId, catalogSubgroupId);
-              subtitle.textContent =
-                (group ? group.name : "—") + " → " + (sub ? sub.name : "—");
-            }
+            subtitle.textContent = "";
+            subtitle.hidden = true;
           }
         }
         requestAnimationFrame(syncProductsSectionHeight);
@@ -8062,9 +8124,6 @@
         }
         if (!isAdmin) {
           loadRecentConfigurations();
-        }
-        if (elements.headerBlurbUser) {
-          elements.headerBlurbUser.style.display = isAdmin ? "none" : "";
         }
         if (elements.headerBlurbAdmin) {
           elements.headerBlurbAdmin.style.display = isAdmin ? "" : "none";

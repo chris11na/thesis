@@ -269,9 +269,6 @@
           <button type="button" class="lang-toggle-btn" id="lang-toggle-btn">RU</button>
         </div>
       </div>
-      <p class="subtitle" id="login-subtitle">
-        Конфигуратор откроется после успешного входа или регистрации.
-      </p>
 
       <div class="tab-row">
         <button type="button" class="tab-btn active" id="tab-login-btn">
@@ -382,7 +379,6 @@
       const i18n = {
         ru: {
           title: "Вход и регистрация",
-          subtitle: "Конфигуратор откроется после успешного входа или регистрации.",
           tabLogin: "Вход",
           tabRegister: "Регистрация",
           email: "Email",
@@ -420,7 +416,6 @@
         },
         en: {
           title: "Sign in or sign up",
-          subtitle: "The configurator opens after you sign in or create an account.",
           tabLogin: "Sign in",
           tabRegister: "Sign up",
           email: "Email",
@@ -480,7 +475,6 @@
         document.documentElement.lang = currentLang;
         const t = i18n[currentLang];
         document.getElementById("login-title").textContent = t.title;
-        document.getElementById("login-subtitle").textContent = t.subtitle;
         tabLoginBtn.textContent = t.tabLogin;
         tabRegisterBtn.textContent = t.tabRegister;
         document.getElementById("login-email-label").textContent = t.email;
