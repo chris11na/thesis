@@ -15,6 +15,8 @@ from app.models.product import Product
 from app.models.product_spec_value import ProductSpecValue
 from app.models.spec_parameter import SpecParameter
 from app.models.product_incompatible_pair import ProductIncompatiblePair
+from app.models.equipment_subgroup import EquipmentSubgroup
+from app.models.equipment_group import EquipmentGroup
 from app.services.config_validation import suggest_license_packs
 from app.services.service_catalog import (
     find_service_products_for_equipment,
@@ -88,6 +90,7 @@ class ProductCreate(BaseModel):
     max_module_slots: int | None = None
     rules_json: str | None = None
     technical_spec_values: list[dict] | None = None
+    subgroup_id: int | None = None
 
 
 class ProductUpdate(BaseModel):
@@ -101,6 +104,7 @@ class ProductUpdate(BaseModel):
     max_module_slots: int | None = None
     rules_json: str | None = None
     technical_spec_values: list[dict] | None = None
+    subgroup_id: int | None = None
 
 
 class SpecParameterCreate(BaseModel):
@@ -196,6 +200,36 @@ def _set_product_spec_values(db: Session, product_id: int, values: list[dict]) -
                 value_search=row["value_search"],
             )
         )
+
+
+def _validate_subgroup_id(db: Session, subgroup_id: int | None) -> None:
+    if subgroup_id is None:
+        return
+    exists = db.query(EquipmentSubgroup.id).filter(EquipmentSubgroup.id == subgroup_id).first()
+    if not exists:
+        raise HTTPException(status_code=400, detail="subgroup_id does not exist")
+
+
+def _load_subgroup_brief(db: Session, subgroup_ids: list[int]) -> dict[int, dict]:
+    out: dict[int, dict] = {}
+    if not subgroup_ids:
+        return out
+    rows = (
+        db.query(EquipmentSubgroup, EquipmentGroup)
+        .join(EquipmentGroup, EquipmentGroup.id == EquipmentSubgroup.group_id)
+        .filter(EquipmentSubgroup.id.in_(subgroup_ids))
+        .all()
+    )
+    for sub, group in rows:
+        out[sub.id] = {
+            "subgroup_id": sub.id,
+            "subgroup_code": sub.code,
+            "subgroup_name": sub.name,
+            "group_id": group.id,
+            "group_code": group.code,
+            "group_name": group.name,
+        }
+    return out
 
 
 @router.get("/spec-parameters")
@@ -324,6 +358,8 @@ def list_products(
     q: str | None = Query(None, description="Search by name, description, specs"),
     product_kind: str | None = Query(None),
     product_category: str | None = Query(None, description="Equipment type code, e.g. VA"),
+    subgroup_id: int | None = Query(None, ge=1),
+    group_id: int | None = Query(None, ge=1),
     spec_parameter_code: str | None = Query(None),
     spec_value: str | None = Query(None),
     configurator_only: bool = Query(False),
@@ -340,6 +376,14 @@ def list_products(
     category = (product_category or "").strip().upper()
     if category:
         query = query.filter(func.upper(Product.product_category) == category)
+
+    if subgroup_id is not None:
+        query = query.filter(Product.subgroup_id == subgroup_id)
+
+    if group_id is not None:
+        query = query.join(
+            EquipmentSubgroup, EquipmentSubgroup.id == Product.subgroup_id
+        ).filter(EquipmentSubgroup.group_id == group_id)
 
     if configurator_only:
         query = query.filter(func.lower(Product.product_kind) == "equipment")
@@ -379,6 +423,9 @@ def list_products(
         .all()
     )
     specs_by_product = _load_product_spec_values(db, [p.id for p in rows])
+    subgroup_brief = _load_subgroup_brief(
+        db, [p.subgroup_id for p in rows if p.subgroup_id is not None]
+    )
     items = []
     for p in rows:
         row = {
@@ -388,6 +435,7 @@ def list_products(
             "technical_specs": p.technical_specs,
             "product_kind": getattr(p, "product_kind", None) or "equipment",
             "product_category": getattr(p, "product_category", None),
+            "subgroup_id": getattr(p, "subgroup_id", None),
             "built_in_license_units": getattr(p, "built_in_license_units", None),
             "module_speeds_json": getattr(p, "module_speeds_json", None),
             "max_module_slots": getattr(p, "max_module_slots", None),
@@ -398,6 +446,8 @@ def list_products(
         mod_n = db.query(Module).filter(Module.product_id == p.id).count()
         lic_n = db.query(License).filter(License.product_id == p.id).count()
         row["addon_options_count"] = mod_n + lic_n
+        if p.subgroup_id and p.subgroup_id in subgroup_brief:
+            row.update(subgroup_brief[p.subgroup_id])
         items.append(row)
 
     return {
@@ -675,6 +725,7 @@ def create_product(
         cat = cat.strip() or None
 
     rj = _parse_rules_json_field(payload.rules_json)
+    _validate_subgroup_id(db, payload.subgroup_id)
 
     row = Product(
         name=payload.name.strip(),
@@ -686,6 +737,7 @@ def create_product(
         module_speeds_json=msj,
         max_module_slots=payload.max_module_slots,
         rules_json=rj,
+        subgroup_id=payload.subgroup_id,
     )
     db.add(row)
     db.flush()
@@ -765,6 +817,9 @@ def update_product(
 
     if "rules_json" in data:
         row.rules_json = _parse_rules_json_field(data["rules_json"])
+    if "subgroup_id" in data:
+        _validate_subgroup_id(db, data["subgroup_id"])
+        row.subgroup_id = data["subgroup_id"]
     if "technical_spec_values" in data:
         _set_product_spec_values(
             db,

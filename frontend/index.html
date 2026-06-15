@@ -325,6 +325,91 @@
         max-height: none;
       }
 
+      .catalog-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .catalog-nav-breadcrumb {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: #475569;
+      }
+
+      .catalog-nav-breadcrumb button {
+        border: none;
+        background: none;
+        padding: 0;
+        color: #2563eb;
+        cursor: pointer;
+        font: inherit;
+      }
+
+      .catalog-nav-breadcrumb button:hover {
+        text-decoration: underline;
+      }
+
+      .catalog-nav-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 10px;
+      }
+
+      .catalog-nav-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #fff;
+        padding: 14px 16px;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color 0.15s, box-shadow 0.15s;
+      }
+
+      .catalog-nav-card:hover {
+        border-color: #93c5fd;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.08);
+      }
+
+      .catalog-nav-card-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 4px;
+      }
+
+      .catalog-nav-card-meta {
+        font-size: 12px;
+        color: #64748b;
+      }
+
+      .catalog-products-panel[hidden] {
+        display: none !important;
+      }
+
+      .admin-groups-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      .admin-groups-table th,
+      .admin-groups-table td {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 8px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .admin-subgroup-list {
+        margin: 0;
+        padding-left: 18px;
+      }
+
       .configurator-ops-card {
         display: flex;
         flex-direction: column;
@@ -1953,7 +2038,12 @@
               <div class="divider"></div>
             </div>
 
-            <div class="catalog-toolbar-row">
+            <div class="catalog-nav" id="catalog-nav">
+              <div class="catalog-nav-breadcrumb" id="catalog-breadcrumb" hidden></div>
+              <div class="catalog-nav-grid" id="catalog-groups-grid"></div>
+              <div class="catalog-nav-grid" id="catalog-subgroups-grid" hidden></div>
+            </div>
+            <div class="catalog-toolbar-row" id="catalog-products-toolbar" hidden>
               <input
                 type="search"
                 id="products-search-input"
@@ -1983,7 +2073,7 @@
                 </button>
               </div>
             </div>
-            <div class="catalog-panel" id="user-products-panel">
+            <div class="catalog-panel catalog-products-panel" id="user-products-panel" hidden>
               <div
                 class="catalog-panel-loading-overlay"
                 id="user-products-loading"
@@ -2376,6 +2466,46 @@
             </div>
           </details>
 
+          <details class="admin-fold">
+            <summary class="admin-fold-summary" id="admin-fold-groups">Группы каталога</summary>
+            <div class="admin-fold-body">
+              <div class="admin-inline" style="margin-bottom: 10px">
+                <input
+                  type="text"
+                  id="admin-new-group-code"
+                  placeholder="Код (латиница)"
+                  style="max-width: 140px"
+                />
+                <input
+                  type="text"
+                  id="admin-new-group-name"
+                  placeholder="Название группы"
+                  style="flex: 1; min-width: 180px"
+                />
+                <button type="button" class="primary-btn" id="admin-add-group-btn">
+                  Создать группу
+                </button>
+                <button type="button" class="secondary-btn" id="admin-reclassify-btn">
+                  Переклассифицировать товары
+                </button>
+              </div>
+              <div class="admin-table-scroll admin-table-scroll--flat">
+                <table class="admin-groups-table" id="admin-groups-table">
+                  <thead>
+                    <tr>
+                      <th>Группа</th>
+                      <th>Подгруппы</th>
+                      <th>Товаров</th>
+                      <th>Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-groups-tbody"></tbody>
+                </table>
+              </div>
+              <div class="status-area" id="admin-groups-status"></div>
+            </div>
+          </details>
+
           <details class="admin-fold" open>
             <summary class="admin-fold-summary" id="admin-fold-catalog">Каталог: оборудование</summary>
             <div class="admin-fold-body">
@@ -2402,6 +2532,12 @@
                   <select id="admin-products-type-select" aria-label="Тип оборудования">
                     <option value="">Все типы оборудования</option>
                   </select>
+                  <select id="admin-catalog-group-select" aria-label="Группа каталога">
+                    <option value="">Все группы</option>
+                  </select>
+                  <select id="admin-catalog-subgroup-select" aria-label="Подгруппа каталога">
+                    <option value="">Все подгруппы</option>
+                  </select>
                   <button
                     type="button"
                     class="secondary-btn products-spec-filter-clear"
@@ -2427,6 +2563,7 @@
                       <th id="th-products-id">ID</th>
                       <th id="th-products-name">Название</th>
                       <th id="th-products-category">Категория</th>
+                      <th id="th-products-group">Группа</th>
                       <th id="th-products-kind">Тип</th>
                       <th id="th-products-desc">Описание</th>
                       <th id="th-products-section">Раздел</th>
@@ -2572,11 +2709,17 @@
         return text.slice(0, maxLen - 1) + "…";
       }
 
-      // Fallback when GET /products fails: same demo ids as backend seed (501/502).
+      // Fallback when GET /products fails: isolated test product ids may still be 501/502.
       const elements = {
         langToggleBtn: document.getElementById("lang-toggle-btn"),
         appPageTitle: document.getElementById("app-page-title"),
         productsList: document.getElementById("products-list"),
+        catalogNav: document.getElementById("catalog-nav"),
+        catalogBreadcrumb: document.getElementById("catalog-breadcrumb"),
+        catalogGroupsGrid: document.getElementById("catalog-groups-grid"),
+        catalogSubgroupsGrid: document.getElementById("catalog-subgroups-grid"),
+        catalogProductsToolbar: document.getElementById("catalog-products-toolbar"),
+        userProductsPanel: document.getElementById("user-products-panel"),
         productsSearchInput: document.getElementById("products-search-input"),
         productsSpecParamSelect: document.getElementById("products-spec-param-select"),
         productsSpecValueInput: document.getElementById("products-spec-value-input"),
@@ -2598,6 +2741,13 @@
           "admin-products-spec-filter-clear"
         ),
         adminProductsTypeSelect: document.getElementById("admin-products-type-select"),
+        adminCatalogGroupSelect: document.getElementById("admin-catalog-group-select"),
+        adminCatalogSubgroupSelect: document.getElementById("admin-catalog-subgroup-select"),
+        adminGroupsTbody: document.getElementById("admin-groups-tbody"),
+        adminNewGroupCode: document.getElementById("admin-new-group-code"),
+        adminNewGroupName: document.getElementById("admin-new-group-name"),
+        adminAddGroupBtn: document.getElementById("admin-add-group-btn"),
+        adminReclassifyBtn: document.getElementById("admin-reclassify-btn"),
         adminProductsPagination: document.getElementById("admin-products-pagination"),
         adminProductsPageInfo: document.getElementById("admin-products-page-info"),
         adminProductsPagePrev: document.getElementById("admin-products-page-prev"),
@@ -2981,6 +3131,11 @@
       }
 
       let products = [];
+      let catalogGroups = [];
+      let catalogGroupId = null;
+      let catalogSubgroupId = null;
+      let adminCatalogGroupFilter = "";
+      let adminCatalogSubgroupFilter = "";
       let specParameters = [];
       /** Active spec parameters for catalog characteristic filter (all roles). */
       let catalogSpecParameters = [];
@@ -4026,6 +4181,433 @@
         populateEquipmentTypeSelect(elements.adminProductsTypeSelect);
       }
 
+      function findCatalogGroup(groupId) {
+        return catalogGroups.find((g) => Number(g.id) === Number(groupId)) || null;
+      }
+
+      function findCatalogSubgroup(groupId, subgroupId) {
+        const group = findCatalogGroup(groupId);
+        if (!group || !Array.isArray(group.subgroups)) return null;
+        return (
+          group.subgroups.find((s) => Number(s.id) === Number(subgroupId)) || null
+        );
+      }
+
+      function selectedCatalogSubgroup() {
+        if (!catalogGroupId || !catalogSubgroupId) return null;
+        return findCatalogSubgroup(catalogGroupId, catalogSubgroupId);
+      }
+
+      function isConfiguratorEquipmentSubgroup(sub) {
+        return !!(sub && String(sub.code || "").toLowerCase() === "equipment");
+      }
+
+      function userCatalogAtProductsLevel() {
+        return Boolean(catalogGroupId && catalogSubgroupId);
+      }
+
+      function syncUserCatalogPanels() {
+        const atProducts = userCatalogAtProductsLevel();
+        if (elements.catalogProductsToolbar) {
+          elements.catalogProductsToolbar.hidden = !atProducts;
+        }
+        if (elements.userProductsPanel) {
+          elements.userProductsPanel.hidden = !atProducts;
+        }
+        if (elements.catalogGroupsGrid) {
+          elements.catalogGroupsGrid.hidden = Boolean(catalogGroupId);
+        }
+        if (elements.catalogSubgroupsGrid) {
+          elements.catalogSubgroupsGrid.hidden = !catalogGroupId || atProducts;
+        }
+      }
+
+      function renderCatalogBreadcrumb() {
+        const el = elements.catalogBreadcrumb;
+        if (!el) return;
+        el.innerHTML = "";
+        if (!catalogGroupId) {
+          el.hidden = true;
+          return;
+        }
+        el.hidden = false;
+        const rootBtn = document.createElement("button");
+        rootBtn.type = "button";
+        rootBtn.textContent = catT("Все группы", "All groups");
+        rootBtn.addEventListener("click", () => {
+          catalogGroupId = null;
+          catalogSubgroupId = null;
+          productsPage = 1;
+          syncUserCatalogPanels();
+          renderCatalogNavigation();
+          void loadProducts();
+        });
+        el.appendChild(rootBtn);
+        const group = findCatalogGroup(catalogGroupId);
+        if (!group) return;
+        el.appendChild(document.createTextNode(" / "));
+        const groupBtn = document.createElement("button");
+        groupBtn.type = "button";
+        groupBtn.textContent = group.name || group.code || "#" + group.id;
+        groupBtn.addEventListener("click", () => {
+          catalogSubgroupId = null;
+          productsPage = 1;
+          syncUserCatalogPanels();
+          renderCatalogNavigation();
+          void loadProducts();
+        });
+        el.appendChild(groupBtn);
+        if (catalogSubgroupId) {
+          const sub = findCatalogSubgroup(catalogGroupId, catalogSubgroupId);
+          if (sub) {
+            el.appendChild(document.createTextNode(" / "));
+            const span = document.createElement("span");
+            span.textContent = sub.name || sub.code;
+            el.appendChild(span);
+          }
+        }
+      }
+
+      function renderCatalogGroupCards() {
+        const grid = elements.catalogGroupsGrid;
+        if (!grid) return;
+        grid.innerHTML = "";
+        if (!catalogGroups.length) {
+          const empty = document.createElement("div");
+          empty.className = "catalog-nav-card-meta";
+          empty.textContent = catT(
+            "Группы каталога пока не настроены.",
+            "Catalog groups are not configured yet."
+          );
+          grid.appendChild(empty);
+          return;
+        }
+        catalogGroups.forEach((group) => {
+          const card = document.createElement("button");
+          card.type = "button";
+          card.className = "catalog-nav-card";
+          const title = document.createElement("div");
+          title.className = "catalog-nav-card-title";
+          title.textContent = group.name || group.code || "#" + group.id;
+          const meta = document.createElement("div");
+          meta.className = "catalog-nav-card-meta";
+          const subCount = Array.isArray(group.subgroups) ? group.subgroups.length : 0;
+          meta.textContent =
+            catT("Подгрупп: ", "Subgroups: ") +
+            subCount +
+            " · " +
+            catT("товаров: ", "products: ") +
+            (group.product_count != null ? group.product_count : 0);
+          card.appendChild(title);
+          card.appendChild(meta);
+          card.addEventListener("click", () => {
+            catalogGroupId = group.id;
+            catalogSubgroupId = null;
+            productsPage = 1;
+            syncUserCatalogPanels();
+            renderCatalogNavigation();
+            void loadProducts();
+          });
+          grid.appendChild(card);
+        });
+      }
+
+      function renderCatalogSubgroupCards() {
+        const grid = elements.catalogSubgroupsGrid;
+        if (!grid) return;
+        grid.innerHTML = "";
+        const group = findCatalogGroup(catalogGroupId);
+        if (!group) return;
+        const subs = Array.isArray(group.subgroups) ? group.subgroups : [];
+        if (!subs.length) {
+          const empty = document.createElement("div");
+          empty.className = "catalog-nav-card-meta";
+          empty.textContent = catT(
+            "В этой группе пока нет подгрупп.",
+            "This group has no subgroups yet."
+          );
+          grid.appendChild(empty);
+          return;
+        }
+        subs.forEach((sub) => {
+          const card = document.createElement("button");
+          card.type = "button";
+          card.className = "catalog-nav-card";
+          const title = document.createElement("div");
+          title.className = "catalog-nav-card-title";
+          title.textContent = sub.name || sub.code || "#" + sub.id;
+          const meta = document.createElement("div");
+          meta.className = "catalog-nav-card-meta";
+          meta.textContent =
+            catT("Товаров: ", "Products: ") +
+            (sub.product_count != null ? sub.product_count : 0);
+          card.appendChild(title);
+          card.appendChild(meta);
+          card.addEventListener("click", () => {
+            catalogSubgroupId = sub.id;
+            productsPage = 1;
+            syncUserCatalogPanels();
+            renderCatalogNavigation();
+            void loadProducts();
+          });
+          grid.appendChild(card);
+        });
+      }
+
+      function renderCatalogNavigation() {
+        renderCatalogBreadcrumb();
+        renderCatalogGroupCards();
+        renderCatalogSubgroupCards();
+        syncUserCatalogPanels();
+        const subtitle = document.getElementById("products-card-subtitle");
+        if (!subtitle) return;
+        if (!catalogGroupId) {
+          subtitle.textContent = catT(
+            "Выберите группу оборудования",
+            "Choose an equipment group"
+          );
+          return;
+        }
+        const group = findCatalogGroup(catalogGroupId);
+        if (!catalogSubgroupId) {
+          subtitle.textContent = catT(
+            "Группа: " + (group ? group.name : "—") + " — выберите подгруппу",
+            "Group: " + (group ? group.name : "—") + " — choose a subgroup"
+          );
+          return;
+        }
+        const sub = findCatalogSubgroup(catalogGroupId, catalogSubgroupId);
+        subtitle.textContent =
+          (group ? group.name : "—") + " → " + (sub ? sub.name : "—");
+      }
+
+      async function loadCatalogGroups() {
+        try {
+          const res = await apiFetch("/catalog-groups", { __globalLoading: false });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) throw new Error((data && data.detail) || "groups load failed");
+          catalogGroups = Array.isArray(data) ? data : [];
+        } catch (e) {
+          console.error(e);
+          catalogGroups = [];
+        }
+        renderCatalogNavigation();
+        populateAdminCatalogGroupSelect();
+        renderAdminGroupsTable();
+      }
+
+      function populateAdminCatalogGroupSelect() {
+        const sel = elements.adminCatalogGroupSelect;
+        if (!sel) return;
+        const prev = adminCatalogGroupFilter || sel.value || "";
+        sel.innerHTML = "";
+        const allOpt = document.createElement("option");
+        allOpt.value = "";
+        allOpt.textContent = catT("Все группы", "All groups");
+        sel.appendChild(allOpt);
+        catalogGroups.forEach((group) => {
+          const opt = document.createElement("option");
+          opt.value = String(group.id);
+          opt.textContent = group.name || group.code || "#" + group.id;
+          sel.appendChild(opt);
+        });
+        if (prev && Array.from(sel.options).some((o) => o.value === prev)) {
+          sel.value = prev;
+        } else {
+          sel.value = "";
+          adminCatalogGroupFilter = "";
+        }
+        populateAdminCatalogSubgroupSelect();
+      }
+
+      function populateAdminCatalogSubgroupSelect() {
+        const sel = elements.adminCatalogSubgroupSelect;
+        if (!sel) return;
+        const prev = adminCatalogSubgroupFilter || sel.value || "";
+        sel.innerHTML = "";
+        const allOpt = document.createElement("option");
+        allOpt.value = "";
+        allOpt.textContent = catT("Все подгруппы", "All subgroups");
+        sel.appendChild(allOpt);
+        const group = findCatalogGroup(adminCatalogGroupFilter);
+        const subs = group && Array.isArray(group.subgroups) ? group.subgroups : [];
+        if (!adminCatalogGroupFilter) {
+          catalogGroups.forEach((g) => {
+            (g.subgroups || []).forEach((sub) => {
+              const opt = document.createElement("option");
+              opt.value = String(sub.id);
+              opt.textContent =
+                (g.name || g.code) + " / " + (sub.name || sub.code);
+              sel.appendChild(opt);
+            });
+          });
+        } else {
+          subs.forEach((sub) => {
+            const opt = document.createElement("option");
+            opt.value = String(sub.id);
+            opt.textContent = sub.name || sub.code || "#" + sub.id;
+            sel.appendChild(opt);
+          });
+        }
+        if (prev && Array.from(sel.options).some((o) => o.value === prev)) {
+          sel.value = prev;
+        } else {
+          sel.value = "";
+          adminCatalogSubgroupFilter = "";
+        }
+      }
+
+      function renderAdminGroupsTable() {
+        const tbody = elements.adminGroupsTbody;
+        if (!tbody) return;
+        tbody.innerHTML = "";
+        catalogGroups.forEach((group) => {
+          const tr = document.createElement("tr");
+          const tdName = document.createElement("td");
+          tdName.textContent = (group.name || "—") + " (" + (group.code || "—") + ")";
+          const tdSubs = document.createElement("td");
+          const ul = document.createElement("ul");
+          ul.className = "admin-subgroup-list";
+          (group.subgroups || []).forEach((sub) => {
+            const li = document.createElement("li");
+            li.textContent =
+              (sub.name || sub.code) +
+              " · " +
+              catT("товаров", "products") +
+              ": " +
+              (sub.product_count != null ? sub.product_count : 0);
+            ul.appendChild(li);
+          });
+          tdSubs.appendChild(ul);
+          const tdCount = document.createElement("td");
+          tdCount.textContent =
+            group.product_count != null ? String(group.product_count) : "0";
+          const tdActions = document.createElement("td");
+          const addSubBtn = document.createElement("button");
+          addSubBtn.type = "button";
+          addSubBtn.className = "secondary-btn";
+          addSubBtn.textContent = catT("Добавить подгруппу", "Add subgroup");
+          addSubBtn.addEventListener("click", () => {
+            void addAdminSubgroup(group.id);
+          });
+          tdActions.appendChild(addSubBtn);
+          tr.appendChild(tdName);
+          tr.appendChild(tdSubs);
+          tr.appendChild(tdCount);
+          tr.appendChild(tdActions);
+          tbody.appendChild(tr);
+        });
+      }
+
+      async function addAdminGroup() {
+        const code = (elements.adminNewGroupCode && elements.adminNewGroupCode.value) || "";
+        const name = (elements.adminNewGroupName && elements.adminNewGroupName.value) || "";
+        if (!code.trim() || !name.trim()) {
+          setCatalogStatus(
+            "admin-groups-status",
+            catT("Укажите код и название группы.", "Enter group code and name."),
+            "error"
+          );
+          return;
+        }
+        try {
+          const res = await apiFetch("/catalog-groups", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              code: code.trim().toLowerCase(),
+              name: name.trim(),
+              sort_order: catalogGroups.length * 10 + 10,
+              subgroups: [
+                { code: "equipment", name: "Оборудование", sort_order: 10 },
+              ],
+            }),
+          });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) throw new Error((data && data.detail) || "create failed");
+          if (elements.adminNewGroupCode) elements.adminNewGroupCode.value = "";
+          if (elements.adminNewGroupName) elements.adminNewGroupName.value = "";
+          setCatalogStatus("admin-groups-status", catT("Группа создана.", "Group created."), "info");
+          await loadCatalogGroups();
+        } catch (e) {
+          setCatalogStatus(
+            "admin-groups-status",
+            catT("Не удалось создать группу: ", "Could not create group: ") +
+              (e && e.message ? e.message : ""),
+            "error"
+          );
+        }
+      }
+
+      async function addAdminSubgroup(groupId) {
+        const code = window.prompt(
+          catT("Код подгруппы (латиница):", "Subgroup code (latin):")
+        );
+        if (!code || !code.trim()) return;
+        const name = window.prompt(
+          catT("Название подгруппы:", "Subgroup name:")
+        );
+        if (!name || !name.trim()) return;
+        try {
+          const res = await apiFetch("/catalog-groups/" + groupId + "/subgroups", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              code: code.trim().toLowerCase(),
+              name: name.trim(),
+            }),
+          });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) throw new Error((data && data.detail) || "create failed");
+          setCatalogStatus(
+            "admin-groups-status",
+            catT("Подгруппа создана.", "Subgroup created."),
+            "info"
+          );
+          await loadCatalogGroups();
+        } catch (e) {
+          setCatalogStatus(
+            "admin-groups-status",
+            catT("Не удалось создать подгруппу: ", "Could not create subgroup: ") +
+              (e && e.message ? e.message : ""),
+            "error"
+          );
+        }
+      }
+
+      async function reclassifyCatalogProducts() {
+        try {
+          const res = await apiFetch("/catalog-groups/reclassify-products?force=true", {
+            method: "POST",
+          });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) throw new Error((data && data.detail) || "reclassify failed");
+          setCatalogStatus(
+            "admin-groups-status",
+            catT(
+              "Переклассификация: назначено " +
+                (data.assigned || 0) +
+                ", без группы " +
+                (data.unmapped || 0),
+              "Reclassified: assigned " +
+                (data.assigned || 0) +
+                ", unmapped " +
+                (data.unmapped || 0)
+            ),
+            "info"
+          );
+          await loadCatalogGroups();
+          await loadProducts();
+        } catch (e) {
+          setCatalogStatus(
+            "admin-groups-status",
+            catT("Ошибка переклассификации: ", "Reclassify error: ") +
+              (e && e.message ? e.message : ""),
+            "error"
+          );
+        }
+      }
+
       function renderProductsPaginationBar(bar, pageInfoEl, prevBtn, nextBtn) {
         if (!bar) return;
         if (productsPages <= 1) {
@@ -4752,7 +5334,7 @@
         if (!products.length) {
           const tr = document.createElement("tr");
           const td = document.createElement("td");
-          td.colSpan = 9;
+          td.colSpan = 10;
           td.textContent = catT(
             "Каталог пуст или ничего не найдено по фильтрам.",
             "Catalog is empty or no matches for current filters."
@@ -4789,6 +5371,11 @@
               ? String(p.product_category).trim()
               : "—"
           );
+          const groupLabel =
+            p.group_name && p.subgroup_name
+              ? p.group_name + " / " + p.subgroup_name
+              : p.subgroup_name || p.group_name || "—";
+          addCell(groupLabel, { className: "cell-wrap cell-muted" });
           addCell(p.product_kind || "equipment");
           addCell(truncateCellText(descText, 100), {
             className: "cell-wrap cell-muted",
@@ -5737,6 +6324,31 @@
             : "Необязательная короткая метка в каталоге (например, тип устройства)."
         );
 
+        const selSubgroup = document.createElement("select");
+        const emptySubOpt = document.createElement("option");
+        emptySubOpt.value = "";
+        emptySubOpt.textContent = isEn ? "Not assigned" : "Не назначена";
+        selSubgroup.appendChild(emptySubOpt);
+        catalogGroups.forEach((group) => {
+          (group.subgroups || []).forEach((sub) => {
+            const opt = document.createElement("option");
+            opt.value = String(sub.id);
+            opt.textContent =
+              (group.name || group.code) + " / " + (sub.name || sub.code);
+            selSubgroup.appendChild(opt);
+          });
+        });
+        if (p.subgroup_id != null) {
+          selSubgroup.value = String(p.subgroup_id);
+        }
+        addFieldStack(
+          isEn ? "Catalog subgroup" : "Подгруппа каталога",
+          selSubgroup,
+          isEn
+            ? "Group and subgroup where this product appears in the catalog."
+            : "Группа и подгруппа, в которой продукт отображается в каталоге."
+        );
+
         const inpBuilt = document.createElement("input");
         inpBuilt.type = "number";
         inpBuilt.min = "0";
@@ -6024,6 +6636,8 @@
                 ? null
                 : inpCategory.value.trim(),
           };
+          const subVal = selSubgroup.value.trim();
+          body.subgroup_id = subVal === "" ? null : parseInt(subVal, 10);
           const bi = inpBuilt.value.trim();
           if (bi === "") {
             body.built_in_license_units = null;
@@ -7132,6 +7746,21 @@
 
       async function loadProducts() {
         setProductsStatus("", "info");
+        const isAdmin = getCurrentRoleId() === 1;
+        const userNeedsSubgroup = !isAdmin && !userCatalogAtProductsLevel();
+
+        if (userNeedsSubgroup) {
+          products = [];
+          productsTotal = 0;
+          productsPages = 1;
+          await Promise.all([loadCatalogGroups(), loadCatalogSpecParameters()]);
+          renderCatalogNavigation();
+          renderProducts();
+          renderSelectedPills();
+          updateCounter();
+          return;
+        }
+
         elements.productsSource.textContent =
           "GET /products (пробуем запрос к backend)";
 
@@ -7151,7 +7780,27 @@
         }
         const typeCode = (productTypeFilter || "").trim();
         if (typeCode) params.set("product_category", typeCode);
-        if (getCurrentRoleId() !== 1) params.set("configurator_only", "true");
+
+        if (isAdmin) {
+          if (adminCatalogSubgroupFilter) {
+            params.set("subgroup_id", adminCatalogSubgroupFilter);
+          } else if (adminCatalogGroupFilter) {
+            params.set("group_id", adminCatalogGroupFilter);
+          }
+        } else if (catalogSubgroupId) {
+          params.set("subgroup_id", String(catalogSubgroupId));
+        }
+
+        const activeSub = isAdmin
+          ? adminCatalogSubgroupFilter
+            ? catalogGroups
+                .flatMap((g) => g.subgroups || [])
+                .find((s) => String(s.id) === String(adminCatalogSubgroupFilter))
+            : null
+          : selectedCatalogSubgroup();
+        if (!isAdmin && isConfiguratorEquipmentSubgroup(activeSub)) {
+          params.set("configurator_only", "true");
+        }
 
         setPanelLoading(
           elements.userProductsLoading,
@@ -7251,12 +7900,14 @@
         }
 
         await Promise.all([
+          loadCatalogGroups(),
           loadCatalogSpecParameters(),
           loadSpecParametersForAdmin(),
           loadEquipmentTypes(),
         ]);
         syncProductFilterInputsFromState();
         syncProductSpecFilterUi();
+        renderCatalogNavigation();
         renderProducts();
         renderSelectedPills();
         updateCounter();
@@ -7886,6 +8537,31 @@
             applyProductCatalogQuery(true);
           });
         }
+        if (elements.adminCatalogGroupSelect) {
+          elements.adminCatalogGroupSelect.addEventListener("change", () => {
+            adminCatalogGroupFilter = elements.adminCatalogGroupSelect.value || "";
+            adminCatalogSubgroupFilter = "";
+            populateAdminCatalogSubgroupSelect();
+            applyProductCatalogQuery(true);
+          });
+        }
+        if (elements.adminCatalogSubgroupSelect) {
+          elements.adminCatalogSubgroupSelect.addEventListener("change", () => {
+            adminCatalogSubgroupFilter =
+              elements.adminCatalogSubgroupSelect.value || "";
+            applyProductCatalogQuery(true);
+          });
+        }
+        if (elements.adminAddGroupBtn) {
+          elements.adminAddGroupBtn.addEventListener("click", () => {
+            void addAdminGroup();
+          });
+        }
+        if (elements.adminReclassifyBtn) {
+          elements.adminReclassifyBtn.addEventListener("click", () => {
+            void reclassifyCatalogProducts();
+          });
+        }
         if (elements.productsPagePrev) {
           elements.productsPagePrev.addEventListener("click", () => {
             if (productsPage > 1) {
@@ -8055,6 +8731,7 @@
         }
 
         syncProductsSectionHeight();
+        syncUserCatalogPanels();
         loadProducts();
       }
 

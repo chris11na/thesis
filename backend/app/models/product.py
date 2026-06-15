@@ -1,8 +1,12 @@
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import ForeignKey, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.models.equipment_subgroup import EquipmentSubgroup
 
 
 class Product(Base):
@@ -28,3 +32,13 @@ class Product(Base):
     max_module_slots: Mapped[Optional[int]] = mapped_column(nullable=True)
     # Extensible rules document (JSON text). Runtime still uses columns above; this is for growth / docs.
     rules_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    subgroup_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("equipment_subgroups.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    subgroup: Mapped[Optional["EquipmentSubgroup"]] = relationship(
+        "EquipmentSubgroup",
+        back_populates="products",
+    )

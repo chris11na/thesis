@@ -9,10 +9,8 @@ from app.models.configuration_item import ConfigurationItem
 from app.models.license import License
 from app.models.module import Module
 from app.models.product import Product
-from app.models.product_spec_value import ProductSpecValue
 from app.models.product_incompatible_pair import ProductIncompatiblePair
 from app.models.role import Role
-from app.models.spec_parameter import SpecParameter
 from app.models.user import User
 from app.core.security import hash_password, is_supported_password_hash
 
@@ -56,229 +54,35 @@ def _delete_product_and_children(db: Session, product_id: int) -> None:
     db.query(Product).filter(Product.id == product_id).delete(synchronize_session=False)
 
 
-def _remove_legacy_demo_products(db: Session) -> None:
-    """
-    Older seeds used product ids 201/202 for the same demo names.
-    Current demo: RU equipment 501/502, EN mirror 503/504.
-    """
+def _purge_demo_products(db: Session) -> None:
+    """Remove legacy demo catalog rows when not used in configurations."""
     for pid in (201, 202):
         if db.query(Product).filter(Product.id == pid).first() is None:
             continue
         if not _product_unused_in_configs(db, pid):
             continue
         _delete_product_and_children(db, pid)
-    db.flush()
 
-
-def _dedupe_demo_products_by_canonical_name(db: Session) -> None:
-    """
-    Same display name as seeded demos (e.g. admin re-created product) -> drop extras.
-    Keeps canonical ids 501–504 when present; otherwise keeps the lowest id.
-    Only removes rows not referenced by configuration_items.
-    """
-    demo_pairs = [
-        ("Контроллер БЛВС (демо)", 501),
-        ("Коммутатор L2/L3 (демо)", 502),
-        ("WLAN Controller (demo)", 503),
-        ("L2/L3 Switch (demo)", 504),
-    ]
-    for name, canonical_id in demo_pairs:
-        rows = (
-            db.query(Product)
-            .filter(Product.name == name)
-            .order_by(Product.id)
-            .all()
-        )
-        if len(rows) <= 1:
-            continue
-        ids = [r.id for r in rows]
-        keeper_id = canonical_id if canonical_id in ids else min(ids)
-        for r in rows:
-            if r.id == keeper_id:
+    demo_names = (
+        "Контроллер БЛВС (демо)",
+        "Коммутатор L2/L3 (демо)",
+        "WLAN Controller (demo)",
+        "L2/L3 Switch (demo)",
+    )
+    for name in demo_names:
+        for row in db.query(Product).filter(Product.name == name).all():
+            if not _product_unused_in_configs(db, row.id):
                 continue
-            if not _product_unused_in_configs(db, r.id):
-                continue
-            _delete_product_and_children(db, r.id)
+            _delete_product_and_children(db, row.id)
     db.flush()
-
-
-def _seed_demo_equipment(db: Session) -> None:
-    """Demo products for thesis: RU (501/502) and EN mirror (503/504) with licenses/modules."""
-    _remove_legacy_demo_products(db)
-    # Use high ids to avoid collisions with modules/licenses in flat compatibility checks.
-    if db.query(Product).filter(Product.id == 501).first() is None:
-        db.add(
-            Product(
-                id=501,
-                name="Контроллер БЛВС (демо)",
-                description="Управление точками доступа; лицензирование по числу AP.",
-                technical_specs="Встроенно поддерживается 16 AP; остальное — пакетами лицензий.",
-                product_kind="equipment",
-                product_category="controller",
-                built_in_license_units=16,
-                module_speeds_json=None,
-                max_module_slots=None,
-            )
-        )
-        db.add(
-            Product(
-                id=502,
-                name="Коммутатор L2/L3 (демо)",
-                description="Оптические модули только совместимых скоростей для этого шасси.",
-                technical_specs="До 8 модулей SFP/SFP+; поддерживаются только 1 и 10 Гбит/с.",
-                product_kind="equipment",
-                product_category="switch",
-                built_in_license_units=None,
-                module_speeds_json="[1, 10]",
-                max_module_slots=8,
-            )
-        )
-        db.flush()
-
-        for lid, lname, units in [
-            (521, "Лицензии AP, пакет ×16", 16),
-            (522, "Лицензии AP, пакет ×32", 32),
-            (523, "Лицензии AP, пакет ×128", 128),
-        ]:
-            if db.query(License).filter(License.id == lid).first() is None:
-                db.add(
-                    License(id=lid, name=lname, product_id=501, units_per_pack=units)
-                )
-
-        for mid, mname, speed, ff, mx in [
-            (511, "Трансивер 1G SFP", 1, "SFP", 8),
-            (512, "Трансивер 10G SFP+", 10, "SFP+", 8),
-            (513, "Трансивер 25G SFP28 (не для этого коммутатора)", 25, "SFP28", 8),
-        ]:
-            if db.query(Module).filter(Module.id == mid).first() is None:
-                db.add(
-                    Module(
-                        id=mid,
-                        name=mname,
-                        product_id=502,
-                        speed_gbps=speed,
-                        form_factor=ff,
-                        max_quantity=mx,
-                    )
-                )
-
-    # English catalog mirror (same roles as 501/502 for bilingual UI demos).
-    if db.query(Product).filter(Product.id == 503).first() is None:
-        db.add(
-            Product(
-                id=503,
-                name="WLAN Controller (demo)",
-                description="Access point management; licensing by AP count.",
-                technical_specs="16 AP built in; additional capacity via license packs.",
-                product_kind="equipment",
-                product_category="controller",
-                built_in_license_units=16,
-                module_speeds_json=None,
-                max_module_slots=None,
-            )
-        )
-        db.add(
-            Product(
-                id=504,
-                name="L2/L3 Switch (demo)",
-                description="Optical transceivers only at speeds supported by this chassis.",
-                technical_specs="Up to 8 SFP/SFP+ slots; 1 and 10 Gbps only.",
-                product_kind="equipment",
-                product_category="switch",
-                built_in_license_units=None,
-                module_speeds_json="[1, 10]",
-                max_module_slots=8,
-            )
-        )
-        db.flush()
-
-        for lid, lname, units in [
-            (524, "AP licenses, pack ×16", 16),
-            (525, "AP licenses, pack ×32", 32),
-            (526, "AP licenses, pack ×128", 128),
-        ]:
-            if db.query(License).filter(License.id == lid).first() is None:
-                db.add(
-                    License(id=lid, name=lname, product_id=503, units_per_pack=units)
-                )
-
-        for mid, mname, speed, ff, mx in [
-            (514, "1G SFP transceiver", 1, "SFP", 8),
-            (515, "10G SFP+ transceiver", 10, "SFP+", 8),
-            (516, "25G SFP28 transceiver (not for this switch)", 25, "SFP28", 8),
-        ]:
-            if db.query(Module).filter(Module.id == mid).first() is None:
-                db.add(
-                    Module(
-                        id=mid,
-                        name=mname,
-                        product_id=504,
-                        speed_gbps=speed,
-                        form_factor=ff,
-                        max_quantity=mx,
-                    )
-                )
-
-    # Run every startup: early return used to skip this and left admin/duplicate rows.
-    _dedupe_demo_products_by_canonical_name(db)
-
-
-def _ensure_spec_parameter(db: Session, code: str, name: str, sort_order: int) -> int:
-    row = db.query(SpecParameter).filter(SpecParameter.code == code).first()
-    if row is None:
-        row = SpecParameter(
-            code=code,
-            name=name,
-            sort_order=sort_order,
-            is_active=True,
-        )
-        db.add(row)
-        db.flush()
-    return row.id
-
-
-def _seed_demo_spec_values(db: Session) -> None:
-    p_wireless = _ensure_spec_parameter(db, "wireless_standard", "Wireless standard", 10)
-    p_ports = _ensure_spec_parameter(db, "ports", "Ports", 20)
-    p_throughput = _ensure_spec_parameter(db, "throughput", "Throughput", 30)
-    p_slots = _ensure_spec_parameter(db, "slots", "Slots", 40)
-
-    demo_values: list[tuple[int, int, str]] = [
-        (501, p_wireless, "802.11ax"),
-        (501, p_throughput, "Up to 10 Gbps"),
-        (502, p_ports, "48x GE + 4x 10GE"),
-        (502, p_slots, "8 SFP/SFP+ slots"),
-        (503, p_wireless, "802.11ax"),
-        (503, p_throughput, "Up to 10 Gbps"),
-        (504, p_ports, "48x GE + 4x 10GE"),
-        (504, p_slots, "8 SFP/SFP+ slots"),
-    ]
-    for product_id, parameter_id, value in demo_values:
-        exists = (
-            db.query(ProductSpecValue)
-            .filter(
-                ProductSpecValue.product_id == product_id,
-                ProductSpecValue.parameter_id == parameter_id,
-            )
-            .first()
-        )
-        if exists is None:
-            db.add(
-                ProductSpecValue(
-                    product_id=product_id,
-                    parameter_id=parameter_id,
-                    value=value,
-                    value_search=value.lower()[:512],
-                )
-            )
 
 
 def seed_initial_data(db: Session) -> None:
     """
     Seed minimal data for the frontend prototype.
 
-    Inserts roles, company, users, demo equipment (501–504 + modules/licenses),
-    and optional demo user.
+    Inserts roles, company, users, and loads equipment catalog from JSON when enabled.
+    Demo equipment (501–504) is no longer seeded; existing demo rows are purged on startup.
     """
 
     # Roles
@@ -358,12 +162,15 @@ def seed_initial_data(db: Session) -> None:
                 )
             )
 
-    _seed_demo_equipment(db)
-    _seed_demo_spec_values(db)
+    _purge_demo_products(db)
 
     from app.services.equipment_catalog_loader import maybe_seed_equipment_catalog
 
     maybe_seed_equipment_catalog(db)
+
+    from app.services.equipment_groups_seed import assign_products_to_subgroups
+
+    assign_products_to_subgroups(db)
 
     db.commit()
 

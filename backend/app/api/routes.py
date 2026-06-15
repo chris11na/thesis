@@ -14,6 +14,7 @@ from app.api.products import router as products_router
 from app.api.configurations import router as configurations_router
 from app.api.companies import router as companies_router
 from app.api.compatibilities import router as compatibilities_router
+from app.api.catalog_groups import router as catalog_groups_router
 from app.api.deps import require_roles
 from app.core.security import hash_password
 
@@ -136,3 +137,4 @@ router.include_router(products_router)
 router.include_router(configurations_router)
 router.include_router(companies_router)
 router.include_router(compatibilities_router)
+router.include_router(catalog_groups_router)
