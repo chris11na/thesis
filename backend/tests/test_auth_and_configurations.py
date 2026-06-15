@@ -345,6 +345,36 @@ def test_register_returns_pending_until_admin_approves() -> None:
     assert login.json().get("access_token")
 
 
+def test_admin_pending_users_count_and_delete_user() -> None:
+    email = f"del-{uuid4().hex[:8]}@example.com"
+    reg = client.post(
+        "/auth/register",
+        json={"name": "Delete Me", "email": email, "password": "regpass1"},
+    )
+    assert reg.status_code == 200
+    user_id = reg.json()["user_id"]
+
+    admin_tok = client.post(
+        "/auth/login",
+        json={"email": "admin@example.com", "password": "admin123"},
+    ).json()["access_token"]
+    headers = {"Authorization": f"Bearer {admin_tok}"}
+
+    pending = client.get("/users/pending-count", headers=headers)
+    assert pending.status_code == 200
+    assert pending.json()["pending_count"] >= 1
+
+    deleted = client.delete(f"/users/{user_id}", headers=headers)
+    assert deleted.status_code == 200
+
+    missing = client.get("/users", headers=headers)
+    assert missing.status_code == 200
+    assert not any(row["id"] == user_id for row in missing.json())
+
+    cannot_delete_admin = client.delete("/users/1", headers=headers)
+    assert cannot_delete_admin.status_code == 400
+
+
 def test_register_rejects_unknown_domain() -> None:
     r = client.post(
         "/auth/register",
@@ -549,6 +579,50 @@ def test_create_structured_configuration_satisfies_ap_target() -> None:
     assert body.get("specification")
     kinds = [row["kind"] for row in body["specification"]]
     assert "equipment" in kinds and "license" in kinds
+
+
+def test_export_configuration_specification_xlsx_and_csv() -> None:
+    tok = _user_token()
+    headers = {"Authorization": f"Bearer {tok}"}
+    created = client.post(
+        "/configurations",
+        json={
+            "user_id": 2,
+            "project_name": "Export test",
+            "lines": [
+                {
+                    "equipment_product_id": 501,
+                    "target_ap_count": 100,
+                    "addons": [{"license_id": 523, "quantity": 1}],
+                }
+            ],
+        },
+        headers=headers,
+    )
+    assert created.status_code == 200, created.text
+    configuration_id = created.json()["configuration_id"]
+
+    xlsx = client.get(
+        f"/configurations/{configuration_id}/specification.xlsx",
+        headers=headers,
+    )
+    assert xlsx.status_code == 200, xlsx.text
+    assert (
+        xlsx.headers["content-type"]
+        == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    assert xlsx.content[:2] == b"PK"
+    assert len(xlsx.content) > 200
+
+    csv_resp = client.get(
+        f"/configurations/{configuration_id}/specification.csv",
+        headers=headers,
+    )
+    assert csv_resp.status_code == 200, csv_resp.text
+    assert "text/csv" in csv_resp.headers["content-type"]
+    body = csv_resp.content.decode("utf-8-sig")
+    assert "Export test" in body
+    assert "Equipment" in body
 
 
 def test_create_structured_configuration_rejects_insufficient_licenses() -> None:

@@ -79,6 +79,7 @@ def build_specification_from_configuration(db: Session, configuration_id: int) -
                     "quantity": it.quantity,
                 }
             )
+    return rows
 
 
 def _project_meta(conf: Configuration) -> list[tuple[str, str]]:

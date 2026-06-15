@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
 from app.models.product import Product
+from app.services.switch_spec_parser import SWITCH_TYPE_CODES, parse_switch_description
 
 
 def parse_catalog_meta(product: Product | None) -> dict[str, Any] | None:
@@ -58,6 +60,21 @@ def service_for_article(product: Product) -> Optional[str]:
     return str(val).strip() if val else None
 
 
+def parse_support_duration(description: str | None) -> Optional[str]:
+    """Extract human-readable support term, e.g. «1 год» from catalog description."""
+    if not description:
+        return None
+    text = description.strip()
+    m = re.search(
+        r"на\s+(\d+)\s+(год|года|лет|year|years|month|months|мес(?:яц|яца|яцев)?)",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if not m:
+        return None
+    return f"{m.group(1)} {m.group(2).lower()}"
+
+
 def find_service_products_for_equipment(
     db: Session,
     equipment: Product,
@@ -82,6 +99,102 @@ def find_service_products_for_equipment(
         elif tier == "extended":
             extended = row
     return {"standard": standard, "extended": extended}
+
+
+_VO_SPEED_PREFIXES: dict[str, str] = {
+    "1g": "vo-1g-",
+    "10g": "vo-10g-",
+    "25g": "vo-25g-",
+    "40g": "vo-40g-",
+    "100g": "vo-100g-",
+}
+
+_VO_COMBO_ARTICLE_PREFIXES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("vo-40g10-", ("40g", "10g")),
+    ("vo-100g25-", ("100g", "25g")),
+)
+
+
+def _optic_speeds_from_switch_description(description: str) -> set[str]:
+    """Infer supported optic speeds from a switch catalog description."""
+    text = (description or "").lower()
+    speeds: set[str] = set()
+    if re.search(r"100\s*gb", text):
+        speeds.add("100g")
+    if re.search(r"40\s*gb", text):
+        speeds.add("40g")
+    if re.search(r"25\s*gb", text):
+        speeds.add("25g")
+    if re.search(r"10\s*gb|10ge", text):
+        speeds.add("10g")
+    if re.search(r"1\s*gb|1ge|1/10", text):
+        speeds.add("1g")
+    return speeds
+
+
+def _vo_name_matches_switch_speeds(name: str, speeds: set[str]) -> bool:
+    lowered = (name or "").lower()
+    if lowered.startswith("vo-pwr-"):
+        return True
+    for article_prefix, combo_speeds in _VO_COMBO_ARTICLE_PREFIXES:
+        if lowered.startswith(article_prefix):
+            return bool(speeds.intersection(combo_speeds))
+    for speed in speeds:
+        prefix = _VO_SPEED_PREFIXES.get(speed)
+        if prefix and lowered.startswith(prefix):
+            return True
+    return False
+
+
+def _optic_ports_from_switch(equipment: Product) -> int:
+    parsed = parse_switch_description(equipment.description or "")
+    try:
+        return max(0, int(parsed.get("optic_ports") or 0))
+    except (TypeError, ValueError):
+        return 0
+
+
+def suggested_accessory_quantity(equipment: Product, accessory: Product) -> int:
+    """Per switch unit: optic items match port count; power cables default to a pair."""
+    article = equipment_article(accessory).lower()
+    if article.startswith("vo-pwr-"):
+        return 2
+    optic_ports = _optic_ports_from_switch(equipment)
+    if optic_ports > 0:
+        return optic_ports
+    return 1
+
+
+def find_accessory_products_for_equipment(
+    db: Session,
+    equipment: Product,
+    *,
+    limit: int = 30,
+) -> list[Product]:
+    """VO optics/accessories compatible with a switch by port speed."""
+    category = (equipment.product_category or "").upper()
+    kind = (equipment.product_kind or "").strip().lower()
+    if category == "VO" or kind == "accessory":
+        return []
+    if category not in SWITCH_TYPE_CODES:
+        return []
+
+    speeds = _optic_speeds_from_switch_description(equipment.description or "")
+    if not speeds:
+        return []
+
+    rows = (
+        db.query(Product)
+        .filter(Product.product_category == "VO", Product.id != equipment.id)
+        .order_by(Product.name, Product.id)
+        .all()
+    )
+    matched = [
+        row
+        for row in rows
+        if _vo_name_matches_switch_speeds(equipment_article(row), speeds)
+    ]
+    return matched[:limit]
 
 
 def validate_service_addon(

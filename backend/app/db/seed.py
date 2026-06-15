@@ -172,5 +172,23 @@ def seed_initial_data(db: Session) -> None:
 
     assign_products_to_subgroups(db)
 
+    from app.services.switch_spec_seed import refresh_switch_spec_values
+    from app.services.load_balancer_spec_seed import refresh_load_balancer_spec_values
+    from app.services.firewall_spec_seed import refresh_firewall_spec_values
+    from app.services.management_spec_seed import refresh_management_spec_values
+    from app.services.server_spec_seed import refresh_server_spec_values
+    from app.services.telephony_spec_seed import refresh_telephony_spec_values
+    from app.services.vo_accessory_spec_seed import refresh_vo_accessory_spec_values
+    from app.services.wifi_spec_seed import refresh_wifi_spec_values
+
+    refresh_switch_spec_values(db)
+    refresh_vo_accessory_spec_values(db)
+    refresh_wifi_spec_values(db)
+    refresh_load_balancer_spec_values(db)
+    refresh_management_spec_values(db)
+    refresh_firewall_spec_values(db)
+    refresh_server_spec_values(db)
+    refresh_telephony_spec_values(db)
+
     db.commit()
 

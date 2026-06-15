@@ -24,13 +24,12 @@ CATALOG_GROUP_DEFINITIONS: list[tuple[str, str, int, list[tuple[str, str, int]]]
     ),
     (
         "wifi",
-        "Контроллер + точки бесп доступа",
+        "Контроллеры и беспроводные точки доступа",
         20,
         [
             ("equipment", "Оборудование", 10),
-            ("certificates", "Сертификаты", 20),
-            ("accessories", "Аксессуары", 30),
-            ("support", "Поддержка", 40),
+            ("accessories", "Аксессуары", 20),
+            ("support", "Поддержка", 30),
         ],
     ),
     (
@@ -40,7 +39,6 @@ CATALOG_GROUP_DEFINITIONS: list[tuple[str, str, int, list[tuple[str, str, int]]]
         [
             ("equipment", "Оборудование", 10),
             ("support", "Поддержка", 20),
-            ("accessories", "Аксессуары", 30),
         ],
     ),
     (
@@ -86,7 +84,7 @@ CATALOG_GROUP_DEFINITIONS: list[tuple[str, str, int, list[tuple[str, str, int]]]
 ]
 
 GROUPS_WITH_CERTIFICATES = frozenset(
-    {"wifi", "management", "firewall", "telephony"}
+    {"management", "firewall", "telephony"}
 )
 
 _SECTION_GROUP_HINTS: tuple[tuple[str, str], ...] = (
@@ -96,7 +94,8 @@ _SECTION_GROUP_HINTS: tuple[tuple[str, str], ...] = (
     ("беспровод", "wifi"),
     ("access point", "wifi"),
     ("network controller", "wifi"),
-    ("балансир", "load_balancer"),
+    ("балансировка трафика", "load_balancer"),
+    ("балансировщики трафика", "load_balancer"),
     ("управления и мониторинга", "management"),
     ("межсетев", "firewall"),
     ("маршрутизатор", "firewall"),
@@ -228,7 +227,35 @@ def ensure_catalog_groups(db: Session) -> dict[str, dict[str, int]]:
                 sub.sort_order = sub_sort
                 sub.is_active = True
             index[group_code][sub_code] = sub.id
+
+        kept_codes = {sub_code for sub_code, _, _ in subgroups}
+        _prune_removed_subgroups(db, group, kept_codes)
+
     return index
+
+
+def _prune_removed_subgroups(
+    db: Session,
+    group: EquipmentGroup,
+    kept_codes: set[str],
+) -> None:
+    """Drop subgroups removed from definitions; move their products to «support»."""
+    subs = (
+        db.query(EquipmentSubgroup)
+        .filter(EquipmentSubgroup.group_id == group.id)
+        .all()
+    )
+    support_sub = next((s for s in subs if s.code == "support"), None)
+    for sub in subs:
+        if sub.code in kept_codes:
+            continue
+        if support_sub is not None:
+            db.query(Product).filter(Product.subgroup_id == sub.id).update(
+                {Product.subgroup_id: support_sub.id},
+                synchronize_session=False,
+            )
+        db.delete(sub)
+    db.flush()
 
 
 def assign_products_to_subgroups(db: Session, *, force: bool = False) -> dict[str, int]:

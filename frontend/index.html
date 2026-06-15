@@ -235,34 +235,11 @@
         line-height: 1.45;
       }
 
-      .recent-config-row-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-      }
-
       .recent-config-row-title {
         font-size: 13px;
         font-weight: 600;
         color: #0f172a;
-      }
-
-      .recent-config-toggle-btn {
-        flex-shrink: 0;
-      }
-
-      .recent-config-details {
-        margin-top: 8px;
-        padding-top: 8px;
-        border-top: 1px solid #e2e8f0;
-        font-size: 12px;
-        color: #334155;
-      }
-
-      .recent-config-details ul {
-        margin: 6px 0 0;
-        padding-left: 1.1em;
+        margin-bottom: 4px;
       }
 
       .recent-config-meta {
@@ -317,12 +294,36 @@
         flex: 1;
         min-height: 0;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      #products-section .catalog-nav-breadcrumb,
+      #products-section #catalog-products-toolbar {
+        flex-shrink: 0;
+      }
+
+      #products-section .catalog-nav {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        margin-bottom: 0;
+      }
+
+      #products-section .catalog-products-panel {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
       }
 
       #products-section .products-list {
         flex: 1;
         min-height: 0;
         max-height: none;
+        overflow-y: auto;
       }
 
       .catalog-nav {
@@ -360,6 +361,14 @@
         gap: 10px;
       }
 
+      .catalog-nav-grid[hidden],
+      #catalog-nav[hidden],
+      #catalog-products-toolbar[hidden],
+      .catalog-products-panel[hidden],
+      .catalog-nav-breadcrumb[hidden] {
+        display: none !important;
+      }
+
       .catalog-nav-card {
         border: 1px solid #e2e8f0;
         border-radius: 12px;
@@ -385,6 +394,18 @@
       .catalog-nav-card-meta {
         font-size: 12px;
         color: #64748b;
+      }
+
+      .catalog-nav-card--selected {
+        border-color: #2563eb;
+        background: #eff6ff;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.12);
+      }
+
+      .product-catalog-path {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 2px;
       }
 
       .catalog-products-panel[hidden] {
@@ -465,36 +486,6 @@
 
       .configurator-ops-footer .actions {
         margin-top: 0;
-      }
-
-      .product-text-clamp {
-        display: -webkit-box;
-        -webkit-line-clamp: 1;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        line-height: 1.45;
-        word-break: break-word;
-      }
-
-      .product-text-expanded {
-        display: block;
-        line-height: 1.45;
-        word-break: break-word;
-      }
-
-      .product-more-toggle {
-        font-size: 11px;
-        color: #4f46e5;
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 4px 0 0;
-        text-decoration: underline;
-        text-underline-offset: 2px;
-      }
-
-      .product-more-toggle:hover {
-        color: #4338ca;
       }
 
       .product-specs-block {
@@ -793,6 +784,15 @@
       .product-desc {
         font-size: 12px;
         color: #6b7280;
+        line-height: 1.45;
+        word-break: break-word;
+      }
+
+      .product-support-duration {
+        font-size: 11px;
+        font-weight: 600;
+        color: #2563eb;
+        margin-top: 4px;
       }
 
       .product-meta {
@@ -888,15 +888,22 @@
       }
 
       .confirm-submit-dialog {
-        position: fixed;
-        inset: 0;
-        margin: auto;
         max-width: min(520px, 92vw);
         width: min(520px, 92vw);
         padding: 0;
         border: none;
         border-radius: 12px;
+        background: #ffffff;
         box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+      }
+
+      .confirm-submit-dialog[open],
+      .config-export-dialog[open] {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0;
       }
 
       .confirm-submit-dialog::backdrop {
@@ -954,6 +961,8 @@
         border-radius: 12px;
         padding: 0;
         max-width: min(440px, calc(100vw - 32px));
+        width: min(440px, calc(100vw - 32px));
+        background: #ffffff;
         box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
       }
 
@@ -1346,6 +1355,129 @@
         justify-content: flex-end;
       }
 
+      .equipment-picker-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100010;
+        background: rgba(15, 23, 42, 0.52);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+      }
+
+      .equipment-picker-overlay[hidden] {
+        display: none !important;
+      }
+
+      .equipment-picker-dialog {
+        background: #fff;
+        border-radius: 14px;
+        width: min(640px, 100%);
+        max-height: min(88vh, 820px);
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
+        overflow: hidden;
+      }
+
+      .equipment-picker-header {
+        padding: 16px 18px 10px;
+        border-bottom: 1px solid #e5e7eb;
+        flex-shrink: 0;
+      }
+
+      .equipment-picker-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 4px;
+      }
+
+      .equipment-picker-lead {
+        font-size: 12px;
+        color: #64748b;
+        line-height: 1.45;
+      }
+
+      .equipment-picker-body {
+        padding: 14px 18px;
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .equipment-picker-qty-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .equipment-picker-qty-row label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+      }
+
+      .equipment-picker-qty-row input {
+        width: 88px;
+      }
+
+      .equipment-picker-accessory-line {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 8px 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13px;
+      }
+
+      .equipment-picker-accessory-line label {
+        cursor: pointer;
+        line-height: 1.4;
+        flex: 1;
+        min-width: 0;
+      }
+
+      .equipment-picker-accessory-qty {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2px;
+        flex-shrink: 0;
+      }
+
+      .equipment-picker-accessory-qty label {
+        font-size: 10px;
+        color: #64748b;
+        cursor: default;
+      }
+
+      .equipment-picker-accessory-qty input {
+        width: 64px;
+      }
+
+      .equipment-picker-footer {
+        padding: 12px 18px 16px;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: flex-end;
+        flex-shrink: 0;
+        background: #f9fafb;
+      }
+
+      .equipment-picker-body .equipment-addon-panel {
+        margin-top: 0;
+        padding: 0;
+        border: none;
+        background: transparent;
+      }
+
       .admin-product-drawer-overlay {
         position: fixed;
         inset: 0;
@@ -1428,6 +1560,29 @@
         gap: 8px;
       }
 
+      .admin-users-pending-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #dc2626;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.3;
+        letter-spacing: 0.02em;
+      }
+
+      .admin-users-pending-badge[hidden] {
+        display: none !important;
+      }
+
+      .admin-user-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
       .admin-fold-summary::-webkit-details-marker {
         display: none;
       }
@@ -1487,22 +1642,26 @@
         display: none !important;
       }
 
-      .catalog-toolbar-row {
-        display: grid;
-        grid-template-columns: minmax(160px, 1fr) minmax(0, 2.4fr);
+      .catalog-toolbar {
+        display: flex;
+        flex-direction: column;
         gap: 8px;
-        align-items: center;
         margin-bottom: 10px;
       }
 
-      .catalog-toolbar-row > input[type="search"] {
+      .catalog-toolbar-search input[type="search"] {
         width: 100%;
         min-width: 0;
+        box-sizing: border-box;
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        font-size: 13px;
       }
 
       .catalog-toolbar-filters {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+        grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
         gap: 8px;
         align-items: center;
       }
@@ -1511,10 +1670,36 @@
       .catalog-toolbar-filters input[type="search"] {
         width: 100%;
         min-width: 0;
+        box-sizing: border-box;
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        font-size: 13px;
       }
 
       .catalog-toolbar-filters--users {
-        grid-template-columns: minmax(0, 1.4fr) auto;
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+
+      .catalog-toolbar-filters--admin-nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .catalog-switch-filters {
+        grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+      }
+
+      .catalog-toolbar-clear {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .catalog-toolbar-filters .secondary-btn,
+      .catalog-toolbar-filters .products-spec-filter-clear {
+        justify-self: start;
+        white-space: nowrap;
+        padding: 8px 12px;
+        font-size: 12px;
       }
 
       .admin-table.admin-table--catalog td {
@@ -1531,11 +1716,6 @@
 
       .admin-table.admin-table--catalog .cell-muted {
         color: #64748b;
-      }
-
-      #products-section .products-list.products-list--paginated {
-        overflow-y: visible;
-        flex: 0 0 auto;
       }
 
       .admin-table-scroll .admin-table {
@@ -1870,10 +2050,6 @@
         max-width: 52rem;
       }
 
-      .products-search-wrap {
-        margin-bottom: 10px;
-      }
-
       .app-header .title-group {
         display: flex;
         align-items: center;
@@ -1887,36 +2063,6 @@
         object-fit: contain;
         flex-shrink: 0;
         display: block;
-      }
-
-      .products-type-filter {
-        margin-bottom: 10px;
-      }
-
-      .products-type-filter select {
-        width: 100%;
-      }
-
-      .products-pagination {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-        margin-top: 10px;
-        padding-top: 10px;
-        border-top: 1px solid #e5e7eb;
-        font-size: 12px;
-        color: #64748b;
-      }
-
-      .products-pagination-actions {
-        display: flex;
-        gap: 8px;
-      }
-
-      .products-pagination-actions button:disabled {
-        opacity: 0.45;
-        cursor: not-allowed;
       }
 
       .admin-user-comment-input {
@@ -1935,47 +2081,15 @@
         font-weight: 600;
       }
 
-      .products-spec-filter {
-        display: grid;
-        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) auto;
-        gap: 8px;
-        align-items: center;
-        margin-bottom: 10px;
-      }
-
-      .products-spec-filter select,
-      .products-spec-filter input[type="search"] {
-        width: 100%;
-        min-width: 0;
-      }
-
-      .products-spec-filter-clear {
-        white-space: nowrap;
-        padding: 8px 10px;
-        font-size: 12px;
-      }
-
       @media (max-width: 640px) {
-        .products-spec-filter {
-          grid-template-columns: 1fr;
-        }
-
-        .catalog-toolbar-row {
-          grid-template-columns: 1fr;
-        }
-
-        .catalog-toolbar-filters {
+        .catalog-toolbar-filters,
+        .catalog-toolbar-filters--users {
           grid-template-columns: 1fr;
         }
       }
 
       .admin-catalog-toolbar {
         margin-bottom: 12px;
-      }
-
-      .admin-catalog-toolbar .products-pagination {
-        margin-top: 10px;
-        margin-bottom: 0;
       }
     </style>
   </head>
@@ -2038,31 +2152,22 @@
               <div class="divider"></div>
             </div>
 
-            <div class="catalog-nav" id="catalog-nav">
-              <div class="catalog-nav-breadcrumb" id="catalog-breadcrumb" hidden></div>
-              <div class="catalog-nav-grid" id="catalog-groups-grid"></div>
-              <div class="catalog-nav-grid" id="catalog-subgroups-grid" hidden></div>
-            </div>
-            <div class="catalog-toolbar-row" id="catalog-products-toolbar" hidden>
-              <input
-                type="search"
-                id="products-search-input"
-                placeholder="Поиск по ID, названию или параметрам (Enter)"
-                autocomplete="off"
-              />
-              <div class="catalog-toolbar-filters products-spec-filter" id="products-spec-filter">
-                <select id="products-spec-param-select" aria-label="Параметр характеристики">
-                  <option value="">Все параметры</option>
-                </select>
+            <div class="catalog-nav-breadcrumb" id="catalog-breadcrumb" hidden></div>
+            <div class="catalog-toolbar" id="catalog-products-toolbar" hidden>
+              <div class="catalog-toolbar-search">
                 <input
                   type="search"
-                  id="products-spec-value-input"
-                  placeholder="Значение (Enter)"
+                  id="products-search-input"
+                  placeholder="Поиск по ID, названию или параметрам (Enter)"
                   autocomplete="off"
                 />
-                <select id="products-type-select" aria-label="Тип оборудования">
-                  <option value="">Все типы оборудования</option>
-                </select>
+              </div>
+              <div
+                class="catalog-toolbar-filters catalog-switch-filters"
+                id="user-switch-filters"
+                hidden
+              ></div>
+              <div class="catalog-toolbar-clear">
                 <button
                   type="button"
                   class="secondary-btn products-spec-filter-clear"
@@ -2073,6 +2178,10 @@
                 </button>
               </div>
             </div>
+            <div class="catalog-nav" id="catalog-nav">
+              <div class="catalog-nav-grid" id="catalog-groups-grid"></div>
+              <div class="catalog-nav-grid" id="catalog-subgroups-grid" hidden></div>
+            </div>
             <div class="catalog-panel catalog-products-panel" id="user-products-panel" hidden>
               <div
                 class="catalog-panel-loading-overlay"
@@ -2082,17 +2191,6 @@
                 Загрузка…
               </div>
               <ul class="products-list" id="products-list"></ul>
-              <div class="products-pagination" id="products-pagination" hidden>
-                <span id="products-page-info"></span>
-                <div class="products-pagination-actions">
-                  <button type="button" class="secondary-btn" id="products-page-prev">
-                    Назад
-                  </button>
-                  <button type="button" class="secondary-btn" id="products-page-next">
-                    Далее
-                  </button>
-                </div>
-              </div>
             </div>
             <div class="scroll-hint debug-only">
               Если продуктов станет много — блок можно прокручивать.
@@ -2281,13 +2379,31 @@
           <div class="config-export-actions">
             <button type="button" class="primary-btn" id="config-export-xlsx-btn"></button>
             <button type="button" class="secondary-btn" id="config-export-csv-btn"></button>
-            <button type="button" class="secondary-btn" id="config-export-gsheets-btn"></button>
           </div>
           <div class="config-export-foot">
             <button type="button" class="secondary-btn" id="config-export-close-btn"></button>
           </div>
         </div>
       </dialog>
+
+      <div id="equipment-picker-overlay" class="equipment-picker-overlay" hidden>
+        <div
+          class="equipment-picker-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="equipment-picker-title"
+        >
+          <div class="equipment-picker-header">
+            <div class="equipment-picker-title" id="equipment-picker-title"></div>
+            <div class="equipment-picker-lead" id="equipment-picker-lead"></div>
+          </div>
+          <div class="equipment-picker-body" id="equipment-picker-body"></div>
+          <div class="equipment-picker-footer">
+            <button type="button" class="secondary-btn" id="equipment-picker-cancel"></button>
+            <button type="button" class="primary-btn" id="equipment-picker-confirm"></button>
+          </div>
+        </div>
+      </div>
 
       <div id="admin-area" class="admin-area" style="display: none">
         <section class="card admin-panel" id="admin-catalog-block">
@@ -2299,13 +2415,15 @@
                 Разрешённый домен почты (например <code>aaa.ru</code>): регистрация и
                 вход пользователей привязаны к компании с этим доменом.
               </p>
-              <div class="catalog-toolbar-row">
-                <input
-                  type="search"
-                  id="admin-companies-search-input"
-                  placeholder="Поиск по названию или домену (Enter)"
-                  autocomplete="off"
-                />
+              <div class="catalog-toolbar">
+                <div class="catalog-toolbar-search">
+                  <input
+                    type="search"
+                    id="admin-companies-search-input"
+                    placeholder="Поиск по названию или домену (Enter)"
+                    autocomplete="off"
+                  />
+                </div>
               </div>
               <div class="catalog-panel" id="admin-companies-panel">
                 <div
@@ -2413,17 +2531,26 @@
             </div>
           </details>
 
-          <details class="admin-fold">
-            <summary class="admin-fold-summary" id="admin-fold-users">Пользователи</summary>
+          <details class="admin-fold" id="admin-users-fold">
+            <summary class="admin-fold-summary">
+              <span id="admin-fold-users-label">Пользователи</span>
+              <span
+                class="admin-users-pending-badge"
+                id="admin-users-pending-badge"
+                hidden
+              ></span>
+            </summary>
             <div class="admin-fold-body">
               <div class="admin-above-table admin-above-table--compact">
-                <div class="catalog-toolbar-row">
-                  <input
-                    type="search"
-                    id="admin-users-search-input"
-                    placeholder="Поиск по имени, email или компании (Enter)"
-                    autocomplete="off"
-                  />
+                <div class="catalog-toolbar">
+                  <div class="catalog-toolbar-search">
+                    <input
+                      type="search"
+                      id="admin-users-search-input"
+                      placeholder="Поиск по имени, email или компании (Enter)"
+                      autocomplete="off"
+                    />
+                  </div>
                   <div class="catalog-toolbar-filters catalog-toolbar-filters--users">
                     <select
                       class="admin-select"
@@ -2509,35 +2636,29 @@
           <details class="admin-fold" open>
             <summary class="admin-fold-summary" id="admin-fold-catalog">Каталог: оборудование</summary>
             <div class="admin-fold-body">
-              <div class="catalog-toolbar-row admin-catalog-toolbar">
-                <input
-                  type="search"
-                  id="admin-products-search-input"
-                  placeholder="Поиск по ID, названию или параметрам (Enter)"
-                  autocomplete="off"
-                />
-                <div class="catalog-toolbar-filters products-spec-filter">
-                  <select
-                    id="admin-products-spec-param-select"
-                    aria-label="Параметр характеристики"
-                  >
-                    <option value="">Все параметры</option>
-                  </select>
+              <div class="catalog-toolbar admin-catalog-toolbar">
+                <div class="catalog-toolbar-search">
                   <input
                     type="search"
-                    id="admin-products-spec-value-input"
-                    placeholder="Значение (Enter)"
+                    id="admin-products-search-input"
+                    placeholder="Поиск по ID, названию или параметрам (Enter)"
                     autocomplete="off"
                   />
-                  <select id="admin-products-type-select" aria-label="Тип оборудования">
-                    <option value="">Все типы оборудования</option>
-                  </select>
+                </div>
+                <div class="catalog-toolbar-filters catalog-toolbar-filters--admin-nav">
                   <select id="admin-catalog-group-select" aria-label="Группа каталога">
                     <option value="">Все группы</option>
                   </select>
                   <select id="admin-catalog-subgroup-select" aria-label="Подгруппа каталога">
                     <option value="">Все подгруппы</option>
                   </select>
+                </div>
+                <div
+                  class="catalog-toolbar-filters catalog-switch-filters"
+                  id="admin-switch-filters"
+                  hidden
+                ></div>
+                <div class="catalog-toolbar-clear">
                   <button
                     type="button"
                     class="secondary-btn products-spec-filter-clear"
@@ -2574,17 +2695,6 @@
                   </thead>
                   <tbody id="admin-products-tbody"></tbody>
                 </table>
-              </div>
-              <div class="products-pagination" id="admin-products-pagination" hidden>
-                <span id="admin-products-page-info"></span>
-                <div class="products-pagination-actions">
-                  <button type="button" class="secondary-btn" id="admin-products-page-prev">
-                    Назад
-                  </button>
-                  <button type="button" class="secondary-btn" id="admin-products-page-next">
-                    Далее
-                  </button>
-                </div>
               </div>
               </div>
               <div class="admin-below-table">
@@ -2721,26 +2831,14 @@
         catalogProductsToolbar: document.getElementById("catalog-products-toolbar"),
         userProductsPanel: document.getElementById("user-products-panel"),
         productsSearchInput: document.getElementById("products-search-input"),
-        productsSpecParamSelect: document.getElementById("products-spec-param-select"),
-        productsSpecValueInput: document.getElementById("products-spec-value-input"),
+        userSwitchFiltersHost: document.getElementById("user-switch-filters"),
         productsSpecFilterClear: document.getElementById("products-spec-filter-clear"),
-        productsTypeSelect: document.getElementById("products-type-select"),
-        productsPagination: document.getElementById("products-pagination"),
-        productsPageInfo: document.getElementById("products-page-info"),
-        productsPagePrev: document.getElementById("products-page-prev"),
-        productsPageNext: document.getElementById("products-page-next"),
         userProductsLoading: document.getElementById("user-products-loading"),
         adminProductsSearchInput: document.getElementById("admin-products-search-input"),
-        adminProductsSpecParamSelect: document.getElementById(
-          "admin-products-spec-param-select"
-        ),
-        adminProductsSpecValueInput: document.getElementById(
-          "admin-products-spec-value-input"
-        ),
+        adminSwitchFiltersHost: document.getElementById("admin-switch-filters"),
         adminProductsSpecFilterClear: document.getElementById(
           "admin-products-spec-filter-clear"
         ),
-        adminProductsTypeSelect: document.getElementById("admin-products-type-select"),
         adminCatalogGroupSelect: document.getElementById("admin-catalog-group-select"),
         adminCatalogSubgroupSelect: document.getElementById("admin-catalog-subgroup-select"),
         adminGroupsTbody: document.getElementById("admin-groups-tbody"),
@@ -2748,10 +2846,6 @@
         adminNewGroupName: document.getElementById("admin-new-group-name"),
         adminAddGroupBtn: document.getElementById("admin-add-group-btn"),
         adminReclassifyBtn: document.getElementById("admin-reclassify-btn"),
-        adminProductsPagination: document.getElementById("admin-products-pagination"),
-        adminProductsPageInfo: document.getElementById("admin-products-page-info"),
-        adminProductsPagePrev: document.getElementById("admin-products-page-prev"),
-        adminProductsPageNext: document.getElementById("admin-products-page-next"),
         adminProductsLoading: document.getElementById("admin-products-loading"),
         productsCounter: document.getElementById("products-counter"),
         productsSource: document.getElementById("products-source"),
@@ -2794,8 +2888,13 @@
         configExportLead: document.getElementById("config-export-lead"),
         configExportXlsxBtn: document.getElementById("config-export-xlsx-btn"),
         configExportCsvBtn: document.getElementById("config-export-csv-btn"),
-        configExportGsheetsBtn: document.getElementById("config-export-gsheets-btn"),
         configExportCloseBtn: document.getElementById("config-export-close-btn"),
+        equipmentPickerOverlay: document.getElementById("equipment-picker-overlay"),
+        equipmentPickerTitle: document.getElementById("equipment-picker-title"),
+        equipmentPickerLead: document.getElementById("equipment-picker-lead"),
+        equipmentPickerBody: document.getElementById("equipment-picker-body"),
+        equipmentPickerCancel: document.getElementById("equipment-picker-cancel"),
+        equipmentPickerConfirm: document.getElementById("equipment-picker-confirm"),
         headerBlurbUser: document.getElementById("header-blurb-user"),
         headerBlurbAdmin: document.getElementById("header-blurb-admin"),
         adminCatalogBlock: document.getElementById("admin-catalog-block"),
@@ -2805,6 +2904,8 @@
         ),
         adminUsersRefreshBtn: document.getElementById("admin-users-refresh-btn"),
         adminUsersSearchInput: document.getElementById("admin-users-search-input"),
+        adminUsersFold: document.getElementById("admin-users-fold"),
+        adminUsersPendingBadge: document.getElementById("admin-users-pending-badge"),
         adminUsersLoading: document.getElementById("admin-users-loading"),
         adminUsersTbody: document.getElementById("admin-users-tbody"),
         adminSpecParamsTbody: document.getElementById("admin-spec-params-tbody"),
@@ -2902,33 +3003,19 @@
         }
         if (elements.productsSearchInput) {
           elements.productsSearchInput.placeholder = isEn
-            ? "Search by ID, name or specs (Enter)"
-            : "Поиск по ID, названию или параметрам (Enter)";
+            ? "Search entire catalog by ID, name or specs (Enter)"
+            : "Поиск по всему каталогу: ID, название или параметры (Enter)";
         }
         if (elements.adminProductsSearchInput) {
           elements.adminProductsSearchInput.placeholder = isEn
             ? "Search by ID, name or specs (Enter)"
             : "Поиск по ID, названию или параметрам (Enter)";
         }
-        if (elements.productsSpecValueInput) {
-          elements.productsSpecValueInput.placeholder = isEn
-            ? "Value (Enter)"
-            : "Значение (Enter)";
-        }
-        if (elements.adminProductsSpecValueInput) {
-          elements.adminProductsSpecValueInput.placeholder = isEn
-            ? "Value (Enter)"
-            : "Значение (Enter)";
-        }
-        if (elements.productsSpecFilterClear) {
-          elements.productsSpecFilterClear.textContent = isEn ? "Clear" : "Сбросить";
-        }
         if (elements.adminProductsSpecFilterClear) {
           elements.adminProductsSpecFilterClear.textContent = isEn ? "Clear" : "Сбросить";
         }
-        if (elements.productsSpecParamSelect) {
-          renderSpecFilterSelect();
-        }
+        renderCatalogFilterControls();
+        syncCatalogFiltersVisibility();
         if (elements.headerBlurbUser) {
           elements.headerBlurbUser.textContent = isEn
             ? "Select equipment on the left. On the right set options, add project details if needed, then submit your configuration."
@@ -2966,8 +3053,10 @@
             ? "Companies and domains"
             : "Организации и домены";
         }
-        const foldUsers = document.getElementById("admin-fold-users");
-        if (foldUsers) foldUsers.textContent = isEn ? "Users" : "Пользователи";
+        const foldUsersLabel = document.getElementById("admin-fold-users-label");
+        if (foldUsersLabel) {
+          foldUsersLabel.textContent = isEn ? "Users" : "Пользователи";
+        }
         const foldCatalog = document.getElementById("admin-fold-catalog");
         if (foldCatalog) {
           foldCatalog.textContent = isEn
@@ -3137,18 +3226,236 @@
       let adminCatalogGroupFilter = "";
       let adminCatalogSubgroupFilter = "";
       let specParameters = [];
-      /** Active spec parameters for catalog characteristic filter (all roles). */
-      let catalogSpecParameters = [];
+      const SWITCH_FILTER_DEFS = [
+        {
+          code: "switch_layer",
+          labelRu: "Уровень",
+          labelEn: "Layer",
+          options: [
+            { value: "2", labelRu: "2", labelEn: "2" },
+            { value: "3", labelRu: "3", labelEn: "3" },
+          ],
+        },
+        {
+          code: "rj45_ports",
+          labelRu: "Портов RJ45",
+          labelEn: "RJ45 ports",
+          options: [
+            { value: "8", labelRu: "8", labelEn: "8" },
+            { value: "24", labelRu: "24", labelEn: "24" },
+            { value: "48", labelRu: "48", labelEn: "48" },
+          ],
+        },
+        {
+          code: "copper_speed",
+          labelRu: "Скорость медных",
+          labelEn: "Copper speed",
+          options: [
+            { value: "10/100/1000", labelRu: "10/100/1000", labelEn: "10/100/1000" },
+            { value: "100/1000", labelRu: "100/1000", labelEn: "100/1000" },
+          ],
+        },
+        {
+          code: "poe_plus",
+          labelRu: "PoE+",
+          labelEn: "PoE+",
+          options: [
+            { value: "да", labelRu: "Да", labelEn: "Yes" },
+            { value: "нет", labelRu: "Нет", labelEn: "No" },
+          ],
+        },
+        {
+          code: "optic_ports",
+          labelRu: "Портов SFP/SFP+",
+          labelEn: "SFP/SFP+ ports",
+          options: [
+            { value: "2", labelRu: "2", labelEn: "2" },
+            { value: "4", labelRu: "4", labelEn: "4" },
+            { value: "6", labelRu: "6", labelEn: "6" },
+          ],
+        },
+        {
+          code: "optic_speed",
+          labelRu: "Скорость оптических",
+          labelEn: "Optic speed",
+          options: [
+            { value: "1g", labelRu: "1G", labelEn: "1G" },
+            { value: "1/10g", labelRu: "1/10G", labelEn: "1/10G" },
+            { value: "10g", labelRu: "10G", labelEn: "10G" },
+          ],
+        },
+        {
+          code: "combo_ports",
+          labelRu: "Combo-портов",
+          labelEn: "Combo ports",
+          options: [
+            { value: "0", labelRu: "0", labelEn: "0" },
+            { value: "4", labelRu: "4", labelEn: "4" },
+            { value: "8", labelRu: "8", labelEn: "8" },
+          ],
+        },
+      ];
+      const VO_FILTER_DEFS = [
+        {
+          code: "vo_item_type",
+          labelRu: "Тип",
+          labelEn: "Type",
+          options: [
+            { value: "cable", labelRu: "Кабель", labelEn: "Cable" },
+            { value: "module", labelRu: "Модуль", labelEn: "Module" },
+          ],
+        },
+      ];
+      const WIFI_EQUIPMENT_FILTER_DEFS = [
+        {
+          code: "wifi_device_type",
+          labelRu: "Тип",
+          labelEn: "Type",
+          options: [
+            { value: "controller", labelRu: "Контроллер", labelEn: "Controller" },
+            {
+              value: "access_point",
+              labelRu: "Точка доступа",
+              labelEn: "Access point",
+            },
+            {
+              value: "connection_certificate",
+              labelRu: "Сертификат на подключение",
+              labelEn: "Connection certificate",
+            },
+          ],
+        },
+      ];
+      const WIFI_ACCESSORY_FILTER_DEFS = [
+        {
+          code: "wifi_accessory_kind",
+          labelRu: "Тип",
+          labelEn: "Type",
+          options: [
+            { value: "antenna", labelRu: "Антенны", labelEn: "Antennas" },
+            { value: "enclosure", labelRu: "Корпуса", labelEn: "Enclosures" },
+          ],
+        },
+      ];
+      const WIFI_SUPPORT_FILTER_DEFS = [
+        {
+          code: "support_tier",
+          labelRu: "Тип поддержки",
+          labelEn: "Support type",
+          options: [
+            { value: "standard", labelRu: "Стандартная", labelEn: "Standard" },
+            { value: "extended", labelRu: "Расширенная", labelEn: "Extended" },
+          ],
+        },
+      ];
+      const VLB_EQUIPMENT_FILTER_DEFS = [
+        {
+          code: "vlb_device_type",
+          labelRu: "Тип",
+          labelEn: "Type",
+          options: [
+            {
+              value: "interface_module",
+              labelRu: "Интерфейсный модуль",
+              labelEn: "Interface module",
+            },
+            {
+              value: "traffic_server",
+              labelRu: "Сервер балансировки трафика",
+              labelEn: "Traffic load balancer server",
+            },
+            {
+              value: "virtual_server",
+              labelRu: "Виртуальный сервер",
+              labelEn: "Virtual server",
+            },
+          ],
+        },
+      ];
+      const VS_MANAGEMENT_EQUIPMENT_FILTER_DEFS = [
+        {
+          code: "vs_item_type",
+          labelRu: "Тип",
+          labelEn: "Type",
+          options: [
+            {
+              value: "management_system",
+              labelRu: "Система управления",
+              labelEn: "Management system",
+            },
+            {
+              value: "connection_certificate",
+              labelRu: "Сертификат",
+              labelEn: "Certificate",
+            },
+          ],
+        },
+      ];
+      const VFW_EQUIPMENT_FILTER_DEFS = [
+        {
+          code: "vfw_item_type",
+          labelRu: "Тип",
+          labelEn: "Type",
+          options: [
+            {
+              value: "firewall",
+              labelRu: "Межсетевой экран",
+              labelEn: "Firewall",
+            },
+            {
+              value: "certificate",
+              labelRu: "Сертификат",
+              labelEn: "Certificate",
+            },
+          ],
+        },
+      ];
+      const TELEPHONY_EQUIPMENT_FILTER_DEFS = [
+        {
+          code: "telephony_item_type",
+          labelRu: "Тип",
+          labelEn: "Type",
+          options: [
+            {
+              value: "communication_manager",
+              labelRu: "Communication Manager",
+              labelEn: "Communication Manager",
+            },
+            {
+              value: "expansion_module",
+              labelRu: "Модуль расширения",
+              labelEn: "Expansion module",
+            },
+            {
+              value: "certificate",
+              labelRu: "Сертификат",
+              labelEn: "Certificate",
+            },
+            {
+              value: "ip_phone",
+              labelRu: "IP-телефон",
+              labelEn: "IP phone",
+            },
+          ],
+        },
+      ];
+      const ALL_CATALOG_FILTER_DEFS = [
+        ...SWITCH_FILTER_DEFS,
+        ...VO_FILTER_DEFS,
+        ...WIFI_EQUIPMENT_FILTER_DEFS,
+        ...WIFI_ACCESSORY_FILTER_DEFS,
+        ...WIFI_SUPPORT_FILTER_DEFS,
+        ...VLB_EQUIPMENT_FILTER_DEFS,
+        ...VS_MANAGEMENT_EQUIPMENT_FILTER_DEFS,
+        ...VFW_EQUIPMENT_FILTER_DEFS,
+        ...TELEPHONY_EQUIPMENT_FILTER_DEFS,
+      ];
+      let catalogFilters = Object.fromEntries(
+        ALL_CATALOG_FILTER_DEFS.map((def) => [def.code, ""])
+      );
       let productSearchTerm = "";
-      let productSpecFilterCode = "";
-      let productSpecFilterValue = "";
-      let productTypeFilter = "";
-      let productsPage = 1;
-      let productsPageSize = 20;
+      const productsPageSize = 500;
       let productsTotal = 0;
-      let productsPages = 1;
-      let equipmentTypesList = [];
-      /** @type {object|null} Built POST /configurations body awaiting confirm dialog. */
       let pendingConfigurationPayload = null;
       /** @type {{ configurationId: number, project?: object }|null} */
       let pendingConfigurationExport = null;
@@ -3160,24 +3467,135 @@
       /** Persist license-pack suggestion messages across renderProducts() rebuilds. */
       let licenseSuggestFeedbackByProductId = new Map();
       let optionsCache = {};
-      /** Expanded product cards (description / specs) — user UI */
-      let productCardExpandedIds = new Set();
+      /** @type {Map<number, { id: number, name: string, description?: string, product_category?: string|null }>} */
+      let configProductCache = new Map();
       let companiesList = [];
       let adminCompaniesTableList = [];
       let adminCompaniesSearchTerm = "";
       let adminUsersList = [];
       let adminUsersSearchTerm = "";
+      let adminUsersPendingCount = 0;
+      let adminUsersPendingBadgeDismissed = false;
+      let lastAdminUsersPendingCount = 0;
+      let equipmentPickerProductId = null;
 
       function defaultLineState() {
         return {
+          quantity: 1,
           targetAp: null,
           moduleQty: {},
           licenseQty: {},
           licPickOrder: [],
           modPickOrder: [],
-          serviceTier: "standard",
+          serviceTier: "none",
           serviceProductId: null,
+          accessoryQty: {},
+          parentProductId: null,
+          parentContributions: null,
         };
+      }
+
+      function isAccessoryConfigLine(st) {
+        if (!st) return false;
+        if (st.parentProductId != null) return true;
+        return !!(
+          st.parentContributions &&
+          Object.keys(st.parentContributions).length > 0
+        );
+      }
+
+      function removeParentAccessoryContributions(parentId) {
+        const parentKey = String(parentId);
+        for (const [accId, accSt] of [...configLineState.entries()]) {
+          if (accSt.parentContributions) continue;
+          if (Number(accSt.parentProductId) === Number(parentId)) {
+            configLineState.delete(Number(accId));
+            licenseSuggestFeedbackByProductId.delete(Number(accId));
+          }
+        }
+        for (const [accId, accSt] of [...configLineState.entries()]) {
+          const contributions = accSt.parentContributions;
+          if (!contributions || contributions[parentKey] == null) continue;
+          accSt.quantity =
+            (Number(accSt.quantity) || 0) - Number(contributions[parentKey]);
+          delete contributions[parentKey];
+          if (accSt.quantity <= 0) {
+            configLineState.delete(Number(accId));
+            licenseSuggestFeedbackByProductId.delete(Number(accId));
+            continue;
+          }
+          const parentIds = Object.keys(contributions);
+          accSt.parentProductId =
+            parentIds.length === 1 ? Number(parentIds[0]) : null;
+        }
+      }
+
+      function reconcileAccessoryLinesForParent(parentId) {
+        const parentSt = ensureLineState(parentId);
+        const parentQty =
+          Number.isFinite(Number(parentSt.quantity)) && Number(parentSt.quantity) > 0
+            ? Number(parentSt.quantity)
+            : 1;
+
+        removeParentAccessoryContributions(parentId);
+
+        for (const [aid, unitQty] of Object.entries(parentSt.accessoryQty || {})) {
+          const accessoryId = Number(aid);
+          const perUnit = Number(unitQty);
+          if (
+            !Number.isFinite(accessoryId) ||
+            !Number.isFinite(perUnit) ||
+            perUnit < 1
+          ) {
+            continue;
+          }
+          const addQty = perUnit * parentQty;
+          let accSt = configLineState.get(accessoryId);
+          if (!accSt) {
+            accSt = defaultLineState();
+            accSt.parentContributions = {};
+            configLineState.set(accessoryId, accSt);
+          }
+          if (!accSt.parentContributions) {
+            accSt.parentContributions = {};
+          }
+          accSt.parentContributions[String(parentId)] = addQty;
+          accSt.quantity = Object.values(accSt.parentContributions).reduce(
+            (sum, qty) => sum + Number(qty),
+            0
+          );
+          const parentIds = Object.keys(accSt.parentContributions);
+          accSt.parentProductId =
+            parentIds.length === 1 ? Number(parentIds[0]) : null;
+        }
+      }
+
+      function accessoryIsSelected(st, productId) {
+        const id = Number(productId);
+        return Number(st.accessoryQty?.[id] || 0) > 0;
+      }
+
+      function getAccessoryUnitQty(st, productId) {
+        const id = Number(productId);
+        const qty = Number(st.accessoryQty?.[id] || 0);
+        return Number.isFinite(qty) && qty > 0 ? qty : 0;
+      }
+
+      function setAccessoryUnitQty(st, productId, qty) {
+        const id = Number(productId);
+        if (!st.accessoryQty || typeof st.accessoryQty !== "object") {
+          st.accessoryQty = {};
+        }
+        const n = Number(qty);
+        if (!Number.isFinite(n) || n < 1) {
+          delete st.accessoryQty[id];
+        } else {
+          st.accessoryQty[id] = Math.floor(n);
+        }
+      }
+
+      function shouldUseEquipmentPickerModal() {
+        return getCurrentRoleId() === 2;
       }
 
       function orderedServiceAddons(st) {
@@ -3270,6 +3688,156 @@
         return configLineState.get(productId);
       }
 
+      function rememberConfigProduct(row) {
+        const id = Number(row?.product_id != null ? row.product_id : row?.id);
+        if (!Number.isFinite(id)) return;
+        const name = (row?.name || "").trim();
+        configProductCache.set(id, {
+          id,
+          name: name || catT("Позиция #", "Line #") + id,
+          description: row?.description || "",
+          product_category: row?.product_category || null,
+        });
+      }
+
+      function productForConfigLine(productId) {
+        const id = Number(productId);
+        const found = products.find((p) => Number(p.id) === id);
+        if (found) {
+          rememberConfigProduct(found);
+          return found;
+        }
+        const cached = configProductCache.get(id);
+        if (cached) return cached;
+        return {
+          id,
+          name: catT("Позиция #", "Line #") + id,
+        };
+      }
+
+      function closeEquipmentPickerOverlayOnly() {
+        const overlay = elements.equipmentPickerOverlay;
+        const body = elements.equipmentPickerBody;
+        if (overlay) overlay.hidden = true;
+        if (body) body.innerHTML = "";
+        equipmentPickerProductId = null;
+      }
+
+      function removeProductFromConfiguration(productId) {
+        const pid = Number(productId);
+        const st = configLineState.get(pid);
+        if (st && isAccessoryConfigLine(st)) {
+          for (const parentId of Object.keys(st.parentContributions || {})) {
+            const parentSt = configLineState.get(Number(parentId));
+            if (parentSt?.accessoryQty) {
+              delete parentSt.accessoryQty[pid];
+            }
+          }
+          if (st.parentProductId != null) {
+            const parentSt = configLineState.get(Number(st.parentProductId));
+            if (parentSt?.accessoryQty) {
+              delete parentSt.accessoryQty[pid];
+            }
+          }
+          configLineState.delete(pid);
+          licenseSuggestFeedbackByProductId.delete(pid);
+        } else {
+          removeParentAccessoryContributions(pid);
+          configLineState.delete(pid);
+          licenseSuggestFeedbackByProductId.delete(pid);
+          for (const [, lineState] of configLineState.entries()) {
+            if (!lineState.accessoryQty) continue;
+            delete lineState.accessoryQty[pid];
+          }
+        }
+        if (equipmentPickerProductId === pid) {
+          closeEquipmentPickerOverlayOnly();
+        }
+        renderSelectedPills();
+        renderProducts();
+        updateCounter();
+      }
+
+      function clearAllConfigurationSelections() {
+        configLineState = new Map();
+        licenseSuggestFeedbackByProductId = new Map();
+        closeEquipmentPickerOverlayOnly();
+        renderSelectedPills();
+        renderProducts();
+        updateCounter();
+      }
+
+      /**
+       * Shared modal confirm (works in embedded browsers that block window.confirm).
+       * @returns {Promise<boolean>}
+       */
+      function appConfirmDialog({
+        message,
+        confirmLabel,
+        cancelLabel,
+        danger = false,
+      }) {
+        const overlay = document.getElementById("admin-confirm-overlay");
+        const msgEl = document.getElementById("admin-confirm-message");
+        const btnOk = document.getElementById("admin-confirm-ok");
+        const btnCancel = document.getElementById("admin-confirm-cancel");
+        if (!overlay || !msgEl || !btnOk || !btnCancel) {
+          return Promise.resolve(window.confirm(message || ""));
+        }
+
+        msgEl.textContent = message || "";
+        btnOk.textContent =
+          confirmLabel || catT("Подтвердить", "Confirm");
+        btnCancel.textContent = cancelLabel || catT("Отмена", "Cancel");
+        btnOk.classList.toggle("danger", !!danger);
+
+        return new Promise((resolve) => {
+          let settled = false;
+          const finish = (ok) => {
+            if (settled) return;
+            settled = true;
+            overlay.hidden = true;
+            overlay.setAttribute("aria-hidden", "true");
+            document.removeEventListener("keydown", onEsc);
+            btnOk.removeEventListener("click", onOk);
+            btnCancel.removeEventListener("click", onCancel);
+            overlay.removeEventListener("click", onOverlayClick);
+            resolve(ok);
+          };
+          const onEsc = (e) => {
+            if (e.key === "Escape") {
+              e.preventDefault();
+              finish(false);
+            }
+          };
+          const onOk = () => finish(true);
+          const onCancel = () => finish(false);
+          const onOverlayClick = (e) => {
+            if (e.target === overlay) finish(false);
+          };
+          document.addEventListener("keydown", onEsc);
+          btnOk.addEventListener("click", onOk);
+          btnCancel.addEventListener("click", onCancel);
+          overlay.addEventListener("click", onOverlayClick);
+          overlay.hidden = false;
+          overlay.setAttribute("aria-hidden", "false");
+          btnCancel.focus();
+        });
+      }
+
+      function userConfirmRemoveLine(lineLabel) {
+        const label = String(lineLabel || "").trim() || catT("эту позицию", "this line");
+        return appConfirmDialog({
+          message: catT(
+            "Убрать «" + label + "» из конфигурации?",
+            'Remove "' + label + '" from the configuration?'
+          ),
+          confirmLabel: catT("Убрать", "Remove"),
+          cancelLabel: catT("Отмена", "Cancel"),
+          danger: true,
+        });
+      }
+
       /** Same label as in user configurator (license line). */
       function formatLicenseUserLabel(lic) {
         const pack = lic.units_per_pack != null ? lic.units_per_pack : 1;
@@ -3299,6 +3867,11 @@
         if (debugUi) {
           return p.name + " (id=" + p.id + ")";
         }
+        if (st.parentProductId != null || isAccessoryConfigLine(st)) {
+          const qty = Number(st.quantity);
+          const count = Number.isFinite(qty) && qty > 0 ? qty : 1;
+          return p.name + " × " + count;
+        }
         const opt = optionsCache[p.id];
         const licById = {};
         if (opt && opt.licenses) {
@@ -3309,6 +3882,10 @@
           for (const m of opt.modules) modById[m.id] = m;
         }
         const chunks = [];
+        const qty = Number(st.quantity);
+        if (Number.isFinite(qty) && qty > 1) {
+          chunks.push(catT("кол-во ", "qty ") + qty);
+        }
         if (st.targetAp != null && st.targetAp > 0) {
           chunks.push(
             catT("цель ", "target ") + st.targetAp + " AP"
@@ -3371,6 +3948,24 @@
         return p.addon_options_count != null ? p.addon_options_count : 0;
       }
 
+      function extractSupportDuration(text) {
+        if (!text) return null;
+        const m = String(text).match(
+          /на\s+(\d+)\s+(год|года|лет|year|years|month|months|мес(?:яц|яца|яцев)?)/i
+        );
+        if (!m) return null;
+        return m[1] + " " + m[2].toLowerCase();
+      }
+
+      function formatSupportOptionLabel(svc) {
+        if (!svc) return "—";
+        const name = svc.article || "—";
+        const dur =
+          svc.support_duration || extractSupportDuration(svc.description || "");
+        if (!dur) return name;
+        return name + " · " + catT("срок ", "term ") + dur;
+      }
+
       function renderLicenseSuggestFeedbackHost(productId, host) {
         host.innerHTML = "";
         const entry = licenseSuggestFeedbackByProductId.get(productId);
@@ -3391,13 +3986,35 @@
         let data;
         try {
           if (!optionsCache[p.id]) {
-            const r = await apiFetch("/products/" + p.id + "/configuration-options", {
+            const r = await apiFetch("/products/" + p.id + "/compatible-addons", {
               __globalLoading: false,
             });
             if (!r.ok) throw new Error("HTTP " + r.status);
             optionsCache[p.id] = await r.json();
           }
           data = optionsCache[p.id];
+          rememberConfigProduct(p);
+          if (data.support?.standard) {
+            rememberConfigProduct({
+              id: data.support.standard.product_id,
+              name: data.support.standard.article,
+              description: data.support.standard.description,
+              product_category: "VPS",
+            });
+          }
+          if (data.support?.extended) {
+            rememberConfigProduct({
+              id: data.support.extended.product_id,
+              name: data.support.extended.article,
+              description: data.support.extended.description,
+              product_category: "VPSN",
+            });
+          }
+          if (Array.isArray(data.accessories)) {
+            for (const acc of data.accessories) {
+              rememberConfigProduct(acc);
+            }
+          }
         } catch (err) {
           panel.innerHTML = "";
           const errEl = document.createElement("div");
@@ -3734,84 +4351,287 @@
         if (data.service_attachable) {
           const svcTitle = document.createElement("div");
           svcTitle.className = "addon-section-title";
-          svcTitle.textContent = catT("Сервисная поддержка", "Service support");
+          svcTitle.textContent = catT("Поддержка", "Support");
           panel.appendChild(svcTitle);
           const svcSelect = document.createElement("select");
           svcSelect.addEventListener("click", (ev) => ev.stopPropagation());
           const optNone = document.createElement("option");
           optNone.value = "none";
-          optNone.textContent = catT("Без сервиса", "No service");
+          optNone.textContent = catT("Без поддержки", "No support");
           const optStd = document.createElement("option");
           optStd.value = "standard";
-          optStd.textContent = catT("Стандартный (VPS)", "Standard (VPS)");
+          optStd.textContent = catT(
+            "Стандартная поддержка (VPS)",
+            "Standard support (VPS)"
+          );
           const optExt = document.createElement("option");
           optExt.value = "extended";
-          optExt.textContent = catT("Расширенный (VPSN)", "Extended (VPSN)");
+          optExt.textContent = catT(
+            "Расширенная поддержка (VPSN)",
+            "Extended support (VPSN)"
+          );
           svcSelect.appendChild(optNone);
           svcSelect.appendChild(optStd);
           svcSelect.appendChild(optExt);
-          svcSelect.value = st.serviceTier || "standard";
+          svcSelect.value = st.serviceTier || "none";
           panel.appendChild(svcSelect);
 
           const svcHint = document.createElement("div");
           svcHint.className = "addon-hint";
-          svcHint.textContent = catT("Загрузка вариантов…", "Loading options…");
+          const svcData = data.support || null;
+          const std = svcData && svcData.standard;
+          const ext = svcData && svcData.extended;
+          if (!std) optStd.disabled = true;
+          if (!ext) optExt.disabled = true;
+          if (st.serviceTier === "standard" && std) {
+            st.serviceProductId = std.product_id;
+          } else if (st.serviceTier === "extended" && ext) {
+            st.serviceProductId = ext.product_id;
+          } else if (st.serviceTier === "none" || !st.serviceTier) {
+            st.serviceTier = "none";
+            st.serviceProductId = null;
+            svcSelect.value = "none";
+          } else if (std) {
+            st.serviceTier = "standard";
+            st.serviceProductId = std.product_id;
+            svcSelect.value = "standard";
+          } else {
+            st.serviceTier = "none";
+            st.serviceProductId = null;
+            svcSelect.value = "none";
+          }
+          svcHint.textContent = catT(
+            (std
+              ? "Стандарт: " + formatSupportOptionLabel(std)
+              : "Стандарт недоступен") +
+              " · " +
+              (ext
+                ? "Расширенный: " + formatSupportOptionLabel(ext)
+                : "Расширенный недоступен"),
+            (std
+              ? "Standard: " + formatSupportOptionLabel(std)
+              : "Standard N/A") +
+              " · " +
+              (ext
+                ? "Extended: " + formatSupportOptionLabel(ext)
+                : "Extended N/A")
+          );
           panel.appendChild(svcHint);
-
-          try {
-            const svcRes = await apiFetch(
-              "/products/" + p.id + "/service-options",
-              { __globalLoading: false }
-            );
-            const svcData = await svcRes.json().catch(() => null);
-            if (!svcRes.ok) throw new Error("service options");
-            const std = svcData && svcData.standard;
-            const ext = svcData && svcData.extended;
-            if (!std) optStd.disabled = true;
-            if (!ext) optExt.disabled = true;
+          svcSelect.addEventListener("change", () => {
+            st.serviceTier = svcSelect.value;
             if (st.serviceTier === "standard" && std) {
               st.serviceProductId = std.product_id;
+              svcHint.textContent = catT(
+                "Стандарт: " + formatSupportOptionLabel(std),
+                "Standard: " + formatSupportOptionLabel(std)
+              );
             } else if (st.serviceTier === "extended" && ext) {
               st.serviceProductId = ext.product_id;
-            } else if (st.serviceTier === "none") {
-              st.serviceProductId = null;
-            } else if (std) {
-              st.serviceTier = "standard";
-              st.serviceProductId = std.product_id;
-              svcSelect.value = "standard";
+              svcHint.textContent = catT(
+                "Расширенный: " + formatSupportOptionLabel(ext),
+                "Extended: " + formatSupportOptionLabel(ext)
+              );
             } else {
-              st.serviceTier = "none";
               st.serviceProductId = null;
-              svcSelect.value = "none";
+              svcHint.textContent = catT(
+                "Поддержка не выбрана.",
+                "No support selected."
+              );
             }
-            svcHint.textContent = catT(
-              (std ? "Стандарт: " + std.article : "Стандарт недоступен") +
-                " · " +
-                (ext ? "Расширенный: " + ext.article : "Расширенный недоступен"),
-              (std ? "Standard: " + std.article : "Standard N/A") +
-                " · " +
-                (ext ? "Extended: " + ext.article : "Extended N/A")
+            renderSelectedPills();
+          });
+        }
+
+        if (data.accessories && data.accessories.length) {
+          const accTitle = document.createElement("div");
+          accTitle.className = "addon-section-title";
+          accTitle.textContent = catT(
+            "Совместимые аксессуары",
+            "Compatible accessories"
+          );
+          panel.appendChild(accTitle);
+          const accHint = document.createElement("div");
+          accHint.className = "addon-hint";
+          accHint.textContent = catT(
+            "Отметьте позиции и укажите количество на один коммутатор. Рекомендуемое значение подставляется автоматически.",
+            "Check items and set quantity per switch. Suggested values are filled in automatically."
+          );
+          panel.appendChild(accHint);
+          if (!st.accessoryQty || typeof st.accessoryQty !== "object") {
+            st.accessoryQty = {};
+          }
+          for (const acc of data.accessories) {
+            const accId = Number(acc.product_id);
+            const suggested =
+              Number(acc.suggested_quantity) > 0
+                ? Number(acc.suggested_quantity)
+                : 1;
+            const row = document.createElement("div");
+            row.className = "equipment-picker-accessory-line";
+            const cb = document.createElement("input");
+            cb.type = "checkbox";
+            cb.checked = accessoryIsSelected(st, accId);
+            cb.addEventListener("click", (ev) => ev.stopPropagation());
+            const qtyWrap = document.createElement("div");
+            qtyWrap.className = "equipment-picker-accessory-qty";
+            const qtyLab = document.createElement("label");
+            qtyLab.textContent = catT("Кол-во", "Qty");
+            const qtyInp = document.createElement("input");
+            qtyInp.type = "number";
+            qtyInp.min = "1";
+            qtyInp.step = "1";
+            qtyInp.disabled = !cb.checked;
+            qtyInp.value = String(
+              getAccessoryUnitQty(st, accId) || suggested
             );
-            svcSelect.addEventListener("change", () => {
-              st.serviceTier = svcSelect.value;
-              if (st.serviceTier === "standard" && std) {
-                st.serviceProductId = std.product_id;
-              } else if (st.serviceTier === "extended" && ext) {
-                st.serviceProductId = ext.product_id;
+            qtyInp.title = catT(
+              "Рекомендуется: " + suggested + " на коммутатор",
+              "Suggested: " + suggested + " per switch"
+            );
+            qtyInp.addEventListener("click", (ev) => ev.stopPropagation());
+            const syncAccessorySelection = () => {
+              if (cb.checked) {
+                const q = parseInt(qtyInp.value, 10);
+                setAccessoryUnitQty(
+                  st,
+                  accId,
+                  Number.isFinite(q) && q > 0 ? q : suggested
+                );
+                qtyInp.value = String(getAccessoryUnitQty(st, accId));
+                qtyInp.disabled = false;
               } else {
-                st.serviceProductId = null;
+                setAccessoryUnitQty(st, accId, 0);
+                qtyInp.disabled = true;
               }
               renderSelectedPills();
+            };
+            cb.addEventListener("change", syncAccessorySelection);
+            qtyInp.addEventListener("input", () => {
+              if (!cb.checked) return;
+              const q = parseInt(qtyInp.value, 10);
+              setAccessoryUnitQty(
+                st,
+                accId,
+                Number.isFinite(q) && q > 0 ? q : 1
+              );
+              renderSelectedPills();
             });
-          } catch (e) {
-            svcHint.textContent = catT(
-              "Не удалось загрузить сервисные опции.",
-              "Could not load service options."
-            );
+            const lab = document.createElement("label");
+            lab.textContent =
+              (acc.name || "#" + acc.product_id) +
+              (acc.description ? " — " + String(acc.description).slice(0, 120) : "");
+            lab.addEventListener("click", (ev) => {
+              ev.preventDefault();
+              cb.checked = !cb.checked;
+              cb.dispatchEvent(new Event("change"));
+            });
+            qtyWrap.appendChild(qtyLab);
+            qtyWrap.appendChild(qtyInp);
+            row.appendChild(cb);
+            row.appendChild(lab);
+            row.appendChild(qtyWrap);
+            panel.appendChild(row);
           }
         }
 
         renderSelectedPills();
+      }
+
+      function closeEquipmentPickerModal(confirmed) {
+        const pid = equipmentPickerProductId;
+        const overlay = elements.equipmentPickerOverlay;
+        const body = elements.equipmentPickerBody;
+        if (overlay) overlay.hidden = true;
+        if (body) body.innerHTML = "";
+        equipmentPickerProductId = null;
+
+        if (pid != null) {
+          const p = products.find((x) => Number(x.id) === Number(pid));
+          if (!confirmed) {
+            configLineState.delete(pid);
+            licenseSuggestFeedbackByProductId.delete(pid);
+          } else {
+            reconcileAccessoryLinesForParent(pid);
+            if (p && shouldUseUserToasts()) {
+              showToast(
+                catT("Позиция добавлена в конфигурацию.", "Line added to configuration."),
+                "success"
+              );
+            }
+          }
+        }
+        renderSelectedPills();
+        renderProducts();
+        updateCounter();
+      }
+
+      async function openEquipmentPickerModal(p) {
+        if (!p || !elements.equipmentPickerOverlay || !elements.equipmentPickerBody) {
+          return;
+        }
+        equipmentPickerProductId = p.id;
+        if (elements.equipmentPickerTitle) {
+          elements.equipmentPickerTitle.textContent = p.name || "—";
+        }
+        if (elements.equipmentPickerLead) {
+          elements.equipmentPickerLead.textContent = catT(
+            "Выберите совместимые компоненты или подтвердите только оборудование. Количество можно изменить ниже.",
+            "Pick compatible add-ons or confirm equipment only. You can set quantity below."
+          );
+        }
+        if (elements.equipmentPickerCancel) {
+          elements.equipmentPickerCancel.textContent = catT("Отмена", "Cancel");
+        }
+        if (elements.equipmentPickerConfirm) {
+          elements.equipmentPickerConfirm.textContent = catT(
+            "Подтвердить выбор",
+            "Confirm selection"
+          );
+        }
+        const body = elements.equipmentPickerBody;
+        body.innerHTML = "";
+        const st = ensureLineState(p.id);
+        const parentQty =
+          Number.isFinite(Number(st.quantity)) && Number(st.quantity) > 0
+            ? Number(st.quantity)
+            : 1;
+        for (const [cid, cst] of configLineState.entries()) {
+          const contrib = cst.parentContributions?.[String(p.id)];
+          if (contrib != null) {
+            const perUnit = Math.max(1, Math.round(Number(contrib) / parentQty));
+            setAccessoryUnitQty(st, Number(cid), perUnit);
+            continue;
+          }
+          if (Number(cst.parentProductId) === Number(p.id)) {
+            const total = Number(cst.quantity) || 1;
+            const perUnit = Math.max(1, Math.round(total / parentQty));
+            setAccessoryUnitQty(st, Number(cid), perUnit);
+          }
+        }
+
+        const qtyRow = document.createElement("div");
+        qtyRow.className = "equipment-picker-qty-row";
+        const qtyLab = document.createElement("label");
+        qtyLab.textContent = catT("Количество:", "Quantity:");
+        const qtyInp = document.createElement("input");
+        qtyInp.type = "number";
+        qtyInp.min = "1";
+        qtyInp.step = "1";
+        qtyInp.value = String(st.quantity != null && st.quantity > 0 ? st.quantity : 1);
+        qtyInp.addEventListener("input", () => {
+          const q = parseInt(qtyInp.value, 10);
+          st.quantity = Number.isFinite(q) && q > 0 ? q : 1;
+          renderSelectedPills();
+        });
+        qtyRow.appendChild(qtyLab);
+        qtyRow.appendChild(qtyInp);
+        body.appendChild(qtyRow);
+
+        const panel = document.createElement("div");
+        panel.className = "equipment-addon-panel";
+        body.appendChild(panel);
+        elements.equipmentPickerOverlay.hidden = false;
+        await renderAddonPanel(panel, p);
       }
 
       const TOKEN_STORAGE_KEY = "access_token";
@@ -3854,21 +4674,6 @@
        * @returns {Promise<boolean>}
        */
       function adminConfirmDelete(subjectLine, consequenceLines) {
-        const overlay = document.getElementById("admin-confirm-overlay");
-        const msgEl = document.getElementById("admin-confirm-message");
-        if (!overlay || !msgEl) {
-          const bullets = (consequenceLines || [])
-            .filter(Boolean)
-            .map((x) => "• " + x)
-            .join("\n");
-          const msg =
-            "ВНИМАНИЕ: удаление необратимо.\n\n" +
-            subjectLine +
-            (bullets ? "\n\n" + bullets : "") +
-            "\n\nТочно удалить?";
-          return Promise.resolve(window.confirm(msg));
-        }
-
         const bullets = (consequenceLines || [])
           .filter(Boolean)
           .map((x) => "• " + x)
@@ -3878,45 +4683,11 @@
           subjectLine +
           (bullets ? "\n\n" + bullets : "") +
           "\n\nТочно удалить?";
-        msgEl.textContent = msg;
-
-        return new Promise((resolve) => {
-          const btnOk = document.getElementById("admin-confirm-ok");
-          const btnCancel = document.getElementById("admin-confirm-cancel");
-          if (!btnOk || !btnCancel) {
-            resolve(false);
-            return;
-          }
-          let settled = false;
-          const finish = (ok) => {
-            if (settled) return;
-            settled = true;
-            overlay.hidden = true;
-            overlay.setAttribute("aria-hidden", "true");
-            document.removeEventListener("keydown", onEsc);
-            btnOk.removeEventListener("click", onOk);
-            btnCancel.removeEventListener("click", onCancel);
-            overlay.removeEventListener("click", onOverlayClick);
-            resolve(ok);
-          };
-          const onEsc = (e) => {
-            if (e.key === "Escape") {
-              e.preventDefault();
-              finish(false);
-            }
-          };
-          const onOk = () => finish(true);
-          const onCancel = () => finish(false);
-          const onOverlayClick = (e) => {
-            if (e.target === overlay) finish(false);
-          };
-          document.addEventListener("keydown", onEsc);
-          btnOk.addEventListener("click", onOk);
-          btnCancel.addEventListener("click", onCancel);
-          overlay.addEventListener("click", onOverlayClick);
-          overlay.hidden = false;
-          overlay.setAttribute("aria-hidden", "false");
-          btnCancel.focus();
+        return appConfirmDialog({
+          message: msg,
+          confirmLabel: catT("Удалить", "Delete"),
+          cancelLabel: catT("Отмена", "Cancel"),
+          danger: true,
         });
       }
 
@@ -3997,48 +4768,249 @@
         openAdminProductDrawer(draft, { createMode: true });
       }
 
-      async function loadCatalogSpecParameters() {
-        try {
-          const res = await apiFetch("/products/spec-parameters");
-          const data = await res.json().catch(() => null);
-          if (!res.ok) throw new Error((data && data.detail) || "spec params load failed");
-          catalogSpecParameters = Array.isArray(data) ? data : [];
-        } catch (e) {
-          console.error(e);
-          catalogSpecParameters = [];
+      function isSwitchesGroupContext() {
+        if (getCurrentRoleId() === 1) {
+          if (!adminCatalogGroupFilter) return false;
+          const group = catalogGroups.find(
+            (g) => String(g.id) === String(adminCatalogGroupFilter)
+          );
+          return !!(group && group.code === "switches");
         }
-        renderSpecFilterSelect();
+        const group = findCatalogGroup(catalogGroupId);
+        return !!(group && group.code === "switches");
       }
 
-      function populateSpecFilterSelect(sel) {
-        if (!sel) return;
+      function activeCatalogSubgroup() {
+        if (getCurrentRoleId() === 1) {
+          if (!adminCatalogSubgroupFilter) return null;
+          return (
+            catalogGroups
+              .flatMap((g) => g.subgroups || [])
+              .find((s) => String(s.id) === String(adminCatalogSubgroupFilter)) ||
+            null
+          );
+        }
+        return selectedCatalogSubgroup();
+      }
+
+      function isSwitchesEquipmentCatalogContext() {
+        if (!isSwitchesGroupContext()) return false;
+        const sub = activeCatalogSubgroup();
+        return !!(sub && String(sub.code || "").toLowerCase() === "equipment");
+      }
+
+      function isSwitchesAccessoriesCatalogContext() {
+        if (!isSwitchesGroupContext()) return false;
+        const sub = activeCatalogSubgroup();
+        return !!(sub && String(sub.code || "").toLowerCase() === "accessories");
+      }
+
+      function isWifiGroupContext() {
+        if (getCurrentRoleId() === 1) {
+          if (!adminCatalogGroupFilter) return false;
+          const group = catalogGroups.find(
+            (g) => String(g.id) === String(adminCatalogGroupFilter)
+          );
+          return !!(group && group.code === "wifi");
+        }
+        const group = findCatalogGroup(catalogGroupId);
+        return !!(group && group.code === "wifi");
+      }
+
+      function isWifiEquipmentCatalogContext() {
+        if (!isWifiGroupContext()) return false;
+        const sub = activeCatalogSubgroup();
+        return !!(sub && String(sub.code || "").toLowerCase() === "equipment");
+      }
+
+      function isWifiAccessoriesCatalogContext() {
+        if (!isWifiGroupContext()) return false;
+        const sub = activeCatalogSubgroup();
+        return !!(sub && String(sub.code || "").toLowerCase() === "accessories");
+      }
+
+      function isWifiSupportCatalogContext() {
+        if (!isWifiGroupContext()) return false;
+        const sub = activeCatalogSubgroup();
+        return !!(sub && String(sub.code || "").toLowerCase() === "support");
+      }
+
+      function isLoadBalancerGroupContext() {
+        if (getCurrentRoleId() === 1) {
+          if (!adminCatalogGroupFilter) return false;
+          const group = catalogGroups.find(
+            (g) => String(g.id) === String(adminCatalogGroupFilter)
+          );
+          return !!(group && group.code === "load_balancer");
+        }
+        const group = findCatalogGroup(catalogGroupId);
+        return !!(group && group.code === "load_balancer");
+      }
+
+      function isLoadBalancerEquipmentCatalogContext() {
+        if (!isLoadBalancerGroupContext()) return false;
+        const sub = activeCatalogSubgroup();
+        return !!(sub && String(sub.code || "").toLowerCase() === "equipment");
+      }
+
+      function isLoadBalancerSupportCatalogContext() {
+        if (!isLoadBalancerGroupContext()) return false;
+        const sub = activeCatalogSubgroup();
+        return !!(sub && String(sub.code || "").toLowerCase() === "support");
+      }
+
+      function isManagementGroupContext() {
+        if (getCurrentRoleId() === 1) {
+          if (!adminCatalogGroupFilter) return false;
+          const group = catalogGroups.find(
+            (g) => String(g.id) === String(adminCatalogGroupFilter)
+          );
+          return !!(group && group.code === "management");
+        }
+        const group = findCatalogGroup(catalogGroupId);
+        return !!(group && group.code === "management");
+      }
+
+      function isManagementEquipmentCatalogContext() {
+        if (!isManagementGroupContext()) return false;
+        const sub = activeCatalogSubgroup();
+        return !!(sub && String(sub.code || "").toLowerCase() === "equipment");
+      }
+
+      function isFirewallGroupContext() {
+        if (getCurrentRoleId() === 1) {
+          if (!adminCatalogGroupFilter) return false;
+          const group = catalogGroups.find(
+            (g) => String(g.id) === String(adminCatalogGroupFilter)
+          );
+          return !!(group && group.code === "firewall");
+        }
+        const group = findCatalogGroup(catalogGroupId);
+        return !!(group && group.code === "firewall");
+      }
+
+      function isFirewallEquipmentCatalogContext() {
+        if (!isFirewallGroupContext()) return false;
+        const sub = activeCatalogSubgroup();
+        return !!(sub && String(sub.code || "").toLowerCase() === "equipment");
+      }
+
+      function isFirewallSupportCatalogContext() {
+        if (!isFirewallGroupContext()) return false;
+        const sub = activeCatalogSubgroup();
+        return !!(sub && String(sub.code || "").toLowerCase() === "support");
+      }
+
+      function isServerGroupContext() {
+        if (getCurrentRoleId() === 1) {
+          if (!adminCatalogGroupFilter) return false;
+          const group = catalogGroups.find(
+            (g) => String(g.id) === String(adminCatalogGroupFilter)
+          );
+          return !!(group && group.code === "server");
+        }
+        const group = findCatalogGroup(catalogGroupId);
+        return !!(group && group.code === "server");
+      }
+
+      function isServerSupportCatalogContext() {
+        if (!isServerGroupContext()) return false;
+        const sub = activeCatalogSubgroup();
+        return !!(sub && String(sub.code || "").toLowerCase() === "support");
+      }
+
+      function isTelephonyGroupContext() {
+        if (getCurrentRoleId() === 1) {
+          if (!adminCatalogGroupFilter) return false;
+          const group = catalogGroups.find(
+            (g) => String(g.id) === String(adminCatalogGroupFilter)
+          );
+          return !!(group && group.code === "telephony");
+        }
+        const group = findCatalogGroup(catalogGroupId);
+        return !!(group && group.code === "telephony");
+      }
+
+      function isTelephonyEquipmentCatalogContext() {
+        if (!isTelephonyGroupContext()) return false;
+        const sub = activeCatalogSubgroup();
+        return !!(sub && String(sub.code || "").toLowerCase() === "equipment");
+      }
+
+      function isTelephonySupportCatalogContext() {
+        if (!isTelephonyGroupContext()) return false;
+        const sub = activeCatalogSubgroup();
+        return !!(sub && String(sub.code || "").toLowerCase() === "support");
+      }
+
+      function visibleCatalogSubgroups(group) {
+        const subs = Array.isArray(group?.subgroups) ? group.subgroups : [];
+        return subs.filter((sub) => Number(sub.product_count || 0) > 0);
+      }
+
+      function activeCatalogFilterDefs() {
+        if (isSwitchesEquipmentCatalogContext()) return SWITCH_FILTER_DEFS;
+        if (isSwitchesAccessoriesCatalogContext()) return VO_FILTER_DEFS;
+        if (isWifiEquipmentCatalogContext()) return WIFI_EQUIPMENT_FILTER_DEFS;
+        if (isWifiAccessoriesCatalogContext()) return WIFI_ACCESSORY_FILTER_DEFS;
+        if (isWifiSupportCatalogContext()) return WIFI_SUPPORT_FILTER_DEFS;
+        if (isLoadBalancerEquipmentCatalogContext()) return VLB_EQUIPMENT_FILTER_DEFS;
+        if (isLoadBalancerSupportCatalogContext()) return WIFI_SUPPORT_FILTER_DEFS;
+        if (isManagementEquipmentCatalogContext()) return VS_MANAGEMENT_EQUIPMENT_FILTER_DEFS;
+        if (isFirewallEquipmentCatalogContext()) return VFW_EQUIPMENT_FILTER_DEFS;
+        if (isFirewallSupportCatalogContext()) return WIFI_SUPPORT_FILTER_DEFS;
+        if (isServerSupportCatalogContext()) return WIFI_SUPPORT_FILTER_DEFS;
+        if (isTelephonyEquipmentCatalogContext()) return TELEPHONY_EQUIPMENT_FILTER_DEFS;
+        if (isTelephonySupportCatalogContext()) return WIFI_SUPPORT_FILTER_DEFS;
+        return [];
+      }
+
+      function activeCatalogFilterState() {
+        return catalogFilters;
+      }
+
+      function buildCatalogFilterControls(host, idPrefix, filterDefs, filterState) {
+        if (!host) return;
+        host.innerHTML = "";
         const isEn = uiLang === "en";
-        const prev = productSpecFilterCode || sel.value || "";
-        sel.innerHTML = "";
-        const allOpt = document.createElement("option");
-        allOpt.value = "";
-        allOpt.textContent = isEn ? "All parameters" : "Все параметры";
-        sel.appendChild(allOpt);
-        catalogSpecParameters.forEach((sp) => {
-          if (!sp || !sp.code) return;
-          const opt = document.createElement("option");
-          opt.value = String(sp.code);
-          opt.textContent = sp.name ? String(sp.name) : String(sp.code);
-          sel.appendChild(opt);
-        });
-        if (prev && Array.from(sel.options).some((o) => o.value === prev)) {
-          sel.value = prev;
-        } else if (sel === elements.productsSpecParamSelect) {
-          sel.value = "";
-          productSpecFilterCode = "";
-        } else {
-          sel.value = "";
+        for (const def of filterDefs) {
+          const sel = document.createElement("select");
+          sel.id = idPrefix + "-catalog-filter-" + def.code;
+          sel.dataset.filterCode = def.code;
+          sel.setAttribute("aria-label", isEn ? def.labelEn : def.labelRu);
+          const placeholder = document.createElement("option");
+          placeholder.value = "";
+          placeholder.textContent = isEn ? def.labelEn : def.labelRu;
+          sel.appendChild(placeholder);
+          for (const optDef of def.options) {
+            const opt = document.createElement("option");
+            opt.value = optDef.value;
+            opt.textContent = isEn ? optDef.labelEn : optDef.labelRu;
+            sel.appendChild(opt);
+          }
+          sel.value = filterState[def.code] || "";
+          sel.addEventListener("change", () => {
+            applyProductCatalogQuery(true);
+          });
+          host.appendChild(sel);
         }
       }
 
-      function renderSpecFilterSelect() {
-        populateSpecFilterSelect(elements.productsSpecParamSelect);
-        populateSpecFilterSelect(elements.adminProductsSpecParamSelect);
+      function renderCatalogFilterControls() {
+        const defs = activeCatalogFilterDefs();
+        const state = activeCatalogFilterState();
+        buildCatalogFilterControls(elements.userSwitchFiltersHost, "user", defs, state);
+        buildCatalogFilterControls(elements.adminSwitchFiltersHost, "admin", defs, state);
+      }
+
+      function syncCatalogFiltersVisibility() {
+        const show = activeCatalogFilterDefs().length > 0;
+        if (elements.userSwitchFiltersHost) {
+          elements.userSwitchFiltersHost.hidden = !show;
+        }
+        if (elements.adminSwitchFiltersHost) {
+          elements.adminSwitchFiltersHost.hidden = !show;
+        }
       }
 
       function syncProductFilterInputsFromState() {
@@ -4049,35 +5021,29 @@
         if (elements.adminProductsSearchInput) {
           elements.adminProductsSearchInput.value = searchVal;
         }
-        const specCode = productSpecFilterCode || "";
-        if (elements.productsSpecParamSelect) {
-          elements.productsSpecParamSelect.value = specCode;
+        for (const host of [
+          elements.userSwitchFiltersHost,
+          elements.adminSwitchFiltersHost,
+        ]) {
+          if (!host) continue;
+          const state = activeCatalogFilterState();
+          host.querySelectorAll("select[data-filter-code]").forEach((sel) => {
+            const code = sel.dataset.filterCode;
+            if (!code) return;
+            sel.value = state[code] || "";
+          });
         }
-        if (elements.adminProductsSpecParamSelect) {
-          elements.adminProductsSpecParamSelect.value = specCode;
-        }
-        const specVal = productSpecFilterValue || "";
-        if (elements.productsSpecValueInput) {
-          elements.productsSpecValueInput.value = specVal;
-        }
-        if (elements.adminProductsSpecValueInput) {
-          elements.adminProductsSpecValueInput.value = specVal;
-        }
-        const typeVal = productTypeFilter || "";
-        if (elements.productsTypeSelect) {
-          elements.productsTypeSelect.value = typeVal;
-        }
-        if (elements.adminProductsTypeSelect) {
-          elements.adminProductsTypeSelect.value = typeVal;
-        }
+      }
+
+      function hasActiveCatalogFilters() {
+        const defs = activeCatalogFilterDefs();
+        const state = activeCatalogFilterState();
+        return defs.some((def) => Boolean((state[def.code] || "").trim()));
       }
 
       function syncProductSpecFilterUi() {
         const hasFilter =
-          Boolean((productSearchTerm || "").trim()) ||
-          Boolean((productSpecFilterCode || "").trim()) ||
-          Boolean((productSpecFilterValue || "").trim()) ||
-          Boolean((productTypeFilter || "").trim());
+          Boolean((productSearchTerm || "").trim()) || hasActiveCatalogFilters();
         if (elements.productsSpecFilterClear) {
           elements.productsSpecFilterClear.hidden = !hasFilter;
         }
@@ -4091,94 +5057,40 @@
           (elements.productsSearchInput && elements.productsSearchInput.value) ||
           (elements.adminProductsSearchInput && elements.adminProductsSearchInput.value) ||
           "";
-        productSpecFilterCode =
-          (elements.productsSpecParamSelect && elements.productsSpecParamSelect.value) ||
-          (elements.adminProductsSpecParamSelect &&
-            elements.adminProductsSpecParamSelect.value) ||
-          "";
-        productSpecFilterValue =
-          (elements.productsSpecValueInput && elements.productsSpecValueInput.value) ||
-          (elements.adminProductsSpecValueInput &&
-            elements.adminProductsSpecValueInput.value) ||
-          "";
-        productTypeFilter =
-          (elements.productsTypeSelect && elements.productsTypeSelect.value) ||
-          (elements.adminProductsTypeSelect && elements.adminProductsTypeSelect.value) ||
-          "";
+        const activeHost =
+          getCurrentRoleId() === 1
+            ? elements.adminSwitchFiltersHost
+            : elements.userSwitchFiltersHost;
+        const state = activeCatalogFilterState();
+        if (activeHost) {
+          activeHost.querySelectorAll("select[data-filter-code]").forEach((sel) => {
+            const code = sel.dataset.filterCode;
+            if (!code) return;
+            state[code] = sel.value || "";
+          });
+        }
       }
 
       function applyProductCatalogQuery(resetPage) {
         readProductFiltersFromInputs();
-        if (resetPage) productsPage = 1;
         syncProductFilterInputsFromState();
         syncProductSpecFilterUi();
+        syncUserCatalogPanels();
+        renderCatalogNavigation();
         void loadProducts();
       }
 
       function clearProductSpecFilter() {
         productSearchTerm = "";
-        productSpecFilterCode = "";
-        productSpecFilterValue = "";
-        productTypeFilter = "";
-        productsPage = 1;
+        for (const def of ALL_CATALOG_FILTER_DEFS) {
+          catalogFilters[def.code] = "";
+        }
+        renderCatalogFilterControls();
         syncProductFilterInputsFromState();
         syncProductSpecFilterUi();
+        syncUserCatalogPanels();
+        renderCatalogNavigation();
         void loadProducts();
-      }
-
-      async function loadEquipmentTypes() {
-        try {
-          const res = await apiFetch("/products/equipment-types", {
-            __globalLoading: false,
-          });
-          const data = await res.json().catch(() => null);
-          if (!res.ok) throw new Error((data && data.detail) || "types load failed");
-          equipmentTypesList = Array.isArray(data) ? data : [];
-        } catch (e) {
-          console.error(e);
-          equipmentTypesList = [];
-        }
-        renderEquipmentTypeSelect();
-      }
-
-      function populateEquipmentTypeSelect(sel) {
-        if (!sel) return;
-        const prev = productTypeFilter || sel.value || "";
-        const totalCount = equipmentTypesList.reduce(
-          (sum, row) => sum + (Number(row && row.count) || 0),
-          0
-        );
-        sel.innerHTML = "";
-        const allOpt = document.createElement("option");
-        allOpt.value = "";
-        allOpt.textContent =
-          catT("Все типы оборудования", "All equipment types") +
-          " (" +
-          totalCount +
-          ")";
-        sel.appendChild(allOpt);
-        equipmentTypesList.forEach((row) => {
-          if (!row || !row.code) return;
-          const opt = document.createElement("option");
-          opt.value = String(row.code);
-          const label = row.label_ru || row.code;
-          opt.textContent =
-            label + (row.count != null ? " (" + row.count + ")" : "");
-          sel.appendChild(opt);
-        });
-        if (prev && Array.from(sel.options).some((o) => o.value === prev)) {
-          sel.value = prev;
-        } else if (sel === elements.productsTypeSelect) {
-          sel.value = "";
-          productTypeFilter = "";
-        } else {
-          sel.value = "";
-        }
-      }
-
-      function renderEquipmentTypeSelect() {
-        populateEquipmentTypeSelect(elements.productsTypeSelect);
-        populateEquipmentTypeSelect(elements.adminProductsTypeSelect);
       }
 
       function findCatalogGroup(groupId) {
@@ -4202,23 +5114,47 @@
         return !!(sub && String(sub.code || "").toLowerCase() === "equipment");
       }
 
+      function isUserCatalogWizard() {
+        const roleId = getCurrentRoleId();
+        return roleId != null && roleId !== 1;
+      }
+
       function userCatalogAtProductsLevel() {
-        return Boolean(catalogGroupId && catalogSubgroupId);
+        return isUserCatalogWizard() && Boolean(catalogGroupId && catalogSubgroupId);
+      }
+
+      function userCatalogGlobalSearchActive() {
+        return isUserCatalogWizard() && Boolean((productSearchTerm || "").trim());
       }
 
       function syncUserCatalogPanels() {
+        const wizard = isUserCatalogWizard();
+        const globalSearch = userCatalogGlobalSearchActive();
         const atProducts = userCatalogAtProductsLevel();
+        const showProductResults = atProducts || globalSearch;
+        const showGroups = wizard && !catalogGroupId && !globalSearch;
+        const showSubgroups = wizard && catalogGroupId && !catalogSubgroupId && !globalSearch;
+
+        if (elements.catalogNav) {
+          elements.catalogNav.hidden = !wizard || showProductResults;
+        }
+        if (elements.catalogBreadcrumb) {
+          elements.catalogBreadcrumb.hidden =
+            !wizard || (!catalogGroupId && !globalSearch);
+        }
         if (elements.catalogProductsToolbar) {
-          elements.catalogProductsToolbar.hidden = !atProducts;
+          elements.catalogProductsToolbar.hidden = !wizard;
         }
         if (elements.userProductsPanel) {
-          elements.userProductsPanel.hidden = !atProducts;
+          elements.userProductsPanel.hidden = wizard ? !showProductResults : false;
         }
+        syncCatalogFiltersVisibility();
+        renderCatalogFilterControls();
         if (elements.catalogGroupsGrid) {
-          elements.catalogGroupsGrid.hidden = Boolean(catalogGroupId);
+          elements.catalogGroupsGrid.hidden = !showGroups;
         }
         if (elements.catalogSubgroupsGrid) {
-          elements.catalogSubgroupsGrid.hidden = !catalogGroupId || atProducts;
+          elements.catalogSubgroupsGrid.hidden = !showSubgroups;
         }
       }
 
@@ -4226,7 +5162,8 @@
         const el = elements.catalogBreadcrumb;
         if (!el) return;
         el.innerHTML = "";
-        if (!catalogGroupId) {
+        const globalSearch = userCatalogGlobalSearchActive();
+        if (!catalogGroupId && !globalSearch) {
           el.hidden = true;
           return;
         }
@@ -4237,12 +5174,22 @@
         rootBtn.addEventListener("click", () => {
           catalogGroupId = null;
           catalogSubgroupId = null;
-          productsPage = 1;
+          productSearchTerm = "";
+          syncProductFilterInputsFromState();
+          syncProductSpecFilterUi();
           syncUserCatalogPanels();
           renderCatalogNavigation();
           void loadProducts();
         });
         el.appendChild(rootBtn);
+        if (!catalogGroupId && globalSearch) {
+          el.appendChild(document.createTextNode(" / "));
+          const span = document.createElement("span");
+          span.textContent =
+            catT("Поиск", "Search") + ": " + (productSearchTerm || "").trim();
+          el.appendChild(span);
+          return;
+        }
         const group = findCatalogGroup(catalogGroupId);
         if (!group) return;
         el.appendChild(document.createTextNode(" / "));
@@ -4251,7 +5198,9 @@
         groupBtn.textContent = group.name || group.code || "#" + group.id;
         groupBtn.addEventListener("click", () => {
           catalogSubgroupId = null;
-          productsPage = 1;
+          productSearchTerm = "";
+          syncProductFilterInputsFromState();
+          syncProductSpecFilterUi();
           syncUserCatalogPanels();
           renderCatalogNavigation();
           void loadProducts();
@@ -4272,6 +5221,9 @@
         const grid = elements.catalogGroupsGrid;
         if (!grid) return;
         grid.innerHTML = "";
+        if (!isUserCatalogWizard() || catalogGroupId) {
+          return;
+        }
         if (!catalogGroups.length) {
           const empty = document.createElement("div");
           empty.className = "catalog-nav-card-meta";
@@ -4301,9 +5253,8 @@
           card.appendChild(title);
           card.appendChild(meta);
           card.addEventListener("click", () => {
-            catalogGroupId = group.id;
+            catalogGroupId = Number(group.id);
             catalogSubgroupId = null;
-            productsPage = 1;
             syncUserCatalogPanels();
             renderCatalogNavigation();
             void loadProducts();
@@ -4316,9 +5267,12 @@
         const grid = elements.catalogSubgroupsGrid;
         if (!grid) return;
         grid.innerHTML = "";
+        if (!isUserCatalogWizard() || !catalogGroupId || catalogSubgroupId) {
+          return;
+        }
         const group = findCatalogGroup(catalogGroupId);
         if (!group) return;
-        const subs = Array.isArray(group.subgroups) ? group.subgroups : [];
+        const subs = visibleCatalogSubgroups(group);
         if (!subs.length) {
           const empty = document.createElement("div");
           empty.className = "catalog-nav-card-meta";
@@ -4344,9 +5298,9 @@
           card.appendChild(title);
           card.appendChild(meta);
           card.addEventListener("click", () => {
-            catalogSubgroupId = sub.id;
-            productsPage = 1;
+            catalogSubgroupId = Number(sub.id);
             syncUserCatalogPanels();
+            renderCatalogFilterControls();
             renderCatalogNavigation();
             void loadProducts();
           });
@@ -4360,25 +5314,32 @@
         renderCatalogSubgroupCards();
         syncUserCatalogPanels();
         const subtitle = document.getElementById("products-card-subtitle");
-        if (!subtitle) return;
-        if (!catalogGroupId) {
-          subtitle.textContent = catT(
-            "Выберите группу оборудования",
-            "Choose an equipment group"
-          );
-          return;
+        if (subtitle) {
+          if (userCatalogGlobalSearchActive() && !catalogGroupId) {
+            subtitle.textContent = catT(
+              "Результаты поиска по всему каталогу",
+              "Search results across the catalog"
+            );
+          } else if (!catalogGroupId) {
+            subtitle.textContent = catT(
+              "Выберите группу оборудования",
+              "Choose an equipment group"
+            );
+          } else {
+            const group = findCatalogGroup(catalogGroupId);
+            if (!catalogSubgroupId) {
+              subtitle.textContent = catT(
+                (group ? group.name : "—") + " — выберите подгруппу",
+                (group ? group.name : "—") + " — choose a subgroup"
+              );
+            } else {
+              const sub = findCatalogSubgroup(catalogGroupId, catalogSubgroupId);
+              subtitle.textContent =
+                (group ? group.name : "—") + " → " + (sub ? sub.name : "—");
+            }
+          }
         }
-        const group = findCatalogGroup(catalogGroupId);
-        if (!catalogSubgroupId) {
-          subtitle.textContent = catT(
-            "Группа: " + (group ? group.name : "—") + " — выберите подгруппу",
-            "Group: " + (group ? group.name : "—") + " — choose a subgroup"
-          );
-          return;
-        }
-        const sub = findCatalogSubgroup(catalogGroupId, catalogSubgroupId);
-        subtitle.textContent =
-          (group ? group.name : "—") + " → " + (sub ? sub.name : "—");
+        requestAnimationFrame(syncProductsSectionHeight);
       }
 
       async function loadCatalogGroups() {
@@ -4433,7 +5394,7 @@
         const subs = group && Array.isArray(group.subgroups) ? group.subgroups : [];
         if (!adminCatalogGroupFilter) {
           catalogGroups.forEach((g) => {
-            (g.subgroups || []).forEach((sub) => {
+            visibleCatalogSubgroups(g).forEach((sub) => {
               const opt = document.createElement("option");
               opt.value = String(sub.id);
               opt.textContent =
@@ -4442,7 +5403,7 @@
             });
           });
         } else {
-          subs.forEach((sub) => {
+          visibleCatalogSubgroups(group).forEach((sub) => {
             const opt = document.createElement("option");
             opt.value = String(sub.id);
             opt.textContent = sub.name || sub.code || "#" + sub.id;
@@ -4606,53 +5567,6 @@
             "error"
           );
         }
-      }
-
-      function renderProductsPaginationBar(bar, pageInfoEl, prevBtn, nextBtn) {
-        if (!bar) return;
-        if (productsPages <= 1) {
-          bar.hidden = true;
-          return;
-        }
-        bar.hidden = false;
-        if (pageInfoEl) {
-          pageInfoEl.textContent = catT(
-            "Страница " +
-              productsPage +
-              " из " +
-              productsPages +
-              " · найдено " +
-              productsTotal,
-            "Page " +
-              productsPage +
-              " of " +
-              productsPages +
-              " · " +
-              productsTotal +
-              " total"
-          );
-        }
-        if (prevBtn) {
-          prevBtn.disabled = productsPage <= 1;
-        }
-        if (nextBtn) {
-          nextBtn.disabled = productsPage >= productsPages;
-        }
-      }
-
-      function renderProductsPagination() {
-        renderProductsPaginationBar(
-          elements.productsPagination,
-          elements.productsPageInfo,
-          elements.productsPagePrev,
-          elements.productsPageNext
-        );
-        renderProductsPaginationBar(
-          elements.adminProductsPagination,
-          elements.adminProductsPageInfo,
-          elements.adminProductsPagePrev,
-          elements.adminProductsPageNext
-        );
       }
 
       async function loadSpecParametersForAdmin() {
@@ -4872,6 +5786,40 @@
         void loadAdminCompanies();
       }
 
+      function syncAdminUsersPendingBadge() {
+        const badge = elements.adminUsersPendingBadge;
+        if (!badge) return;
+        const count = adminUsersPendingCount;
+        const show = count > 0 && !adminUsersPendingBadgeDismissed;
+        badge.hidden = !show;
+        if (!show) return;
+        badge.textContent =
+          count === 1
+            ? catT("Новое", "New")
+            : catT("Новых: " + count, count + " new");
+      }
+
+      async function refreshAdminUsersPendingCount() {
+        if (getCurrentRoleId() !== 1) return;
+        try {
+          const res = await apiFetch("/users/pending-count", {
+            method: "GET",
+            __globalLoading: false,
+          });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) return;
+          const count = Number(data && data.pending_count) || 0;
+          if (count > lastAdminUsersPendingCount) {
+            adminUsersPendingBadgeDismissed = false;
+          }
+          lastAdminUsersPendingCount = count;
+          adminUsersPendingCount = count;
+          syncAdminUsersPendingBadge();
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
       async function loadAdminUsers(options) {
         if (getCurrentRoleId() !== 1) return;
         const toastOnSuccess = options && options.toastOnSuccess;
@@ -4904,6 +5852,7 @@
           }
           adminUsersList = Array.isArray(data) ? data : [];
           renderAdminUsersTable();
+          await refreshAdminUsersPendingCount();
           setCatalogStatus("admin-users-status", "", "info");
           if (toastOnSuccess) {
             showToast(
@@ -4972,18 +5921,32 @@
           tr.appendChild(statusTd);
 
           const actionsTd = document.createElement("td");
+          const actionsWrap = document.createElement("div");
+          actionsWrap.className = "admin-user-actions";
           if (!approved && u.role_id !== 1) {
-            const btn = document.createElement("button");
-            btn.type = "button";
-            btn.className = "secondary-btn";
-            btn.textContent = catT("Одобрить", "Approve");
-            btn.addEventListener("click", () => {
+            const approveBtn = document.createElement("button");
+            approveBtn.type = "button";
+            approveBtn.className = "secondary-btn";
+            approveBtn.textContent = catT("Одобрить", "Approve");
+            approveBtn.addEventListener("click", () => {
               void patchAdminUser(u.id, { is_approved: true });
             });
-            actionsTd.appendChild(btn);
-          } else {
-            actionsTd.textContent = "—";
+            actionsWrap.appendChild(approveBtn);
           }
+          if (Number(u.id) !== 1) {
+            const deleteBtn = document.createElement("button");
+            deleteBtn.type = "button";
+            deleteBtn.className = "ghost-btn danger";
+            deleteBtn.textContent = catT("Удалить", "Delete");
+            deleteBtn.addEventListener("click", () => {
+              void deleteAdminUser(u);
+            });
+            actionsWrap.appendChild(deleteBtn);
+          }
+          if (!actionsWrap.childElementCount) {
+            actionsWrap.textContent = "—";
+          }
+          actionsTd.appendChild(actionsWrap);
           tr.appendChild(actionsTd);
 
           const commentTd = document.createElement("td");
@@ -5025,6 +5988,51 @@
           }
           await loadAdminUsers();
           showToast(catT("Пользователь обновлён", "User updated"), "success");
+        } catch (e) {
+          console.error(e);
+          setCatalogStatus(
+            "admin-users-status",
+            catT("Сеть.", "Network error."),
+            "error"
+          );
+        }
+      }
+
+      async function deleteAdminUser(u) {
+        const userId = Number(u.id);
+        if (!userId || userId === 1) return;
+        const label = (u.name || u.email || "#" + userId).trim();
+        if (
+          !(await adminConfirmDelete(
+            catT(
+              'Удалить пользователя "' + label + '" (id ' + userId + ")?",
+              'Delete user "' + label + '" (id ' + userId + ")?"
+            ),
+            [
+              catT(
+                "Будут удалены конфигурации и сессии этого пользователя.",
+                "This user's configurations and sessions will be deleted."
+              ),
+            ]
+          ))
+        ) {
+          return;
+        }
+        try {
+          const res = await apiFetch("/users/" + encodeURIComponent(String(userId)), {
+            method: "DELETE",
+          });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) {
+            setCatalogStatus(
+              "admin-users-status",
+              (data && data.detail) || catT("Не удалось удалить", "Delete failed"),
+              "error"
+            );
+            return;
+          }
+          await loadAdminUsers();
+          showToast(catT("Пользователь удалён", "User deleted"), "success");
         } catch (e) {
           console.error(e);
           setCatalogStatus(
@@ -5099,7 +6107,6 @@
           if (elements.adminSpecParamSort) elements.adminSpecParamSort.value = "";
           await loadSpecParametersForAdmin();
           renderAdminSpecParametersTable();
-          await loadCatalogSpecParameters();
           setCatalogStatus("admin-spec-params-status", "", "info");
           showToast(catT("Параметр добавлен", "Parameter added"), "success");
         } catch (e) {
@@ -5131,7 +6138,6 @@
           }
           await loadSpecParametersForAdmin();
           renderAdminSpecParametersTable();
-          await loadCatalogSpecParameters();
         } catch (e) {
           console.error(e);
         }
@@ -6960,7 +7966,6 @@
       function refreshAdminProductUi() {
         if (getCurrentRoleId() !== 1) return;
         renderAdminProductsTable();
-        renderProductsPagination();
         syncAdminProductDrawer();
       }
 
@@ -7072,6 +8077,7 @@
         if (Number(roleId) === 1) {
           (async () => {
             await loadAdminCompanies();
+            await refreshAdminUsersPendingCount();
             await loadAdminUsers();
           })();
         }
@@ -7337,27 +8343,32 @@
         if (!productsSection || !configSection) return;
         if (window.matchMedia("(max-width: 800px)").matches) {
           productsSection.style.height = "";
+          productsSection.style.minHeight = "";
           return;
         }
         const configHeight = Math.ceil(configSection.getBoundingClientRect().height);
         if (configHeight > 0) {
-          productsSection.style.height = configHeight + "px";
+          // Match right column height but keep enough room for catalog nav + scrollable list.
+          const minCatalogHeight = isUserCatalogWizard() ? 420 : 320;
+          const targetHeight = Math.max(configHeight, minCatalogHeight);
+          productsSection.style.height = targetHeight + "px";
+          productsSection.style.minHeight = minCatalogHeight + "px";
         }
       }
 
       function renderProducts() {
-        if (elements.productsList) {
-          elements.productsList.classList.toggle(
-            "products-list--paginated",
-            productsPages > 1
-          );
+        if (!elements.productsList) return;
+        if (
+          isUserCatalogWizard() &&
+          !userCatalogAtProductsLevel() &&
+          !userCatalogGlobalSearchActive()
+        ) {
+          elements.productsList.innerHTML = "";
+          return;
         }
         elements.productsList.innerHTML = "";
         const hasSpecFilter =
-          Boolean((productSpecFilterCode || "").trim()) ||
-          Boolean((productSpecFilterValue || "").trim()) ||
-          Boolean((productTypeFilter || "").trim()) ||
-          Boolean((productSearchTerm || "").trim());
+          Boolean((productSearchTerm || "").trim()) || hasActiveCatalogFilters();
         const visibleProducts = products;
 
         if (visibleProducts.length === 0) {
@@ -7375,7 +8386,6 @@
                 "No matches found. Try another search."
               );
           elements.productsList.appendChild(li);
-          renderProductsPagination();
           requestAnimationFrame(syncProductsSectionHeight);
           return;
         }
@@ -7399,101 +8409,40 @@
           const name = document.createElement("div");
           name.className = "product-name";
           name.textContent = p.name;
+          main.appendChild(name);
+
+          if (
+            userCatalogGlobalSearchActive() &&
+            (p.group_name || p.subgroup_name)
+          ) {
+            const pathEl = document.createElement("div");
+            pathEl.className = "product-catalog-path";
+            pathEl.textContent = [p.group_name, p.subgroup_name]
+              .filter(Boolean)
+              .join(" / ");
+            main.appendChild(pathEl);
+          }
 
           const descText = (p.description ?? "").trim();
-          const specsText = (p.technical_specs ?? "").trim();
-          const specValues = Array.isArray(p.technical_spec_values)
-            ? p.technical_spec_values.filter(
-                (x) =>
-                  x &&
-                  x.parameter_name &&
-                  String(x.parameter_name).trim() &&
-                  x.value &&
-                  String(x.value).trim()
-              )
-            : [];
-          const expanded = productCardExpandedIds.has(p.id);
-          const hasAnyText =
-            descText.length > 0 || specsText.length > 0 || specValues.length > 0;
-          let descInnerEl = null;
-          let specInnerEl = null;
-
           const desc = document.createElement("div");
           desc.className = "product-desc";
           if (descText) {
-            const descInner = document.createElement("div");
-            descInner.className = expanded
-              ? "product-text-expanded"
-              : "product-text-clamp";
-            descInner.textContent = descText;
-            desc.appendChild(descInner);
-            descInnerEl = descInner;
-          }
-          if (specValues.length > 0) {
-            const specWrap = document.createElement("div");
-            specWrap.className = "product-specs-block";
-            const specLab = document.createElement("div");
-            specLab.style.fontWeight = "600";
-            specLab.style.fontSize = "11px";
-            specLab.style.color = "#64748b";
-            specLab.style.marginBottom = "2px";
-            specLab.textContent = catT(
-              "Технические параметры",
-              "Technical parameters"
-            );
-            const specInner = document.createElement("div");
-            specInner.className = expanded
-              ? "product-text-expanded"
-              : "product-text-clamp";
-            specInner.textContent = specValues
-              .map((x) => `${x.parameter_name}: ${x.value}`)
-              .join(" · ");
-            specWrap.appendChild(specLab);
-            specWrap.appendChild(specInner);
-            desc.appendChild(specWrap);
-            specInnerEl = specInner;
-          } else if (specsText) {
-            const specWrap = document.createElement("div");
-            specWrap.className = "product-specs-block";
-            const specLab = document.createElement("div");
-            specLab.style.fontWeight = "600";
-            specLab.style.fontSize = "11px";
-            specLab.style.color = "#64748b";
-            specLab.style.marginBottom = "2px";
-            specLab.textContent = catT(
-              "Технические характеристики",
-              "Technical specifications"
-            );
-            const specInner = document.createElement("div");
-            specInner.className = expanded
-              ? "product-text-expanded"
-              : "product-text-clamp";
-            specInner.textContent = specsText;
-            specWrap.appendChild(specLab);
-            specWrap.appendChild(specInner);
-            desc.appendChild(specWrap);
-            specInnerEl = specInner;
+            desc.textContent = descText;
           }
 
-          function appendToggleButton(label) {
-            const moreBtn = document.createElement("button");
-            moreBtn.type = "button";
-            moreBtn.className = "product-more-toggle";
-            moreBtn.textContent = label;
-            moreBtn.addEventListener("click", (e) => {
-              e.stopPropagation();
-              if (productCardExpandedIds.has(p.id)) {
-                productCardExpandedIds.delete(p.id);
-              } else {
-                productCardExpandedIds.add(p.id);
-              }
-              renderProducts();
-            });
-            desc.appendChild(moreBtn);
-          }
-
-          if (expanded && hasAnyText) {
-            appendToggleButton(catT("Свернуть", "Show less"));
+          const cat = (p.product_category || "").toUpperCase();
+          if (cat === "VPS" || cat === "VPSN") {
+            const dur =
+              extractSupportDuration(descText) ||
+              (p.support_duration && String(p.support_duration)) ||
+              null;
+            if (dur) {
+              const durEl = document.createElement("div");
+              durEl.className = "product-support-duration";
+              durEl.textContent =
+                catT("Срок поддержки: ", "Support period: ") + dur;
+              desc.appendChild(durEl);
+            }
           }
 
           const meta = document.createElement("div");
@@ -7506,7 +8455,6 @@
             (p.product_kind ? " · " + p.product_kind : "") +
             (ac ? " · options: " + ac : "");
 
-          main.appendChild(name);
           main.appendChild(desc);
           main.appendChild(meta);
 
@@ -7515,7 +8463,11 @@
           li.appendChild(row);
 
           const n = addonCountForProduct(p);
-          if (n > 0 && isProductSelected(p.id)) {
+          const showInlineAddons =
+            !shouldUseEquipmentPickerModal() &&
+            n > 0 &&
+            isProductSelected(p.id);
+          if (showInlineAddons) {
             const panel = document.createElement("div");
             panel.className = "equipment-addon-panel";
             panel.addEventListener("click", (ev) => ev.stopPropagation());
@@ -7523,20 +8475,43 @@
             renderAddonPanel(panel, p);
           }
 
-          const toggle = () => {
-            if (isProductSelected(p.id)) {
-              configLineState.delete(p.id);
-              licenseSuggestFeedbackByProductId.delete(p.id);
-            } else {
-              configLineState.set(p.id, defaultLineState());
+          const toggleSelect = () => {
+            configLineState.set(p.id, defaultLineState());
+            renderSelectedPills();
+            renderProducts();
+            updateCounter();
+            if (shouldUseEquipmentPickerModal()) {
+              void openEquipmentPickerModal(p);
             }
+          };
+
+          const toggleDeselect = () => {
+            configLineState.delete(p.id);
+            licenseSuggestFeedbackByProductId.delete(p.id);
             renderSelectedPills();
             renderProducts();
             updateCounter();
           };
 
+          const toggle = () => {
+            if (isProductSelected(p.id)) {
+              toggleDeselect();
+            } else {
+              toggleSelect();
+            }
+          };
+
+          const openPickerForEdit = () => {
+            if (!shouldUseEquipmentPickerModal()) return;
+            void openEquipmentPickerModal(p);
+          };
+
           li.addEventListener("click", (e) => {
             if (e.target.closest(".equipment-addon-panel")) return;
+            if (isProductSelected(p.id) && shouldUseEquipmentPickerModal()) {
+              openPickerForEdit();
+              return;
+            }
             if (e.target === checkbox) {
               toggle();
             } else {
@@ -7545,54 +8520,44 @@
             }
           });
 
-          elements.productsList.appendChild(li);
+          checkbox.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (checkbox.checked) {
+              if (!isProductSelected(p.id)) toggleSelect();
+            } else if (isProductSelected(p.id)) {
+              toggleDeselect();
+            }
+          });
 
-          if (!expanded && hasAnyText && (descInnerEl || specInnerEl)) {
-            requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                let overflow = false;
-                if (descInnerEl) {
-                  overflow =
-                    descInnerEl.scrollHeight > descInnerEl.clientHeight + 1;
-                }
-                if (specInnerEl) {
-                  overflow =
-                    overflow ||
-                    specInnerEl.scrollHeight > specInnerEl.clientHeight + 1;
-                }
-                if (overflow) {
-                  appendToggleButton(catT("Показать полностью", "Show full text"));
-                }
-              });
-            });
-          }
+          elements.productsList.appendChild(li);
         });
-        renderProductsPagination();
         requestAnimationFrame(syncProductsSectionHeight);
       }
 
       function renderSelectedPills() {
         elements.selectedPills.innerHTML = "";
         const debugUi = document.body.classList.contains("debug-ui-on");
-        products
-          .filter((p) => isProductSelected(p.id))
-          .forEach((p) => {
-            const pill = document.createElement("span");
-            pill.className = debugUi ? "pill removable" : "pill removable-user";
-            pill.textContent = selectionPillCaption(p);
-            pill.title = debugUi
-              ? "Remove from configuration (id " + p.id + ")"
-              : catT("Убрать из выбранных", "Remove from selection");
-            pill.addEventListener("click", (e) => {
-              e.stopPropagation();
-              configLineState.delete(p.id);
-              licenseSuggestFeedbackByProductId.delete(p.id);
-              renderSelectedPills();
-              renderProducts();
-              updateCounter();
-            });
-            elements.selectedPills.appendChild(pill);
+        const selectedIds = Array.from(configLineState.keys()).sort(
+          (a, b) => Number(a) - Number(b)
+        );
+        for (const pid of selectedIds) {
+          const p = productForConfigLine(pid);
+          const pill = document.createElement("span");
+          pill.className = debugUi ? "pill removable" : "pill removable-user";
+          pill.textContent = selectionPillCaption(p);
+          pill.title = debugUi
+            ? "Remove from configuration (id " + p.id + ")"
+            : catT("Убрать из выбранных", "Remove from selection");
+          pill.addEventListener("click", (e) => {
+            e.stopPropagation();
+            void (async () => {
+              const ok = await userConfirmRemoveLine(selectionPillCaption(p));
+              if (!ok) return;
+              removeProductFromConfiguration(p.id);
+            })();
           });
+          elements.selectedPills.appendChild(pill);
+        }
         updateCreateConfigBtnState();
       }
 
@@ -7678,8 +8643,6 @@
           for (const row of rows) {
             const li = document.createElement("li");
             li.className = "recent-config-row";
-            const header = document.createElement("div");
-            header.className = "recent-config-row-header";
             const titleLine = document.createElement("div");
             titleLine.className = "recent-config-row-title";
             const projectName =
@@ -7687,13 +8650,7 @@
               catT("без названия проекта", "no project name");
             titleLine.textContent =
               projectName + " " + formatRecentConfigDate(row.created_at);
-            header.appendChild(titleLine);
-            const toggleBtn = document.createElement("button");
-            toggleBtn.type = "button";
-            toggleBtn.className = "secondary-btn recent-config-toggle-btn";
-            toggleBtn.textContent = catT("Раскрыть", "Expand");
-            header.appendChild(toggleBtn);
-            li.appendChild(header);
+            li.appendChild(titleLine);
             const meta = document.createElement("div");
             meta.className = "recent-config-meta";
             meta.textContent =
@@ -7708,28 +8665,6 @@
             if (row.id != null) {
               appendRecentConfigExportActions(li, Number(row.id));
             }
-            const details = document.createElement("div");
-            details.className = "recent-config-details";
-            details.hidden = true;
-            let hydratedRow = row;
-            let triedHydrate = false;
-            fillRecentConfigDetails(details, hydratedRow);
-            li.appendChild(details);
-            toggleBtn.addEventListener("click", async () => {
-              details.hidden = !details.hidden;
-              toggleBtn.textContent = details.hidden
-                ? catT("Раскрыть", "Expand")
-                : catT("Свернуть", "Collapse");
-              if (details.hidden) return;
-              if (!triedHydrate && getRecentConfigLines(hydratedRow).length === 0) {
-                triedHydrate = true;
-                const loaded = await fetchRecentConfigurationDetails(row.id);
-                if (loaded) {
-                  hydratedRow = { ...row, ...loaded };
-                }
-                fillRecentConfigDetails(details, hydratedRow);
-              }
-            });
             elements.recentConfigurationsList.appendChild(li);
           }
         } catch (e) {
@@ -7747,13 +8682,15 @@
       async function loadProducts() {
         setProductsStatus("", "info");
         const isAdmin = getCurrentRoleId() === 1;
-        const userNeedsSubgroup = !isAdmin && !userCatalogAtProductsLevel();
+        const globalSearch = userCatalogGlobalSearchActive();
+        const userNeedsSubgroup =
+          isUserCatalogWizard() && !userCatalogAtProductsLevel() && !globalSearch;
 
         if (userNeedsSubgroup) {
           products = [];
           productsTotal = 0;
-          productsPages = 1;
-          await Promise.all([loadCatalogGroups(), loadCatalogSpecParameters()]);
+          await Promise.all([loadCatalogGroups()]);
+          syncUserCatalogPanels();
           renderCatalogNavigation();
           renderProducts();
           renderSelectedPills();
@@ -7768,18 +8705,14 @@
         let serverDetail = "";
 
         const params = new URLSearchParams();
-        params.set("page", String(productsPage));
+        params.set("page", "1");
         params.set("page_size", String(productsPageSize));
         const q = (productSearchTerm || "").trim();
         if (q) params.set("q", q);
-        const specCode = (productSpecFilterCode || "").trim();
-        const specVal = (productSpecFilterValue || "").trim();
-        if (specCode && specVal) {
-          params.set("spec_parameter_code", specCode);
-          params.set("spec_value", specVal);
+        for (const def of activeCatalogFilterDefs()) {
+          const val = (catalogFilters[def.code] || "").trim();
+          if (val) params.set(def.code, val);
         }
-        const typeCode = (productTypeFilter || "").trim();
-        if (typeCode) params.set("product_category", typeCode);
 
         if (isAdmin) {
           if (adminCatalogSubgroupFilter) {
@@ -7798,7 +8731,7 @@
                 .find((s) => String(s.id) === String(adminCatalogSubgroupFilter))
             : null
           : selectedCatalogSubgroup();
-        if (!isAdmin && isConfiguratorEquipmentSubgroup(activeSub)) {
+        if (!isAdmin && !globalSearch && isConfiguratorEquipmentSubgroup(activeSub)) {
           params.set("configurator_only", "true");
         }
 
@@ -7840,19 +8773,13 @@
 
           if (data && Array.isArray(data.items)) {
             products = data.items;
-            productsTotal = Number(data.total) || 0;
-            productsPage = Number(data.page) || productsPage;
-            productsPages = Math.max(
-              1,
-              Math.ceil(productsTotal / productsPageSize) || 1
-            );
+            productsTotal = Number(data.total) || products.length;
           } else {
             products = Array.isArray(data) ? data : [];
             productsTotal = products.length;
-            productsPages = Math.max(
-              1,
-              Math.ceil(productsTotal / productsPageSize) || 1
-            );
+          }
+          for (const item of products) {
+            rememberConfigProduct(item);
           }
 
           elements.productsSource.textContent =
@@ -7862,7 +8789,6 @@
           console.error("Failed to load products from backend:", error);
           products = [];
           productsTotal = 0;
-          productsPages = 1;
           const parts = [
             catT(
               "Не удалось загрузить каталог продуктов.",
@@ -7899,14 +8825,12 @@
           setPanelLoading(elements.adminProductsLoading, false);
         }
 
-        await Promise.all([
-          loadCatalogGroups(),
-          loadCatalogSpecParameters(),
-          loadSpecParametersForAdmin(),
-          loadEquipmentTypes(),
-        ]);
+        await Promise.all([loadCatalogGroups(), loadSpecParametersForAdmin()]);
+        renderCatalogFilterControls();
+        syncCatalogFiltersVisibility();
         syncProductFilterInputsFromState();
         syncProductSpecFilterUi();
+        syncUserCatalogPanels();
         renderCatalogNavigation();
         renderProducts();
         renderSelectedPills();
@@ -7985,95 +8909,6 @@
         host.appendChild(ul);
       }
 
-      function getRecentConfigLines(row) {
-        if (Array.isArray(row?.lines)) return row.lines;
-        if (Array.isArray(row?.items)) return row.items;
-        if (Array.isArray(row?.specification)) return row.specification;
-        return [];
-      }
-
-      async function fetchRecentConfigurationDetails(configId) {
-        if (!configId) return null;
-        try {
-          const res = await apiFetch("/configurations/" + encodeURIComponent(String(configId)), {
-            method: "GET",
-            __globalLoading: false,
-          });
-          if (!res.ok) return null;
-          const data = await res.json().catch(() => null);
-          return data && typeof data === "object" ? data : null;
-        } catch {
-          return null;
-        }
-      }
-
-      function lineCaptionFromRecentConfig(line) {
-        if (typeof line === "string") return line;
-        if (!line || typeof line !== "object") return "—";
-        const productName =
-          line.equipment_product_name || line.product_name || line.name || null;
-        const productId =
-          line.equipment_product_id || line.product_id || line.id || null;
-        const quantity = line.quantity != null ? Number(line.quantity) : null;
-        let base = productName
-          ? String(productName)
-          : productId
-            ? "product #" + String(productId)
-            : "—";
-        if (Number.isFinite(quantity) && quantity > 0) {
-          base += " · " + catT("кол-во", "qty") + ": " + quantity;
-        }
-        return base;
-      }
-
-      function fillRecentConfigDetails(host, row) {
-        if (!host) return;
-        host.textContent = "";
-        appendConfirmSummaryRow(
-          host,
-          catT("Проект:", "Project:"),
-          row.project_name
-        );
-        appendConfirmSummaryRow(
-          host,
-          catT("Контакт:", "Contact:"),
-          row.project_contact_name
-        );
-        appendConfirmSummaryRow(
-          host,
-          catT("Email контакта:", "Contact email:"),
-          row.project_contact_email
-        );
-        appendConfirmSummaryRow(
-          host,
-          catT("Заметки:", "Notes:"),
-          row.project_notes
-        );
-        const head = document.createElement("div");
-        head.style.marginTop = "8px";
-        head.style.fontWeight = "600";
-        head.textContent = catT("Состав:", "Contents:");
-        host.appendChild(head);
-        const lines = getRecentConfigLines(row);
-        if (!lines.length) {
-          const muted = document.createElement("div");
-          muted.className = "recent-config-meta";
-          muted.textContent = catT(
-            "Состав пока загружается или недоступен.",
-            "Contents are loading or unavailable."
-          );
-          host.appendChild(muted);
-          return;
-        }
-        const ul = document.createElement("ul");
-        for (const line of lines) {
-          const li = document.createElement("li");
-          li.textContent = lineCaptionFromRecentConfig(line);
-          ul.appendChild(li);
-        }
-        host.appendChild(ul);
-      }
-
       function beginCreateConfigurationFlow() {
         if (!accessToken) {
           redirectToLogin();
@@ -8121,6 +8956,10 @@
             equipment_product_id: pid,
             addons,
           };
+          const eqQty = Number(st.quantity);
+          if (Number.isFinite(eqQty) && eqQty > 1) {
+            line.quantity = eqQty;
+          }
           if (st.targetAp != null && st.targetAp > 0) {
             line.target_ap_count = st.targetAp;
           }
@@ -8229,7 +9068,6 @@
         const buttons = [
           elements.configExportXlsxBtn,
           elements.configExportCsvBtn,
-          elements.configExportGsheetsBtn,
         ];
         for (const btn of buttons) {
           if (!btn) continue;
@@ -8258,11 +9096,6 @@
           elements.configExportCsvBtn.textContent = isEn
             ? "Download CSV (Google Sheets)"
             : "Скачать CSV (Google Таблицы)";
-        }
-        if (elements.configExportGsheetsBtn) {
-          elements.configExportGsheetsBtn.textContent = isEn
-            ? "Open Google Sheets"
-            : "Открыть Google Таблицы";
         }
         if (elements.configExportCloseBtn) {
           elements.configExportCloseBtn.textContent = isEn ? "Close" : "Закрыть";
@@ -8336,14 +9169,27 @@
             return false;
           }
           const blob = await response.blob();
+          if (!blob || blob.size === 0) {
+            setStatus(
+              catT(
+                "Файл спецификации пустой.",
+                "The specification file is empty."
+              ),
+              "error"
+            );
+            return false;
+          }
           const url = URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = url;
           link.download = "configuration-" + configurationId + "-spec." + ext;
+          link.style.display = "none";
           document.body.appendChild(link);
           link.click();
-          link.remove();
-          URL.revokeObjectURL(url);
+          window.setTimeout(() => {
+            link.remove();
+            URL.revokeObjectURL(url);
+          }, 2000);
           showToast(
             catT(
               "Файл спецификации скачан.",
@@ -8365,21 +9211,6 @@
         } finally {
           if (dialogOpen) setConfigExportButtonsBusy(false);
         }
-      }
-
-      async function openGoogleSheetsForImport() {
-        const ctx = pendingConfigurationExport;
-        if (ctx && ctx.configurationId) {
-          await downloadConfigurationExportFile(ctx.configurationId, "csv");
-        }
-        window.open("https://sheets.google.com/create", "_blank", "noopener,noreferrer");
-        showToast(
-          catT(
-            "В Google Таблицах: Файл → Импорт → Загрузка и выберите скачанный CSV.",
-            "In Google Sheets use File → Import → Upload and pick the CSV you downloaded."
-          ),
-          "info"
-        );
       }
 
       async function executeCreateConfiguration(payload) {
@@ -8430,6 +9261,8 @@
             ),
             "success"
           );
+
+          clearAllConfigurationSelections();
 
           const configurationId =
             json && json.configuration_id != null ? Number(json.configuration_id) : null;
@@ -8511,37 +9344,13 @@
         bindSearchInputOnEnter(elements.adminProductsSearchInput, () => {
           applyProductCatalogQuery(true);
         });
-        bindSearchInputOnEnter(elements.productsSpecValueInput, () => {
-          applyProductCatalogQuery(true);
-        });
-        bindSearchInputOnEnter(elements.adminProductsSpecValueInput, () => {
-          applyProductCatalogQuery(true);
-        });
-        if (elements.productsSpecParamSelect) {
-          elements.productsSpecParamSelect.addEventListener("change", () => {
-            applyProductCatalogQuery(true);
-          });
-        }
-        if (elements.adminProductsSpecParamSelect) {
-          elements.adminProductsSpecParamSelect.addEventListener("change", () => {
-            applyProductCatalogQuery(true);
-          });
-        }
-        if (elements.productsTypeSelect) {
-          elements.productsTypeSelect.addEventListener("change", () => {
-            applyProductCatalogQuery(true);
-          });
-        }
-        if (elements.adminProductsTypeSelect) {
-          elements.adminProductsTypeSelect.addEventListener("change", () => {
-            applyProductCatalogQuery(true);
-          });
-        }
         if (elements.adminCatalogGroupSelect) {
           elements.adminCatalogGroupSelect.addEventListener("change", () => {
             adminCatalogGroupFilter = elements.adminCatalogGroupSelect.value || "";
             adminCatalogSubgroupFilter = "";
             populateAdminCatalogSubgroupSelect();
+            renderCatalogFilterControls();
+            syncCatalogFiltersVisibility();
             applyProductCatalogQuery(true);
           });
         }
@@ -8549,6 +9358,8 @@
           elements.adminCatalogSubgroupSelect.addEventListener("change", () => {
             adminCatalogSubgroupFilter =
               elements.adminCatalogSubgroupSelect.value || "";
+            renderCatalogFilterControls();
+            syncCatalogFiltersVisibility();
             applyProductCatalogQuery(true);
           });
         }
@@ -8560,38 +9371,6 @@
         if (elements.adminReclassifyBtn) {
           elements.adminReclassifyBtn.addEventListener("click", () => {
             void reclassifyCatalogProducts();
-          });
-        }
-        if (elements.productsPagePrev) {
-          elements.productsPagePrev.addEventListener("click", () => {
-            if (productsPage > 1) {
-              productsPage -= 1;
-              void loadProducts();
-            }
-          });
-        }
-        if (elements.adminProductsPagePrev) {
-          elements.adminProductsPagePrev.addEventListener("click", () => {
-            if (productsPage > 1) {
-              productsPage -= 1;
-              void loadProducts();
-            }
-          });
-        }
-        if (elements.productsPageNext) {
-          elements.productsPageNext.addEventListener("click", () => {
-            if (productsPage < productsPages) {
-              productsPage += 1;
-              void loadProducts();
-            }
-          });
-        }
-        if (elements.adminProductsPageNext) {
-          elements.adminProductsPageNext.addEventListener("click", () => {
-            if (productsPage < productsPages) {
-              productsPage += 1;
-              void loadProducts();
-            }
           });
         }
         if (elements.adminSpecParamAddBtn) {
@@ -8644,11 +9423,6 @@
             }
           });
         }
-        if (elements.configExportGsheetsBtn) {
-          elements.configExportGsheetsBtn.addEventListener("click", () => {
-            void openGoogleSheetsForImport();
-          });
-        }
         if (elements.configExportDialog && elements.configExportCloseBtn) {
           elements.configExportCloseBtn.addEventListener("click", () => {
             elements.configExportDialog.close();
@@ -8662,6 +9436,14 @@
         if (elements.adminUsersRefreshBtn) {
           elements.adminUsersRefreshBtn.addEventListener("click", () => {
             loadAdminUsers({ toastOnSuccess: true });
+          });
+        }
+        if (elements.adminUsersFold) {
+          elements.adminUsersFold.addEventListener("toggle", () => {
+            if (elements.adminUsersFold.open) {
+              adminUsersPendingBadgeDismissed = true;
+              syncAdminUsersPendingBadge();
+            }
           });
         }
         bindSearchInputOnEnter(elements.adminUsersSearchInput, () => {
@@ -8728,6 +9510,24 @@
           elements.adminProductName.addEventListener("input", rpv);
           elements.adminProductDesc.addEventListener("input", rpv);
           rpv();
+        }
+
+        if (elements.equipmentPickerCancel) {
+          elements.equipmentPickerCancel.addEventListener("click", () => {
+            closeEquipmentPickerModal(false);
+          });
+        }
+        if (elements.equipmentPickerConfirm) {
+          elements.equipmentPickerConfirm.addEventListener("click", () => {
+            closeEquipmentPickerModal(true);
+          });
+        }
+        if (elements.equipmentPickerOverlay) {
+          elements.equipmentPickerOverlay.addEventListener("click", (e) => {
+            if (e.target === elements.equipmentPickerOverlay) {
+              closeEquipmentPickerModal(false);
+            }
+          });
         }
 
         syncProductsSectionHeight();

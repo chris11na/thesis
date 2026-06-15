@@ -42,6 +42,7 @@ class ConfigurationAddonIn(BaseModel):
 
 class ConfigurationLineIn(BaseModel):
     equipment_product_id: int = Field(ge=1)
+    quantity: int = Field(default=1, ge=1)
     target_ap_count: Optional[int] = Field(default=None, ge=1)
     addons: List[ConfigurationAddonIn] = Field(default_factory=list)
 
@@ -97,6 +98,7 @@ def _lines_to_data(lines: List[ConfigurationLineIn]) -> List[EquipmentLineData]:
                 equipment_product_id=ln.equipment_product_id,
                 target_ap_count=ln.target_ap_count,
                 addons=addons,
+                quantity=ln.quantity,
             )
         )
     return out
@@ -112,7 +114,7 @@ def _build_specification(db: Session, line_data: List[EquipmentLineData]) -> Lis
                 "kind": "equipment",
                 "product_id": line.equipment_product_id,
                 "name": name,
-                "quantity": 1,
+                "quantity": line.quantity,
                 "target_ap_count": line.target_ap_count,
             }
         )
@@ -286,7 +288,7 @@ def create_configuration(
                 module_id=None,
                 license_id=None,
                 parent_product_id=None,
-                quantity=1,
+                quantity=line.quantity,
             )
         )
         for addon in line.addons:

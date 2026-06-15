@@ -2621,7 +2621,7 @@
       "service_tier": null,
       "service_for_article": null,
       "configurator_eligible": true,
-      "service_attachable": true
+      "service_attachable": false
     },
     {
       "article": "VAP-2458-DP",
@@ -2635,7 +2635,7 @@
       "service_tier": null,
       "service_for_article": null,
       "configurator_eligible": true,
-      "service_attachable": true
+      "service_attachable": false
     },
     {
       "article": "VAP-2458-OMNI",
@@ -2649,7 +2649,7 @@
       "service_tier": null,
       "service_for_article": null,
       "configurator_eligible": true,
-      "service_attachable": true
+      "service_attachable": false
     },
     {
       "article": "VAP-2450-60DEG",
@@ -2663,7 +2663,7 @@
       "service_tier": null,
       "service_for_article": null,
       "configurator_eligible": true,
-      "service_attachable": true
+      "service_attachable": false
     },
     {
       "article": "VAP-BOX-255",
@@ -2677,7 +2677,7 @@
       "service_tier": null,
       "service_for_article": null,
       "configurator_eligible": true,
-      "service_attachable": true
+      "service_attachable": false
     },
     {
       "article": "VAP-BOX-295",
@@ -2691,7 +2691,7 @@
       "service_tier": null,
       "service_for_article": null,
       "configurator_eligible": true,
-      "service_attachable": true
+      "service_attachable": false
     },
     {
       "article": "VAP-BOX-355",
@@ -2705,7 +2705,7 @@
       "service_tier": null,
       "service_for_article": null,
       "configurator_eligible": true,
-      "service_attachable": true
+      "service_attachable": false
     },
     {
       "article": "VPS-VNC-2000",
@@ -4684,7 +4684,7 @@
     {
       "article": "VS-V",
       "name": "VS-V",
-      "description": "Cистема управления и мониторинга V-Sense, виртуальная машина, 10 устройств по-умолчанию",
+      "description": "Система управления и мониторинга V-Sense, виртуальная машина, 10 устройств по-умолчанию",
       "type_code": "VS",
       "type_label_ru": "Система управления V-Sense",
       "type_label_en": "V-Sense management system",
@@ -4698,7 +4698,7 @@
     {
       "article": "VS-H",
       "name": "VS-H",
-      "description": "Cистема управления и мониторинга V-Sense, сервер, 10 устройств по-умолчанию",
+      "description": "Система управления и мониторинга V-Sense, сервер, 10 устройств по-умолчанию",
       "type_code": "VS",
       "type_label_ru": "Система управления V-Sense",
       "type_label_en": "V-Sense management system",
@@ -4726,7 +4726,7 @@
     {
       "article": "VS-10",
       "name": "VS-10",
-      "description": "Сертификат на право подключения десяти устройства в систему управления и мониторинга V-Sense",
+      "description": "Сертификат на право подключения десяти устройств в систему управления и мониторинга V-Sense",
       "type_code": "VS",
       "type_label_ru": "Система управления V-Sense",
       "type_label_en": "V-Sense management system",
@@ -4740,7 +4740,7 @@
     {
       "article": "VS-100",
       "name": "VS-100",
-      "description": "Сертификат на право подключения ста устройства в систему управления и мониторинга V-Sense",
+      "description": "Сертификат на право подключения ста устройств в систему управления и мониторинга V-Sense",
       "type_code": "VS",
       "type_label_ru": "Система управления V-Sense",
       "type_label_en": "V-Sense management system",
@@ -4754,7 +4754,7 @@
     {
       "article": "VS-500",
       "name": "VS-500",
-      "description": "Сертификат на право подключения пятисот устройства в систему управления и мониторинга V-Sense",
+      "description": "Сертификат на право подключения пятисот устройств в систему управления и мониторинга V-Sense",
       "type_code": "VS",
       "type_label_ru": "Система управления V-Sense",
       "type_label_en": "V-Sense management system",

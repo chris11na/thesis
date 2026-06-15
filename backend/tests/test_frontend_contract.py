@@ -32,11 +32,16 @@ def test_frontend_contains_role_badge_and_admin_block() -> None:
     assert 'id="role-badge"' in html
     assert 'id="admin-catalog-block"' in html
     assert 'assets/logo.png' in html
-    assert 'id="products-pagination"' in html
     assert 'id="admin-products-search-input"' in html
     assert 'id="admin-users-search-input"' in html
+    assert 'id="admin-users-pending-badge"' in html
     assert 'id="admin-companies-search-input"' in html
-    assert 'id="admin-products-type-select"' in html
+    assert 'id="user-switch-filters"' in html
+    assert 'id="admin-switch-filters"' in html
+    assert "SWITCH_FILTER_DEFS" in html
+    assert "VO_FILTER_DEFS" in html
+    assert "WIFI_EQUIPMENT_FILTER_DEFS" in html
+    assert "VLB_EQUIPMENT_FILTER_DEFS" in html
     assert 'id="admin-spec-params-tbody"' in html
 
 

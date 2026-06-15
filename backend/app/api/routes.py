@@ -8,6 +8,9 @@ from app.core.email_domain import email_domain
 from app.db.session import SessionLocal
 from app.models.user import User
 from app.models.company import Company
+from app.models.configuration import Configuration
+from app.models.configuration_item import ConfigurationItem
+from app.models.refresh_token import RefreshToken
 from app.schemas.user import UserAdminRead, UserAdminUpdate, UserCreate, UserRead
 from app.api.auth import router as auth_router
 from app.api.products import router as products_router
@@ -95,6 +98,20 @@ def list_users(
     return query.order_by(User.company_id, User.id).all()
 
 
+@router.get("/users/pending-count")
+def pending_users_count(
+    db: Session = Depends(get_db),
+    _: dict = Depends(require_roles(1)),
+):
+    """Count self-registered users awaiting administrator approval."""
+    count = (
+        db.query(User)
+        .filter(User.is_approved.is_(False), User.role_id != 1)
+        .count()
+    )
+    return {"pending_count": count}
+
+
 @router.patch("/users/{user_id}", response_model=UserAdminRead)
 def update_user(
     user_id: int,
@@ -129,6 +146,41 @@ def update_user(
     db.commit()
     db.refresh(row)
     return row
+
+
+@router.delete("/users/{user_id}")
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _: dict = Depends(require_roles(1)),
+):
+    if user_id == 1:
+        raise HTTPException(status_code=400, detail="Cannot delete the primary admin user")
+
+    row = db.query(User).filter(User.id == user_id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    config_ids = [
+        cid
+        for (cid,) in db.query(Configuration.id)
+        .filter(Configuration.user_id == user_id)
+        .all()
+    ]
+    if config_ids:
+        db.query(ConfigurationItem).filter(
+            ConfigurationItem.configuration_id.in_(config_ids)
+        ).delete(synchronize_session=False)
+        db.query(Configuration).filter(Configuration.id.in_(config_ids)).delete(
+            synchronize_session=False
+        )
+
+    db.query(RefreshToken).filter(RefreshToken.user_id == user_id).delete(
+        synchronize_session=False
+    )
+    db.delete(row)
+    db.commit()
+    return {"ok": True, "deleted_user_id": user_id}
 
 
 # Подключаем роутеры по модулям

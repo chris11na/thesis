@@ -19,9 +19,12 @@ from app.models.equipment_subgroup import EquipmentSubgroup
 from app.models.equipment_group import EquipmentGroup
 from app.services.config_validation import suggest_license_packs
 from app.services.service_catalog import (
+    find_accessory_products_for_equipment,
+    suggested_accessory_quantity,
     find_service_products_for_equipment,
     is_service_attachable,
     parse_catalog_meta,
+    parse_support_duration,
 )
 from app.services.product_rules_runtime import (
     effective_built_in_license_units,
@@ -353,6 +356,19 @@ def delete_spec_parameter(
     return {"status": "ok"}
 
 
+def _apply_exact_spec_filter(query, db: Session, code: str, value: str):
+    normalized = (value or "").strip().lower()
+    if not normalized:
+        return query
+    matching_ids = (
+        db.query(ProductSpecValue.product_id)
+        .join(SpecParameter, SpecParameter.id == ProductSpecValue.parameter_id)
+        .filter(SpecParameter.code == code)
+        .filter(ProductSpecValue.value_search == normalized)
+    )
+    return query.filter(Product.id.in_(matching_ids))
+
+
 @router.get("")
 def list_products(
     q: str | None = Query(None, description="Search by name, description, specs"),
@@ -362,9 +378,24 @@ def list_products(
     group_id: int | None = Query(None, ge=1),
     spec_parameter_code: str | None = Query(None),
     spec_value: str | None = Query(None),
+    switch_layer: str | None = Query(None),
+    rj45_ports: str | None = Query(None),
+    copper_speed: str | None = Query(None),
+    poe_plus: str | None = Query(None),
+    optic_ports: str | None = Query(None),
+    optic_speed: str | None = Query(None),
+    combo_ports: str | None = Query(None),
+    vo_item_type: str | None = Query(None, description="VO accessory type: cable or module"),
+    vlb_device_type: str | None = Query(None),
+    vs_item_type: str | None = Query(None),
+    vfw_item_type: str | None = Query(None),
+    telephony_item_type: str | None = Query(None),
+    wifi_device_type: str | None = Query(None),
+    wifi_accessory_kind: str | None = Query(None),
+    support_tier: str | None = Query(None),
     configurator_only: bool = Query(False),
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = Query(50, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
     query = db.query(Product)
@@ -398,6 +429,43 @@ def list_products(
             SpecParameter.code == code,
             ProductSpecValue.value_search.contains(value),
         )
+
+    switch_filters = {
+        "switch_layer": switch_layer,
+        "rj45_ports": rj45_ports,
+        "copper_speed": copper_speed,
+        "poe_plus": poe_plus,
+        "optic_ports": optic_ports,
+        "optic_speed": optic_speed,
+        "combo_ports": combo_ports,
+    }
+    for spec_code, spec_val in switch_filters.items():
+        if (spec_val or "").strip():
+            query = _apply_exact_spec_filter(query, db, spec_code, spec_val)
+
+    if (vo_item_type or "").strip():
+        query = _apply_exact_spec_filter(query, db, "vo_item_type", vo_item_type)
+
+    wifi_filters = {
+        "wifi_device_type": wifi_device_type,
+        "wifi_accessory_kind": wifi_accessory_kind,
+        "support_tier": support_tier,
+    }
+    for spec_code, spec_val in wifi_filters.items():
+        if (spec_val or "").strip():
+            query = _apply_exact_spec_filter(query, db, spec_code, spec_val)
+
+    if (vlb_device_type or "").strip():
+        query = _apply_exact_spec_filter(query, db, "vlb_device_type", vlb_device_type)
+
+    if (vs_item_type or "").strip():
+        query = _apply_exact_spec_filter(query, db, "vs_item_type", vs_item_type)
+
+    if (vfw_item_type or "").strip():
+        query = _apply_exact_spec_filter(query, db, "vfw_item_type", vfw_item_type)
+
+    if (telephony_item_type or "").strip():
+        query = _apply_exact_spec_filter(query, db, "telephony_item_type", telephony_item_type)
 
     search = (q or "").strip().lower()
     if search:
@@ -513,6 +581,7 @@ def get_service_options(product_id: int, db: Session = Depends(get_db)):
             "product_id": prod.id,
             "article": prod.name,
             "description": prod.description,
+            "support_duration": parse_support_duration(prod.description),
             "service_tier": parse_catalog_meta(prod).get("service_tier")
             if parse_catalog_meta(prod)
             else None,
@@ -524,6 +593,31 @@ def get_service_options(product_id: int, db: Session = Depends(get_db)):
         "default_tier": "standard" if services.get("standard") else "none",
         "standard": _svc_row(services.get("standard")),
         "extended": _svc_row(services.get("extended")),
+    }
+
+
+@router.get("/{product_id}/compatible-addons")
+def get_compatible_addons(product_id: int, db: Session = Depends(get_db)):
+    """Bundled compatible options for equipment picker UI."""
+    opts = get_configuration_options(product_id, db)
+    svc = get_service_options(product_id, db)
+    p = db.query(Product).filter(Product.id == product_id).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="Product not found")
+    accessories = find_accessory_products_for_equipment(db, p)
+    return {
+        **opts,
+        "support": svc,
+        "accessories": [
+            {
+                "product_id": row.id,
+                "name": row.name,
+                "description": row.description,
+                "product_category": row.product_category,
+                "suggested_quantity": suggested_accessory_quantity(p, row),
+            }
+            for row in accessories
+        ],
     }
 
 

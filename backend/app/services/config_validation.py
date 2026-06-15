@@ -30,16 +30,18 @@ class AddonLineData:
 
 
 class EquipmentLineData:
-    __slots__ = ("equipment_product_id", "target_ap_count", "addons")
+    __slots__ = ("equipment_product_id", "target_ap_count", "quantity", "addons")
 
     def __init__(
         self,
         equipment_product_id: int,
         target_ap_count: Optional[int],
         addons: List[AddonLineData],
+        quantity: int = 1,
     ):
         self.equipment_product_id = equipment_product_id
         self.target_ap_count = target_ap_count
+        self.quantity = quantity
         self.addons = addons
 
 
@@ -53,6 +55,8 @@ def validate_structured_lines(
         )
         if not product:
             return False, f"Unknown equipment product_id={line.equipment_product_id}"
+        if line.quantity < 1:
+            return False, "Equipment quantity must be at least 1"
 
         supported_speeds, _ = effective_speed_allowlist(product)
         module_qty_sum = 0
