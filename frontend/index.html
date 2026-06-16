@@ -786,6 +786,7 @@
         color: #6b7280;
         line-height: 1.45;
         word-break: break-word;
+        white-space: pre-line;
       }
 
       .product-support-duration {
@@ -2226,12 +2227,12 @@
             <div class="catalog-nav-breadcrumb" id="catalog-breadcrumb" hidden></div>
             <div class="catalog-toolbar" id="catalog-products-toolbar" hidden>
               <div class="catalog-toolbar-search">
-                <input
-                  type="search"
-                  id="products-search-input"
-                  placeholder="Поиск по ID, названию или параметрам (Enter)"
-                  autocomplete="off"
-                />
+              <input
+                type="search"
+                id="products-search-input"
+                placeholder="Поиск по ID, названию или параметрам (Enter)"
+                autocomplete="off"
+              />
               </div>
               <div
                 class="catalog-toolbar-filters catalog-switch-filters"
@@ -2488,12 +2489,12 @@
               </p>
               <div class="catalog-toolbar">
                 <div class="catalog-toolbar-search">
-                  <input
-                    type="search"
-                    id="admin-companies-search-input"
-                    placeholder="Поиск по названию или домену (Enter)"
-                    autocomplete="off"
-                  />
+                <input
+                  type="search"
+                  id="admin-companies-search-input"
+                  placeholder="Поиск по названию или домену (Enter)"
+                  autocomplete="off"
+                />
                 </div>
               </div>
               <div class="catalog-panel" id="admin-companies-panel">
@@ -2615,12 +2616,12 @@
               <div class="admin-above-table admin-above-table--compact">
                 <div class="catalog-toolbar">
                   <div class="catalog-toolbar-search">
-                    <input
-                      type="search"
-                      id="admin-users-search-input"
-                      placeholder="Поиск по имени, email или компании (Enter)"
-                      autocomplete="off"
-                    />
+                  <input
+                    type="search"
+                    id="admin-users-search-input"
+                    placeholder="Поиск по имени, email или компании (Enter)"
+                    autocomplete="off"
+                  />
                   </div>
                   <div class="catalog-toolbar-filters catalog-toolbar-filters--users">
                     <select
@@ -2709,12 +2710,12 @@
             <div class="admin-fold-body">
               <div class="catalog-toolbar admin-catalog-toolbar">
                 <div class="catalog-toolbar-search">
-                  <input
-                    type="search"
-                    id="admin-products-search-input"
-                    placeholder="Поиск по ID, названию или параметрам (Enter)"
-                    autocomplete="off"
-                  />
+                <input
+                  type="search"
+                  id="admin-products-search-input"
+                  placeholder="Поиск по ID, названию или параметрам (Enter)"
+                  autocomplete="off"
+                />
                 </div>
                 <div class="catalog-toolbar-filters catalog-toolbar-filters--admin-nav">
                   <select id="admin-catalog-group-select" aria-label="Группа каталога">
@@ -3089,7 +3090,7 @@
         if (elements.headerBlurbAdmin) {
           elements.headerBlurbAdmin.textContent = isEn
             ? "Manage companies, users, and the equipment catalog. Buyers build configurations in their own configurator view."
-            : "Здесь вы управляете организациями, пользователями и каталогом. Покупатели собирают конфигурации в своём разделе конфигуратора.";
+            : "Здесь вы управляете организациями, пользователями и каталогом.";
         }
         const productsCardSubtitle = document.getElementById("products-card-subtitle");
         if (productsCardSubtitle) {
@@ -3825,9 +3826,164 @@
         configLineState = new Map();
         licenseSuggestFeedbackByProductId = new Map();
         closeEquipmentPickerOverlayOnly();
+        clearConfigSelectionDraftStorage();
         renderSelectedPills();
         renderProducts();
         updateCounter();
+      }
+
+      function getConfigSelectionDraftStorageKey() {
+        if (getCurrentRoleId() !== 2 || !accessToken) return null;
+        const data = parseJwt(accessToken);
+        const userId = data && data.sub != null ? Number(data.sub) : null;
+        if (!userId || userId <= 0) return null;
+        return CONFIG_SELECTION_DRAFT_PREFIX + userId;
+      }
+
+      function serializeLineStateForDraft(st) {
+        return {
+          quantity: Number(st.quantity) > 0 ? Number(st.quantity) : 1,
+          targetAp:
+            st.targetAp != null && Number(st.targetAp) > 0 ? Number(st.targetAp) : null,
+          moduleQty: st.moduleQty || {},
+          licenseQty: st.licenseQty || {},
+          licPickOrder: Array.isArray(st.licPickOrder) ? st.licPickOrder.slice() : [],
+          modPickOrder: Array.isArray(st.modPickOrder) ? st.modPickOrder.slice() : [],
+          serviceTier: st.serviceTier || "none",
+          serviceProductId:
+            st.serviceProductId != null ? Number(st.serviceProductId) : null,
+          accessoryQty: st.accessoryQty || {},
+          parentProductId:
+            st.parentProductId != null ? Number(st.parentProductId) : null,
+          parentContributions: st.parentContributions
+            ? { ...st.parentContributions }
+            : null,
+        };
+      }
+
+      function deserializeLineStateFromDraft(raw) {
+        const st = defaultLineState();
+        if (!raw || typeof raw !== "object") return st;
+        if (Number.isFinite(Number(raw.quantity)) && Number(raw.quantity) > 0) {
+          st.quantity = Number(raw.quantity);
+        }
+        if (raw.targetAp != null && Number(raw.targetAp) > 0) {
+          st.targetAp = Number(raw.targetAp);
+        }
+        st.moduleQty =
+          raw.moduleQty && typeof raw.moduleQty === "object" ? { ...raw.moduleQty } : {};
+        st.licenseQty =
+          raw.licenseQty && typeof raw.licenseQty === "object" ? { ...raw.licenseQty } : {};
+        st.licPickOrder = Array.isArray(raw.licPickOrder)
+          ? raw.licPickOrder.map((x) => Number(x)).filter((x) => Number.isFinite(x))
+          : [];
+        st.modPickOrder = Array.isArray(raw.modPickOrder)
+          ? raw.modPickOrder.map((x) => Number(x)).filter((x) => Number.isFinite(x))
+          : [];
+        st.serviceTier = raw.serviceTier || "none";
+        st.serviceProductId =
+          raw.serviceProductId != null && Number(raw.serviceProductId) > 0
+            ? Number(raw.serviceProductId)
+            : null;
+        st.accessoryQty =
+          raw.accessoryQty && typeof raw.accessoryQty === "object"
+            ? { ...raw.accessoryQty }
+            : {};
+        st.parentProductId =
+          raw.parentProductId != null && Number(raw.parentProductId) > 0
+            ? Number(raw.parentProductId)
+            : null;
+        st.parentContributions =
+          raw.parentContributions && typeof raw.parentContributions === "object"
+            ? { ...raw.parentContributions }
+            : null;
+        return st;
+      }
+
+      function clearConfigSelectionDraftStorage() {
+        const key = getConfigSelectionDraftStorageKey();
+        if (key) {
+          try {
+            localStorage.removeItem(key);
+          } catch {
+            // ignore quota / private mode
+          }
+        }
+      }
+
+      function persistConfigSelectionDraft() {
+        const key = getConfigSelectionDraftStorageKey();
+        if (!key) return;
+        try {
+          if (configLineState.size === 0) {
+            localStorage.removeItem(key);
+            return;
+          }
+          const products = {};
+          for (const pid of configLineState.keys()) {
+            rememberConfigProduct(productForConfigLine(pid));
+            const cached = configProductCache.get(Number(pid));
+            if (cached) {
+              products[String(pid)] = cached;
+            }
+          }
+          const lines = [];
+          for (const [pid, st] of configLineState.entries()) {
+            lines.push([Number(pid), serializeLineStateForDraft(st)]);
+          }
+          localStorage.setItem(
+            key,
+            JSON.stringify({ v: 1, lines, products })
+          );
+        } catch (e) {
+          console.warn("Could not persist configuration draft:", e);
+        }
+      }
+
+      function schedulePersistConfigSelectionDraft() {
+        if (getCurrentRoleId() !== 2) return;
+        if (persistConfigDraftTimer) {
+          clearTimeout(persistConfigDraftTimer);
+        }
+        persistConfigDraftTimer = setTimeout(() => {
+          persistConfigDraftTimer = null;
+          persistConfigSelectionDraft();
+        }, 250);
+      }
+
+      function restoreConfigSelectionDraft() {
+        if (getCurrentRoleId() !== 2) return false;
+        const key = getConfigSelectionDraftStorageKey();
+        if (!key) return false;
+        let raw = null;
+        try {
+          raw = localStorage.getItem(key);
+        } catch {
+          return false;
+        }
+        if (!raw) return false;
+        try {
+          const parsed = JSON.parse(raw);
+          if (!parsed || !Array.isArray(parsed.lines)) return false;
+          const next = new Map();
+          for (const row of parsed.lines) {
+            if (!Array.isArray(row) || row.length < 2) continue;
+            const pid = Number(row[0]);
+            if (!Number.isFinite(pid) || pid <= 0) continue;
+            next.set(pid, deserializeLineStateFromDraft(row[1]));
+          }
+          if (parsed.products && typeof parsed.products === "object") {
+            for (const snap of Object.values(parsed.products)) {
+              rememberConfigProduct(snap);
+            }
+          }
+          if (next.size === 0) return false;
+          configLineState = next;
+          return true;
+        } catch (e) {
+          console.warn("Could not restore configuration draft:", e);
+          return false;
+        }
       }
 
       /**
@@ -4018,6 +4174,14 @@
         );
         if (!m) return null;
         return m[1] + " " + m[2].toLowerCase();
+      }
+
+      /** Break description after ". " so long catalog text is easier to scan. */
+      function formatProductDescriptionForDisplay(text) {
+        if (text == null) return "";
+        const raw = String(text).trim();
+        if (!raw) return "";
+        return raw.replace(/\.\s+/g, ".\n");
       }
 
       function formatSupportOptionLabel(svc) {
@@ -4442,28 +4606,28 @@
           const svcHint = document.createElement("div");
           svcHint.className = "addon-hint";
           const svcData = data.support || null;
-          const std = svcData && svcData.standard;
-          const ext = svcData && svcData.extended;
-          if (!std) optStd.disabled = true;
-          if (!ext) optExt.disabled = true;
-          if (st.serviceTier === "standard" && std) {
-            st.serviceProductId = std.product_id;
-          } else if (st.serviceTier === "extended" && ext) {
-            st.serviceProductId = ext.product_id;
+            const std = svcData && svcData.standard;
+            const ext = svcData && svcData.extended;
+            if (!std) optStd.disabled = true;
+            if (!ext) optExt.disabled = true;
+            if (st.serviceTier === "standard" && std) {
+              st.serviceProductId = std.product_id;
+            } else if (st.serviceTier === "extended" && ext) {
+              st.serviceProductId = ext.product_id;
           } else if (st.serviceTier === "none" || !st.serviceTier) {
             st.serviceTier = "none";
-            st.serviceProductId = null;
+              st.serviceProductId = null;
             svcSelect.value = "none";
-          } else if (std) {
-            st.serviceTier = "standard";
-            st.serviceProductId = std.product_id;
-            svcSelect.value = "standard";
-          } else {
-            st.serviceTier = "none";
-            st.serviceProductId = null;
-            svcSelect.value = "none";
-          }
-          svcHint.textContent = catT(
+            } else if (std) {
+              st.serviceTier = "standard";
+              st.serviceProductId = std.product_id;
+              svcSelect.value = "standard";
+            } else {
+              st.serviceTier = "none";
+              st.serviceProductId = null;
+              svcSelect.value = "none";
+            }
+            svcHint.textContent = catT(
             (std
               ? "Стандарт: " + formatSupportOptionLabel(std)
               : "Стандарт недоступен") +
@@ -4480,29 +4644,29 @@
                 : "Extended N/A")
           );
           panel.appendChild(svcHint);
-          svcSelect.addEventListener("change", () => {
-            st.serviceTier = svcSelect.value;
-            if (st.serviceTier === "standard" && std) {
-              st.serviceProductId = std.product_id;
+            svcSelect.addEventListener("change", () => {
+              st.serviceTier = svcSelect.value;
+              if (st.serviceTier === "standard" && std) {
+                st.serviceProductId = std.product_id;
               svcHint.textContent = catT(
                 "Стандарт: " + formatSupportOptionLabel(std),
                 "Standard: " + formatSupportOptionLabel(std)
               );
-            } else if (st.serviceTier === "extended" && ext) {
-              st.serviceProductId = ext.product_id;
+              } else if (st.serviceTier === "extended" && ext) {
+                st.serviceProductId = ext.product_id;
               svcHint.textContent = catT(
                 "Расширенный: " + formatSupportOptionLabel(ext),
                 "Extended: " + formatSupportOptionLabel(ext)
               );
-            } else {
-              st.serviceProductId = null;
+              } else {
+                st.serviceProductId = null;
               svcHint.textContent = catT(
                 "Поддержка не выбрана.",
                 "No support selected."
               );
-            }
-            renderSelectedPills();
-          });
+              }
+              renderSelectedPills();
+            });
         }
 
         if (data.accessories && data.accessories.length) {
@@ -4699,6 +4863,8 @@
 
       const TOKEN_STORAGE_KEY = "access_token";
       const REFRESH_TOKEN_STORAGE_KEY = "refresh_token";
+      const CONFIG_SELECTION_DRAFT_PREFIX = "configurator_selection_draft_v1_u";
+      let persistConfigDraftTimer = null;
       let accessToken = localStorage.getItem(TOKEN_STORAGE_KEY);
       let refreshToken = localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
 
@@ -4737,15 +4903,15 @@
        * @returns {Promise<boolean>}
        */
       function adminConfirmDelete(subjectLine, consequenceLines) {
-        const bullets = (consequenceLines || [])
-          .filter(Boolean)
-          .map((x) => "• " + x)
-          .join("\n");
-        const msg =
-          "ВНИМАНИЕ: удаление необратимо.\n\n" +
-          subjectLine +
-          (bullets ? "\n\n" + bullets : "") +
-          "\n\nТочно удалить?";
+          const bullets = (consequenceLines || [])
+            .filter(Boolean)
+            .map((x) => "• " + x)
+            .join("\n");
+          const msg =
+            "ВНИМАНИЕ: удаление необратимо.\n\n" +
+            subjectLine +
+            (bullets ? "\n\n" + bullets : "") +
+            "\n\nТочно удалить?";
         return appConfirmDialog({
           message: msg,
           confirmLabel: catT("Удалить", "Delete"),
@@ -5046,10 +5212,10 @@
           placeholder.textContent = isEn ? def.labelEn : def.labelRu;
           sel.appendChild(placeholder);
           for (const optDef of def.options) {
-            const opt = document.createElement("option");
+          const opt = document.createElement("option");
             opt.value = optDef.value;
             opt.textContent = isEn ? optDef.labelEn : optDef.labelRu;
-            sel.appendChild(opt);
+          sel.appendChild(opt);
           }
           sel.value = filterState[def.code] || "";
           sel.addEventListener("change", () => {
@@ -5668,7 +5834,7 @@
             nameTrim || (prevEn ? "(no name)" : "(без названия)");
           const desc = document.createElement("div");
           desc.className = "product-desc";
-          desc.textContent = descTrim || "—";
+          desc.textContent = formatProductDescriptionForDisplay(descTrim) || "—";
           host.appendChild(title);
           host.appendChild(desc);
         }
@@ -8486,7 +8652,7 @@
           const desc = document.createElement("div");
           desc.className = "product-desc";
           if (descText) {
-            desc.textContent = descText;
+            desc.textContent = formatProductDescriptionForDisplay(descText);
           }
 
           const cat = (p.product_category || "").toUpperCase();
@@ -8535,7 +8701,7 @@
           }
 
           const toggleSelect = () => {
-            configLineState.set(p.id, defaultLineState());
+              configLineState.set(p.id, defaultLineState());
             renderSelectedPills();
             renderProducts();
             updateCounter();
@@ -8601,23 +8767,24 @@
         );
         for (const pid of selectedIds) {
           const p = productForConfigLine(pid);
-          const pill = document.createElement("span");
-          pill.className = debugUi ? "pill removable" : "pill removable-user";
-          pill.textContent = selectionPillCaption(p);
-          pill.title = debugUi
-            ? "Remove from configuration (id " + p.id + ")"
-            : catT("Убрать из выбранных", "Remove from selection");
-          pill.addEventListener("click", (e) => {
-            e.stopPropagation();
+            const pill = document.createElement("span");
+            pill.className = debugUi ? "pill removable" : "pill removable-user";
+            pill.textContent = selectionPillCaption(p);
+            pill.title = debugUi
+              ? "Remove from configuration (id " + p.id + ")"
+              : catT("Убрать из выбранных", "Remove from selection");
+            pill.addEventListener("click", (e) => {
+              e.stopPropagation();
             void (async () => {
               const ok = await userConfirmRemoveLine(selectionPillCaption(p));
               if (!ok) return;
               removeProductFromConfiguration(p.id);
             })();
-          });
-          elements.selectedPills.appendChild(pill);
+            });
+            elements.selectedPills.appendChild(pill);
         }
         updateCreateConfigBtnState();
+        schedulePersistConfigSelectionDraft();
       }
 
       function updateCounter() {
@@ -9271,8 +9438,8 @@
           document.body.appendChild(link);
           link.click();
           window.setTimeout(() => {
-            link.remove();
-            URL.revokeObjectURL(url);
+          link.remove();
+          URL.revokeObjectURL(url);
           }, 2000);
           showToast(
             catT(
@@ -9363,13 +9530,13 @@
               "error"
             );
           } else {
-            setStatus(
-              catT(
-                "Конфигурация успешно создана.",
-                "Configuration created successfully."
-              ),
-              "success"
-            );
+          setStatus(
+            catT(
+              "Конфигурация успешно создана.",
+              "Configuration created successfully."
+            ),
+            "success"
+          );
           }
 
           clearAllConfigurationSelections();
@@ -9441,7 +9608,16 @@
         });
 
         syncAuthUI();
+        restoreConfigSelectionDraft();
         syncConfigExportDialogLabels();
+
+        window.addEventListener("beforeunload", () => {
+          if (persistConfigDraftTimer) {
+            clearTimeout(persistConfigDraftTimer);
+            persistConfigDraftTimer = null;
+          }
+          persistConfigSelectionDraft();
+        });
 
         elements.createConfigBtn.addEventListener("click", () => {
           beginCreateConfigurationFlow();
