@@ -119,10 +119,10 @@ test.describe("Admin CRUD", () => {
     });
 
     const drawer = page.locator("#admin-product-drawer-body");
-    const desc = drawer.locator("textarea").first();
+    const desc = drawer.locator("textarea.admin-textarea-desc");
     const previous = await desc.inputValue();
-    const marker = ` e2e-${Date.now()}`;
-    await desc.fill(previous + marker);
+    const marker = `e2e-${Date.now()} `;
+    await desc.fill(marker + previous);
 
     const patchReq = page.waitForResponse(
       (response) =>
@@ -131,10 +131,15 @@ test.describe("Admin CRUD", () => {
         response.ok(),
       { timeout: 20_000 }
     );
+    const reloadReq = waitForProductsApi(page);
     await drawer.locator(".admin-product-edit-actions button.primary-btn").click();
     await patchReq;
+    await reloadReq;
 
-    await expect(page.locator("#admin-products-tbody")).toContainText(marker, {
+    const updatedRow = page.locator("#admin-products-tbody tr").filter({
+      hasText: "VNC-2000",
+    });
+    await expect(updatedRow.first()).toContainText(marker.trim(), {
       timeout: 15_000,
     });
 
@@ -144,7 +149,7 @@ test.describe("Admin CRUD", () => {
     });
     await editRow.first().getByRole("button", { name: /изменить|edit/i }).click();
     await expect(page.locator("#admin-product-drawer-overlay")).toBeVisible();
-    await drawer.locator("textarea").first().fill(previous);
+    await drawer.locator("textarea.admin-textarea-desc").fill(previous);
     const restoreReq = page.waitForResponse(
       (response) =>
         response.url().match(/\/products\/\d+/) &&
@@ -152,7 +157,9 @@ test.describe("Admin CRUD", () => {
         response.ok(),
       { timeout: 20_000 }
     );
+    const restoreReloadReq = waitForProductsApi(page);
     await drawer.locator(".admin-product-edit-actions button.primary-btn").click();
     await restoreReq;
+    await restoreReloadReq;
   });
 });
