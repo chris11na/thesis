@@ -2175,7 +2175,12 @@
       aria-live="polite"
       aria-busy="false"
     >
-      <div class="global-loading-spinner" role="status" aria-label="Loading"></div>
+      <div
+        class="global-loading-spinner"
+        id="global-loading-spinner"
+        role="status"
+        aria-label="Loading"
+      ></div>
     </div>
     <div class="app">
       <header class="app-header">
@@ -2581,12 +2586,12 @@
                 <table class="admin-table" id="admin-spec-params-table">
                   <thead>
                     <tr>
-                      <th>ID</th>
-                      <th>Код</th>
-                      <th>Название</th>
-                      <th>Порядок</th>
-                      <th>Активен</th>
-                      <th></th>
+                      <th id="th-spec-params-id">ID</th>
+                      <th id="th-spec-params-code">Код</th>
+                      <th id="th-spec-params-name">Название</th>
+                      <th id="th-spec-params-order">Порядок</th>
+                      <th id="th-spec-params-active">Активен</th>
+                      <th id="th-spec-params-actions"></th>
                     </tr>
                   </thead>
                   <tbody id="admin-spec-params-tbody"></tbody>
@@ -2692,10 +2697,10 @@
                 <table class="admin-groups-table" id="admin-groups-table">
                   <thead>
                     <tr>
-                      <th>Группа</th>
-                      <th>Подгруппы</th>
-                      <th>Товаров</th>
-                      <th>Действия</th>
+                      <th id="th-groups-name">Группа</th>
+                      <th id="th-groups-subgroups">Подгруппы</th>
+                      <th id="th-groups-count">Товаров</th>
+                      <th id="th-groups-actions">Действия</th>
                     </tr>
                   </thead>
                   <tbody id="admin-groups-tbody"></tbody>
@@ -3014,6 +3019,9 @@
         adminProductDrawer: document.getElementById("admin-product-drawer"),
         adminProductDrawerBody: document.getElementById("admin-product-drawer-body"),
         adminProductDrawerClose: document.getElementById("admin-product-drawer-close"),
+        adminConfirmCancel: document.getElementById("admin-confirm-cancel"),
+        adminConfirmOk: document.getElementById("admin-confirm-ok"),
+        globalLoadingSpinner: document.getElementById("global-loading-spinner"),
       };
 
       let uiLang = localStorage.getItem(UI_LANG_STORAGE_KEY) || "ru";
@@ -3023,15 +3031,112 @@
         return uiLang === "en" ? enText : ruText;
       }
 
+      const CATALOG_GROUP_I18N = {
+        switches: ["Коммутаторы", "Switches"],
+        wifi: [
+          "Контроллеры и беспроводные точки доступа",
+          "Controllers & wireless access points",
+        ],
+        load_balancer: [
+          "Балансировка трафика приложений",
+          "Application load balancing",
+        ],
+        management: [
+          "Система управления и мониторинга",
+          "Management & monitoring",
+        ],
+        firewall: [
+          "Межсетевые экраны и маршрутизаторы",
+          "Firewalls & routers",
+        ],
+        server: ["Серверное оборудование", "Server equipment"],
+        telephony: ["Телефония", "Telephony"],
+      };
+
+      const CATALOG_SUBGROUP_I18N = {
+        equipment: ["Оборудование", "Equipment"],
+        accessories: ["Аксессуары", "Accessories"],
+        support: ["Поддержка", "Support"],
+        certificates: ["Сертификаты", "Certificates"],
+        licenses: ["Лицензии", "Licenses"],
+      };
+
+      function catalogGroupDisplayName(groupOrCode, fallbackName) {
+        const code =
+          typeof groupOrCode === "string"
+            ? groupOrCode.toLowerCase()
+            : String((groupOrCode && groupOrCode.code) || "").toLowerCase();
+        const pair = code ? CATALOG_GROUP_I18N[code] : null;
+        if (pair) return catT(pair[0], pair[1]);
+        if (fallbackName) return fallbackName;
+        if (groupOrCode && typeof groupOrCode === "object") {
+          return groupOrCode.name || groupOrCode.code || "—";
+        }
+        return code || "—";
+      }
+
+      function catalogSubgroupDisplayName(subOrCode, groupOrCode, fallbackName) {
+        const subCode =
+          typeof subOrCode === "string"
+            ? subOrCode.toLowerCase()
+            : String((subOrCode && subOrCode.code) || "").toLowerCase();
+        const groupCode =
+          typeof groupOrCode === "string"
+            ? groupOrCode.toLowerCase()
+            : String((groupOrCode && groupOrCode.code) || "").toLowerCase();
+        if (subCode === "accessories" && groupCode === "switches") {
+          return catT("Аксессуры и оптика", "Accessories & optics");
+        }
+        const pair = subCode ? CATALOG_SUBGROUP_I18N[subCode] : null;
+        if (pair) return catT(pair[0], pair[1]);
+        if (fallbackName) return fallbackName;
+        if (subOrCode && typeof subOrCode === "object") {
+          return subOrCode.name || subOrCode.code || "—";
+        }
+        return subCode || "—";
+      }
+
+      function catalogProductGroupPath(p) {
+        if (!p) return "—";
+        const groupLabel = catalogGroupDisplayName(p.group_code, p.group_name);
+        const subLabel = catalogSubgroupDisplayName(
+          p.subgroup_code,
+          p.group_code,
+          p.subgroup_name
+        );
+        if (groupLabel !== "—" && subLabel !== "—") {
+          return groupLabel + " / " + subLabel;
+        }
+        return subLabel !== "—" ? subLabel : groupLabel;
+      }
+
+      function syncPageTitle() {
+        if (!elements.appPageTitle) return;
+        const isAdmin = getCurrentRoleId() === 1;
+        elements.appPageTitle.textContent = isAdmin
+          ? catT("Администрирование", "Administration")
+          : catT("Конфигуратор", "Configurator");
+        document.title = elements.appPageTitle.textContent;
+      }
+
+      function syncLoadingLabels() {
+        const text = catT("Загрузка…", "Loading…");
+        [
+          elements.userProductsLoading,
+          elements.adminProductsLoading,
+          elements.adminUsersLoading,
+          elements.adminCompaniesLoading,
+        ].forEach((el) => {
+          if (el) el.textContent = text;
+        });
+      }
+
       function applyUiLanguage(lang) {
         uiLang = lang === "en" ? "en" : "ru";
         localStorage.setItem(UI_LANG_STORAGE_KEY, uiLang);
         document.documentElement.lang = uiLang;
         const isEn = uiLang === "en";
         if (elements.langToggleBtn) elements.langToggleBtn.textContent = isEn ? "EN" : "RU";
-        if (elements.appPageTitle) {
-          elements.appPageTitle.textContent = isEn ? "Configurator" : "Конфигуратор";
-        }
         const productsTitle = document.getElementById("products-card-title");
         if (productsTitle) productsTitle.textContent = isEn ? "Products" : "Продукты";
         const confTitle = document.getElementById("configuration-card-title");
@@ -3089,7 +3194,7 @@
         syncCatalogFiltersVisibility();
         if (elements.headerBlurbAdmin) {
           elements.headerBlurbAdmin.textContent = isEn
-            ? "Manage companies, users, and the equipment catalog. Buyers build configurations in their own configurator view."
+            ? "Manage companies, users, and the equipment catalog."
             : "Здесь вы управляете организациями, пользователями и каталогом.";
         }
         const productsCardSubtitle = document.getElementById("products-card-subtitle");
@@ -3245,10 +3350,15 @@
         if (selectedHeading) {
           selectedHeading.textContent = catT("Выбранные товары", "Selected products");
         }
-        if (Array.isArray(products) && products.length > 0) {
+        updateCounter();
+        renderSelectedPills();
+        if (getCurrentRoleId() !== 1) {
+          renderCatalogNavigation();
+          if (Array.isArray(products) && products.length > 0) {
+            renderProducts();
+          }
+        } else if (Array.isArray(products) && products.length > 0) {
           renderProducts();
-          renderSelectedPills();
-          updateCounter();
         }
         requestAnimationFrame(syncProductsSectionHeight);
         if (elements.projectContactHelp) {
@@ -3277,6 +3387,152 @@
           elements.recentConfigurationsEmpty.textContent = isEn
             ? "Nothing here yet."
             : "Пока ничего нет.";
+        }
+        const foldSpecParams = document.getElementById("admin-fold-spec-params");
+        if (foldSpecParams) {
+          foldSpecParams.textContent = isEn
+            ? "Specification parameters"
+            : "Параметры характеристик";
+        }
+        const foldGroups = document.getElementById("admin-fold-groups");
+        if (foldGroups) {
+          foldGroups.textContent = isEn ? "Catalog groups" : "Группы каталога";
+        }
+        if (elements.adminNewGroupCode) {
+          elements.adminNewGroupCode.placeholder = isEn
+            ? "Code (latin)"
+            : "Код (латиница)";
+        }
+        if (elements.adminNewGroupName) {
+          elements.adminNewGroupName.placeholder = isEn
+            ? "Group name"
+            : "Название группы";
+        }
+        if (elements.adminAddGroupBtn) {
+          elements.adminAddGroupBtn.textContent = isEn
+            ? "Create group"
+            : "Создать группу";
+        }
+        if (elements.adminReclassifyBtn) {
+          elements.adminReclassifyBtn.textContent = isEn
+            ? "Reclassify products"
+            : "Переклассифицировать товары";
+        }
+        if (elements.adminSpecParamCode) {
+          elements.adminSpecParamCode.placeholder = isEn ? "code" : "код";
+        }
+        if (elements.adminSpecParamName) {
+          elements.adminSpecParamName.placeholder = isEn ? "Name" : "Название";
+        }
+        if (elements.adminSpecParamAddBtn) {
+          elements.adminSpecParamAddBtn.textContent = isEn
+            ? "Add parameter"
+            : "Добавить параметр";
+        }
+        const thSpecParamsCode = document.getElementById("th-spec-params-code");
+        if (thSpecParamsCode) thSpecParamsCode.textContent = isEn ? "Code" : "Код";
+        const thSpecParamsName = document.getElementById("th-spec-params-name");
+        if (thSpecParamsName) thSpecParamsName.textContent = isEn ? "Name" : "Название";
+        const thSpecParamsOrder = document.getElementById("th-spec-params-order");
+        if (thSpecParamsOrder) thSpecParamsOrder.textContent = isEn ? "Order" : "Порядок";
+        const thSpecParamsActive = document.getElementById("th-spec-params-active");
+        if (thSpecParamsActive) thSpecParamsActive.textContent = isEn ? "Active" : "Активен";
+        const thGroupsName = document.getElementById("th-groups-name");
+        if (thGroupsName) thGroupsName.textContent = isEn ? "Group" : "Группа";
+        const thGroupsSubgroups = document.getElementById("th-groups-subgroups");
+        if (thGroupsSubgroups) {
+          thGroupsSubgroups.textContent = isEn ? "Subgroups" : "Подгруппы";
+        }
+        const thGroupsCount = document.getElementById("th-groups-count");
+        if (thGroupsCount) thGroupsCount.textContent = isEn ? "Products" : "Товаров";
+        const thGroupsActions = document.getElementById("th-groups-actions");
+        if (thGroupsActions) thGroupsActions.textContent = isEn ? "Actions" : "Действия";
+        const thProductsId = document.getElementById("th-products-id");
+        if (thProductsId) thProductsId.textContent = "ID";
+        const thProductsGroup = document.getElementById("th-products-group");
+        if (thProductsGroup) thProductsGroup.textContent = isEn ? "Group" : "Группа";
+        const thUsersId = document.getElementById("th-users-id");
+        if (thUsersId) thUsersId.textContent = "ID";
+        const thUsersEmail = document.getElementById("th-users-email");
+        if (thUsersEmail) thUsersEmail.textContent = "Email";
+        const thUsersStatus = document.getElementById("th-users-status");
+        if (thUsersStatus) thUsersStatus.textContent = isEn ? "Status" : "Статус";
+        const thUsersActions = document.getElementById("th-users-actions");
+        if (thUsersActions) thUsersActions.textContent = isEn ? "Actions" : "Действия";
+        const thUsersComment = document.getElementById("th-users-comment");
+        if (thUsersComment) {
+          thUsersComment.textContent = isEn ? "Admin comment" : "Комментарий админа";
+        }
+        const thCompaniesId = document.getElementById("th-companies-id");
+        if (thCompaniesId) thCompaniesId.textContent = "ID";
+        if (elements.adminSaveCompanyBtn) {
+          elements.adminSaveCompanyBtn.textContent = isEn ? "Save" : "Сохранить";
+        }
+        if (elements.adminCancelCompanyEditBtn) {
+          elements.adminCancelCompanyEditBtn.textContent = isEn ? "Cancel" : "Отмена";
+        }
+        if (elements.productsSpecFilterClear) {
+          elements.productsSpecFilterClear.textContent = isEn ? "Clear" : "Сбросить";
+        }
+        if (elements.adminConfirmCancel) {
+          elements.adminConfirmCancel.textContent = isEn ? "Cancel" : "Отмена";
+        }
+        if (elements.adminConfirmOk) {
+          elements.adminConfirmOk.textContent = isEn ? "Delete" : "Удалить";
+        }
+        if (elements.adminProductDrawerClose) {
+          elements.adminProductDrawerClose.setAttribute(
+            "aria-label",
+            isEn ? "Close product card" : "Закрыть карточку"
+          );
+        }
+        if (elements.globalLoadingSpinner) {
+          elements.globalLoadingSpinner.setAttribute(
+            "aria-label",
+            isEn ? "Loading" : "Загрузка"
+          );
+        }
+        if (elements.adminCatalogGroupSelect) {
+          elements.adminCatalogGroupSelect.setAttribute(
+            "aria-label",
+            isEn ? "Catalog group" : "Группа каталога"
+          );
+        }
+        if (elements.adminCatalogSubgroupSelect) {
+          elements.adminCatalogSubgroupSelect.setAttribute(
+            "aria-label",
+            isEn ? "Catalog subgroup" : "Подгруппа каталога"
+          );
+        }
+        if (elements.adminUsersCompanySelect) {
+          elements.adminUsersCompanySelect.setAttribute(
+            "aria-label",
+            isEn ? "Company" : "Компания"
+          );
+        }
+        if (elements.projectContactHelp) {
+          elements.projectContactHelp.setAttribute(
+            "aria-label",
+            isEn ? "Help" : "Подсказка"
+          );
+        }
+        syncLoadingLabels();
+        syncPageTitle();
+        if (accessToken) {
+          const data = parseJwt(accessToken);
+          const roleId =
+            data && data.role_id != null ? Number(data.role_id) : null;
+          updateRoleBadge(roleId);
+        }
+        if (getCurrentRoleId() === 1) {
+          renderAdminCompaniesTable();
+          renderAdminUsersTable();
+          renderAdminSpecParametersTable();
+          renderAdminGroupsTable();
+          renderAdminProductsTable();
+          syncAdminProductDrawer();
+          populateAdminCatalogGroupSelect();
+          populateAdminCatalogSubgroupSelect();
         }
         if (getCurrentRoleId() !== 1 && accessToken) {
           void loadRecentConfigurations();
@@ -5431,7 +5687,7 @@
         el.appendChild(document.createTextNode(" / "));
         const groupBtn = document.createElement("button");
         groupBtn.type = "button";
-        groupBtn.textContent = group.name || group.code || "#" + group.id;
+        groupBtn.textContent = catalogGroupDisplayName(group);
         groupBtn.addEventListener("click", () => {
           catalogSubgroupId = null;
           productSearchTerm = "";
@@ -5447,7 +5703,7 @@
           if (sub) {
             el.appendChild(document.createTextNode(" / "));
             const span = document.createElement("span");
-            span.textContent = sub.name || sub.code;
+            span.textContent = catalogSubgroupDisplayName(sub, group);
             el.appendChild(span);
           }
         }
@@ -5476,7 +5732,7 @@
           card.className = "catalog-nav-card";
           const title = document.createElement("div");
           title.className = "catalog-nav-card-title";
-          title.textContent = group.name || group.code || "#" + group.id;
+          title.textContent = catalogGroupDisplayName(group);
           const meta = document.createElement("div");
           meta.className = "catalog-nav-card-meta";
           const visibleSubs = visibleCatalogSubgroups(group);
@@ -5530,7 +5786,7 @@
           card.className = "catalog-nav-card";
           const title = document.createElement("div");
           title.className = "catalog-nav-card-title";
-          title.textContent = sub.name || sub.code || "#" + sub.id;
+          title.textContent = catalogSubgroupDisplayName(sub, group);
           const meta = document.createElement("div");
           meta.className = "catalog-nav-card-meta";
           meta.textContent =
@@ -5597,7 +5853,7 @@
         catalogGroups.forEach((group) => {
           const opt = document.createElement("option");
           opt.value = String(group.id);
-          opt.textContent = group.name || group.code || "#" + group.id;
+          opt.textContent = catalogGroupDisplayName(group);
           sel.appendChild(opt);
         });
         if (prev && Array.from(sel.options).some((o) => o.value === prev)) {
@@ -5626,7 +5882,9 @@
               const opt = document.createElement("option");
               opt.value = String(sub.id);
               opt.textContent =
-                (g.name || g.code) + " / " + (sub.name || sub.code);
+                catalogGroupDisplayName(g) +
+                " / " +
+                catalogSubgroupDisplayName(sub, g);
               sel.appendChild(opt);
             });
           });
@@ -5634,7 +5892,7 @@
           visibleCatalogSubgroups(group).forEach((sub) => {
             const opt = document.createElement("option");
             opt.value = String(sub.id);
-            opt.textContent = sub.name || sub.code || "#" + sub.id;
+            opt.textContent = catalogSubgroupDisplayName(sub, group);
             sel.appendChild(opt);
           });
         }
@@ -5852,9 +6110,9 @@
       }
 
       function roleLabel(roleId) {
-        if (roleId === 1) return "Admin";
-        if (roleId === 2) return "User";
-        if (roleId === 3) return "Guest";
+        if (roleId === 1) return catT("Админ", "Admin");
+        if (roleId === 2) return catT("Пользователь", "User");
+        if (roleId === 3) return catT("Гость", "Guest");
         return String(roleId ?? "—");
       }
 
@@ -5983,7 +6241,8 @@
           if (!res.ok) {
             setCatalogStatus(
               "admin-companies-status",
-              (data && data.detail) || "Не удалось загрузить организации",
+              (data && data.detail) ||
+                catT("Не удалось загрузить организации", "Could not load companies"),
               "error"
             );
             return;
@@ -5999,7 +6258,10 @@
           console.error(e);
           setCatalogStatus(
             "admin-companies-status",
-            "Сеть: не удалось загрузить организации",
+            catT(
+              "Сеть: не удалось загрузить организации",
+              "Network: could not load companies"
+            ),
             "error"
           );
         } finally {
@@ -6073,7 +6335,8 @@
           if (!res.ok) {
             setCatalogStatus(
               "admin-users-status",
-              (data && data.detail) || "Не удалось загрузить пользователей",
+              (data && data.detail) ||
+                catT("Не удалось загрузить пользователей", "Could not load users"),
               "error"
             );
             return;
@@ -6282,7 +6545,7 @@
             sp.code || "—",
             sp.name || "—",
             String(sp.sort_order != null ? sp.sort_order : "—"),
-            sp.is_active ? catT("да", "yes") : catT("нет", "no"),
+            sp.is_active ? catT("Да", "Yes") : catT("Нет", "No"),
           ].forEach((text) => {
             const td = document.createElement("td");
             td.textContent = text;
@@ -6375,9 +6638,15 @@
         const id = c.id;
         if (
           !(await adminConfirmDelete(
-            "Удалить организацию \"" + (c.name || id) + "\" (id " + id + ")?",
+            catT(
+              'Удалить организацию "' + (c.name || id) + '" (id ' + id + ")?",
+              'Delete company "' + (c.name || id) + '" (id ' + id + ")?"
+            ),
             [
-              "Пользователи с этой организацией могут потерять доступ или данные — проверьте политику API.",
+              catT(
+                "Пользователи с этой организацией могут потерять доступ или данные — проверьте политику API.",
+                "Users in this company may lose access or data — check API policy."
+              ),
             ]
           ))
         ) {
@@ -6389,7 +6658,7 @@
           if (!res.ok) {
             setCatalogStatus(
               "admin-companies-status",
-              (data && data.detail) || "Ошибка удаления",
+              (data && data.detail) || catT("Ошибка удаления", "Delete failed"),
               "error"
             );
             return;
@@ -6445,7 +6714,7 @@
           if (!res.ok) {
             setCatalogStatus(
               "admin-companies-status",
-              (data && data.detail) || "Ошибка сохранения",
+              (data && data.detail) || catT("Ошибка сохранения", "Save failed"),
               "error"
             );
             return;
@@ -6487,7 +6756,7 @@
           if (!res.ok) {
             setCatalogStatus(
               "admin-companies-status",
-              (data && data.detail) || "Ошибка",
+              (data && data.detail) || catT("Ошибка", "Error"),
               "error"
             );
             return;
@@ -6605,10 +6874,7 @@
               ? String(p.product_category).trim()
               : "—"
           );
-          const groupLabel =
-            p.group_name && p.subgroup_name
-              ? p.group_name + " / " + p.subgroup_name
-              : p.subgroup_name || p.group_name || "—";
+          const groupLabel = catalogProductGroupPath(p);
           addCell(groupLabel, { className: "cell-wrap cell-muted" });
           addCell(p.product_kind || "equipment");
           addCell(truncateCellText(descText, 100), {
@@ -6707,7 +6973,8 @@
             const errEl = document.createElement("div");
             errEl.className = "status-text error";
             errEl.textContent =
-              (data && data.detail) || "Не удалось загрузить каталог.";
+              (data && data.detail) ||
+                catT("Не удалось загрузить каталог.", "Could not load catalog options.");
             host.appendChild(errEl);
             return;
           }
@@ -6716,7 +6983,7 @@
           host.innerHTML = "";
           const errEl = document.createElement("div");
           errEl.className = "status-text error";
-          errEl.textContent = "Сеть.";
+          errEl.textContent = catT("Сеть.", "Network error.");
           host.appendChild(errEl);
           return;
         }
@@ -6835,7 +7102,7 @@
               if (!res.ok) {
                 setCatalogStatus(
                   "admin-products-status",
-                  (j && j.detail) || "Ошибка модуля",
+                  (j && j.detail) || catT("Ошибка модуля", "Module error"),
                   "error"
                 );
                 return;
@@ -7105,7 +7372,7 @@
               if (!res.ok) {
                 setCatalogStatus(
                   "admin-products-status",
-                  (j && j.detail) || "Ошибка лицензии",
+                  (j && j.detail) || catT("Ошибка лицензии", "License error"),
                   "error"
                 );
                 return;
@@ -7358,8 +7625,10 @@
             .filter((n) => Number.isFinite(n));
           if (!parts.length) {
             return {
-              error:
+              error: catT(
                 "Отмечено ограничение скоростей: введите числа через запятую (например 1, 10).",
+                "Speed filter enabled: enter numbers separated by commas (e.g. 1, 10)."
+              ),
             };
           }
           out.push({ type: "filter", field: "speed", allowed: parts });
@@ -7367,14 +7636,14 @@
         if (chkMod) {
           const m = parseInt(modVal, 10);
           if (!Number.isFinite(m) || m < 0) {
-            return { error: "Макс. модулей в правилах: неотрицательное целое." };
+            return { error: catT("Макс. модулей в правилах: неотрицательное целое.", "Max modules in rules: non-negative integer.") };
           }
           out.push({ type: "limit", field: "modules", max: m });
         }
         if (chkLic) {
           const v = parseInt(licVal, 10);
           if (!Number.isFinite(v) || v < 0) {
-            return { error: "Встроенные AP в правилах: неотрицательное целое." };
+            return { error: catT("Встроенные AP в правилах: неотрицательное целое.", "Built-in AP in rules: non-negative integer.") };
           }
           out.push({ type: "license", included: v });
         }
@@ -7995,7 +8264,7 @@
           if (!res.ok) {
             setCatalogStatus(
               "admin-products-status",
-              (data && data.detail) || "Ошибка сохранения",
+              (data && data.detail) || catT("Ошибка сохранения", "Save failed"),
               "error"
             );
             return;
@@ -8026,7 +8295,7 @@
           if (!res.ok) {
             setCatalogStatus(
               "admin-products-status",
-              (data && data.detail) || "Ошибка создания",
+              (data && data.detail) || catT("Ошибка создания", "Create failed"),
               "error"
             );
             return;
@@ -8065,7 +8334,7 @@
           if (!res.ok) {
             setCatalogStatus(
               "admin-products-status",
-              (data && data.detail) || "Ошибка",
+              (data && data.detail) || catT("Ошибка", "Error"),
               "error"
             );
             return;
@@ -8165,7 +8434,7 @@
           if (!res.ok) {
             setCatalogStatus(
               "admin-products-status",
-              (data && data.detail) || "Ошибка",
+              (data && data.detail) || catT("Ошибка", "Error"),
               "error"
             );
             return;
@@ -8230,21 +8499,21 @@
       function updateRoleBadge(roleId) {
         if (roleId === 1) {
           elements.roleBadge.className = "status-badge role-admin";
-          elements.roleBadge.textContent = "Admin";
+          elements.roleBadge.textContent = catT("Админ", "Admin");
           return;
         }
         if (roleId === 2) {
           elements.roleBadge.className = "status-badge role-user";
-          elements.roleBadge.textContent = "User";
+          elements.roleBadge.textContent = catT("Пользователь", "User");
           return;
         }
         if (roleId === 3) {
           elements.roleBadge.className = "status-badge role-guest";
-          elements.roleBadge.textContent = "Guest";
+          elements.roleBadge.textContent = catT("Гость", "Guest");
           return;
         }
         elements.roleBadge.className = "status-badge role-anonymous";
-        elements.roleBadge.textContent = "Anonymous";
+        elements.roleBadge.textContent = catT("Аноним", "Anonymous");
       }
 
       function redirectToLogin() {
@@ -8275,11 +8544,7 @@
         const roleIdNumber = data && data.role_id != null ? Number(data.role_id) : null;
 
         const isAdmin = Number(roleId) === 1;
-        if (elements.appPageTitle) {
-          elements.appPageTitle.textContent = isAdmin
-            ? "Администрирование"
-            : "Конфигуратор";
-        }
+        syncPageTitle();
         if (elements.userMainStack) {
           elements.userMainStack.style.display = isAdmin ? "none" : "flex";
         }
@@ -8638,13 +8903,11 @@
 
           if (
             userCatalogGlobalSearchActive() &&
-            (p.group_name || p.subgroup_name)
+            (p.group_name || p.subgroup_name || p.group_code || p.subgroup_code)
           ) {
             const pathEl = document.createElement("div");
             pathEl.className = "product-catalog-path";
-            pathEl.textContent = [p.group_name, p.subgroup_name]
-              .filter(Boolean)
-              .join(" / ");
+            pathEl.textContent = catalogProductGroupPath(p);
             main.appendChild(pathEl);
           }
 

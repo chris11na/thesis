@@ -41,8 +41,8 @@ docker compose up --build
 
 ## CI
 
-<!-- Replace OWNER/REPO with your GitHub repository path -->
-![Backend CI](https://github.com/OWNER/REPO/actions/workflows/backend-ci.yml/badge.svg)
+![Backend CI](https://github.com/chris11na/thesis/actions/workflows/backend-ci.yml/badge.svg)
+![Frontend E2E](https://github.com/chris11na/thesis/actions/workflows/frontend-e2e.yml/badge.svg)
 
 GitHub Actions workflow:
 
