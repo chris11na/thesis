@@ -57,8 +57,8 @@ GitHub Actions workflow:
 
 Detailed manual + automated testing scenarios:
 
-- `TESTING.md`
-- Frontend Playwright e2e scaffold is in `frontend/tests/e2e`
+- `diploma/TESTING.md` (English; local copy under `diploma/`, not tracked in git)
+- Frontend Playwright e2e in `frontend/tests/e2e`
 
 ## Demo Script (3-5 min)
 
@@ -100,4 +100,4 @@ Use this order during defense:
   - Frontend: `http://localhost:8080`
   - Backend: `http://localhost:8000`
   - Swagger: `http://localhost:8000/docs`
-- One-page defense prompt: создай у себя локально файл `DEFENSE_CHEATSHEET.md` — он в `.gitignore` и **не попадает в коммиты** (можно скопировать структуру из `TESTING.md` / демо-сценария выше).
+- One-page defense prompt: create `DEFENSE_CHEATSHEET.md` locally (in `.gitignore`, not committed). You can reuse structure from `diploma/TESTING.md` or the demo script above.

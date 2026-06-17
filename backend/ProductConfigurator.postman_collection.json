@@ -2,132 +2,395 @@
   "info": {
     "name": "Product Configurator API",
     "_postman_id": "d9a0df2f-5ac6-47f9-98b7-86ecfd8561dc",
+    "description": "Import into Postman and set collection variable baseUrl (default http://127.0.0.1:8000).\n\nRun Auth → Login (User) or Login (Admin) first — access/refresh tokens are saved automatically.\nCreate Configuration (User) saves configurationId for export/delete requests.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Auth - Login",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/auth/login",
-          "host": [
-            "{{baseUrl}}"
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.access_token) pm.collectionVariables.set('accessToken', json.access_token);",
+                  "if (json.refresh_token) pm.collectionVariables.set('refreshToken', json.refresh_token);",
+                  "if (json.user_id != null) pm.collectionVariables.set('userId', String(json.user_id));"
+                ]
+              }
+            }
           ],
-          "path": [
-            "auth",
-            "login"
-          ]
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
         },
-        "body": {
-          "mode": "raw",
-          "raw": "{\"email\":\"admin@example.com\",\"password\":\"admin123\"}"
+        {
+          "name": "Login (User)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.access_token) pm.collectionVariables.set('accessToken', json.access_token);",
+                  "if (json.refresh_token) pm.collectionVariables.set('refreshToken', json.refresh_token);",
+                  "if (json.user_id != null) pm.collectionVariables.set('userId', String(json.user_id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"user123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Refresh",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.access_token) pm.collectionVariables.set('accessToken', json.access_token);",
+                  "if (json.refresh_token) pm.collectionVariables.set('refreshToken', json.refresh_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/refresh"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/logout"
+          }
         }
-      }
+      ]
     },
     {
-      "name": "Auth - Refresh",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
+      "name": "Products",
+      "item": [
+        {
+          "name": "List (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products?page=1&page_size=10&configurator_only=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "10" },
+                { "key": "configurator_only", "value": "true" }
+              ]
+            }
           }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/auth/refresh",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "auth",
-            "refresh"
-          ]
         },
-        "body": {
-          "mode": "raw",
-          "raw": "{\"refresh_token\":\"<REFRESH_TOKEN>\"}"
+        {
+          "name": "Configuration options (demo product 501)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/501/configuration-options"
+          }
         }
-      }
+      ]
     },
     {
-      "name": "Auth - Logout",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/auth/logout",
-          "host": [
-            "{{baseUrl}}"
+      "name": "Configurations",
+      "item": [
+        {
+          "name": "Create (structured + sales handoff)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const id = json.configuration_id != null ? json.configuration_id : json.id;",
+                  "if (id != null) pm.collectionVariables.set('configurationId', String(id));"
+                ]
+              }
+            }
           ],
-          "path": [
-            "auth",
-            "logout"
-          ]
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": {{userId}},\n  \"project_name\": \"Postman demo project\",\n  \"project_contact_name\": \"Demo Contact\",\n  \"project_contact_email\": \"user@example.com\",\n  \"project_notes\": \"Created from Postman collection\",\n  \"lines\": [\n    {\n      \"equipment_product_id\": 501,\n      \"target_ap_count\": 10,\n      \"addons\": []\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/configurations"
+          }
         },
-        "body": {
-          "mode": "raw",
-          "raw": "{\"refresh_token\":\"<REFRESH_TOKEN>\"}"
+        {
+          "name": "Create (legacy items)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": {{userId}},\n  \"items\": [501]\n}"
+            },
+            "url": "{{baseUrl}}/configurations"
+          }
+        },
+        {
+          "name": "My recent",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/configurations/me/recent?limit=3"
+          }
+        },
+        {
+          "name": "Export specification (XLSX)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/configurations/{{configurationId}}/specification.xlsx"
+          }
+        },
+        {
+          "name": "Export specification (CSV)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/configurations/{{configurationId}}/specification.csv"
+          }
         }
-      }
+      ]
     },
     {
-      "name": "Products - List",
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "{{baseUrl}}/products",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "products"
-          ]
-        }
-      }
-    },
-    {
-      "name": "Configurations - Create",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Submissions — list all",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/configurations/submissions"
           }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/configurations",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "configurations"
-          ]
         },
-        "body": {
-          "mode": "raw",
-          "raw": "{\"user_id\":1,\"items\":[501]}"
+        {
+          "name": "Submissions — search",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/configurations/submissions?q=postman",
+              "host": ["{{baseUrl}}"],
+              "path": ["configurations", "submissions"],
+              "query": [{ "key": "q", "value": "postman" }]
+            }
+          }
+        },
+        {
+          "name": "Submissions — filter by company",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/configurations/submissions?company_id=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["configurations", "submissions"],
+              "query": [{ "key": "company_id", "value": "1" }]
+            }
+          }
+        },
+        {
+          "name": "Submissions — last 30 days",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/configurations/submissions?since_days=30",
+              "host": ["{{baseUrl}}"],
+              "path": ["configurations", "submissions"],
+              "query": [{ "key": "since_days", "value": "30" }]
+            }
+          }
+        },
+        {
+          "name": "Delete configuration",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/configurations/{{configurationId}}"
+          }
+        },
+        {
+          "name": "Users — list",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users"
+          }
+        },
+        {
+          "name": "Users — pending count",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users/pending-count"
+          }
         }
-      }
+      ]
     }
   ],
   "variable": [
     {
       "key": "baseUrl",
       "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": "2"
+    },
+    {
+      "key": "configurationId",
+      "value": "1"
     }
   ]
 }
