@@ -1589,6 +1589,13 @@
         flex-wrap: wrap;
       }
 
+      .admin-submission-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+      }
+
       .admin-submission-notes {
         max-width: 180px;
         white-space: nowrap;
@@ -2692,13 +2699,48 @@
                 (sales handoff).
               </p>
               <div class="admin-above-table admin-above-table--compact">
-                <button
-                  type="button"
-                  class="secondary-btn"
-                  id="admin-submissions-refresh-btn"
-                >
-                  Обновить список
-                </button>
+                <div class="catalog-toolbar">
+                  <div class="catalog-toolbar-search">
+                    <input
+                      type="search"
+                      id="admin-submissions-search-input"
+                      placeholder="Поиск по проекту, пользователю, компании, ID (Enter)"
+                      autocomplete="off"
+                    />
+                  </div>
+                  <div class="catalog-toolbar-filters catalog-toolbar-filters--users">
+                    <select
+                      class="admin-select"
+                      id="admin-submissions-company-select"
+                      aria-label="Компания"
+                    ></select>
+                    <select
+                      class="admin-select"
+                      id="admin-submissions-period-select"
+                      aria-label="Период"
+                    >
+                      <option value="">За всё время</option>
+                      <option value="7">За 7 дней</option>
+                      <option value="30">За 30 дней</option>
+                      <option value="90">За 90 дней</option>
+                    </select>
+                    <button
+                      type="button"
+                      class="secondary-btn"
+                      id="admin-submissions-refresh-btn"
+                    >
+                      Обновить список
+                    </button>
+                    <button
+                      type="button"
+                      class="secondary-btn products-spec-filter-clear"
+                      id="admin-submissions-clear-filters-btn"
+                      hidden
+                    >
+                      Сбросить
+                    </button>
+                  </div>
+                </div>
                 <div id="admin-submissions-status" class="status-area"></div>
               </div>
               <div class="catalog-panel" id="admin-submissions-panel">
@@ -2722,6 +2764,7 @@
                         <th id="th-submissions-items">Позиций</th>
                         <th id="th-submissions-notes">Примечание</th>
                         <th id="th-submissions-export">Спецификация</th>
+                        <th id="th-submissions-actions">Действия</th>
                       </tr>
                     </thead>
                     <tbody id="admin-submissions-tbody"></tbody>
@@ -3049,6 +3092,18 @@
         adminUsersLoading: document.getElementById("admin-users-loading"),
         adminUsersTbody: document.getElementById("admin-users-tbody"),
         adminSubmissionsFold: document.getElementById("admin-submissions-fold"),
+        adminSubmissionsSearchInput: document.getElementById(
+          "admin-submissions-search-input"
+        ),
+        adminSubmissionsCompanySelect: document.getElementById(
+          "admin-submissions-company-select"
+        ),
+        adminSubmissionsPeriodSelect: document.getElementById(
+          "admin-submissions-period-select"
+        ),
+        adminSubmissionsClearFiltersBtn: document.getElementById(
+          "admin-submissions-clear-filters-btn"
+        ),
         adminSubmissionsRefreshBtn: document.getElementById(
           "admin-submissions-refresh-btn"
         ),
@@ -3313,6 +3368,19 @@
             ? "Refresh list"
             : "Обновить список";
         }
+        if (elements.adminSubmissionsSearchInput) {
+          elements.adminSubmissionsSearchInput.placeholder = isEn
+            ? "Search project, user, company, ID (Enter)"
+            : "Поиск по проекту, пользователю, компании, ID (Enter)";
+        }
+        if (elements.adminSubmissionsClearFiltersBtn) {
+          elements.adminSubmissionsClearFiltersBtn.textContent = isEn
+            ? "Clear filters"
+            : "Сбросить";
+        }
+        fillAdminSubmissionsCompanySelect();
+        syncAdminSubmissionsPeriodSelectLabels();
+        syncAdminSubmissionsClearFiltersBtn();
         const thSubmissionsDate = document.getElementById("th-submissions-date");
         if (thSubmissionsDate) {
           thSubmissionsDate.textContent = isEn ? "Submitted" : "Отправлено";
@@ -3344,6 +3412,10 @@
         const thSubmissionsExport = document.getElementById("th-submissions-export");
         if (thSubmissionsExport) {
           thSubmissionsExport.textContent = isEn ? "Specification" : "Спецификация";
+        }
+        const thSubmissionsActions = document.getElementById("th-submissions-actions");
+        if (thSubmissionsActions) {
+          thSubmissionsActions.textContent = isEn ? "Actions" : "Действия";
         }
         const foldCatalog = document.getElementById("admin-fold-catalog");
         if (foldCatalog) {
@@ -3458,6 +3530,9 @@
         }
         if (elements.adminUsersCompanySelect) {
           fillAdminUsersCompanySelect();
+        }
+        if (elements.adminSubmissionsCompanySelect) {
+          fillAdminSubmissionsCompanySelect();
         }
         if (getCurrentRoleId() === 1) {
           renderAdminCompaniesTable();
@@ -3919,6 +3994,7 @@
       let adminUsersPendingBadgeDismissed = false;
       let lastAdminUsersPendingCount = 0;
       let adminSubmissionsList = [];
+      let adminSubmissionsSearchTerm = "";
       let equipmentPickerProductId = null;
 
       function defaultLineState() {
@@ -6258,6 +6334,78 @@
         }
       }
 
+      function fillAdminSubmissionsCompanySelect() {
+        const sel = elements.adminSubmissionsCompanySelect;
+        if (!sel) return;
+        const prev = sel.value;
+        sel.innerHTML = "";
+        const allOpt = document.createElement("option");
+        allOpt.value = "";
+        allOpt.textContent = uiLang === "en" ? "All companies" : "Все компании";
+        sel.appendChild(allOpt);
+        companiesList.forEach((c) => {
+          const opt = document.createElement("option");
+          opt.value = String(c.id);
+          opt.textContent = c.name + " (" + c.domain + ")";
+          sel.appendChild(opt);
+        });
+        if (prev !== undefined && [...sel.options].some((o) => o.value === prev)) {
+          sel.value = prev;
+        }
+      }
+
+      function syncAdminSubmissionsPeriodSelectLabels() {
+        const sel = elements.adminSubmissionsPeriodSelect;
+        if (!sel || sel.options.length < 4) return;
+        const labels = uiLang === "en"
+          ? ["All time", "Last 7 days", "Last 30 days", "Last 90 days"]
+          : ["За всё время", "За 7 дней", "За 30 дней", "За 90 дней"];
+        [...sel.options].forEach((opt, idx) => {
+          if (labels[idx]) opt.textContent = labels[idx];
+        });
+      }
+
+      function adminSubmissionsFiltersActive() {
+        const company =
+          elements.adminSubmissionsCompanySelect &&
+          elements.adminSubmissionsCompanySelect.value;
+        const period =
+          elements.adminSubmissionsPeriodSelect &&
+          elements.adminSubmissionsPeriodSelect.value;
+        return Boolean(
+          (adminSubmissionsSearchTerm || "").trim() || company || period
+        );
+      }
+
+      function syncAdminSubmissionsClearFiltersBtn() {
+        if (!elements.adminSubmissionsClearFiltersBtn) return;
+        elements.adminSubmissionsClearFiltersBtn.hidden =
+          !adminSubmissionsFiltersActive();
+      }
+
+      function applyAdminSubmissionsSearch() {
+        adminSubmissionsSearchTerm = (
+          elements.adminSubmissionsSearchInput?.value || ""
+        ).trim();
+        syncAdminSubmissionsClearFiltersBtn();
+        void loadAdminSubmissions();
+      }
+
+      function clearAdminSubmissionsFilters() {
+        adminSubmissionsSearchTerm = "";
+        if (elements.adminSubmissionsSearchInput) {
+          elements.adminSubmissionsSearchInput.value = "";
+        }
+        if (elements.adminSubmissionsCompanySelect) {
+          elements.adminSubmissionsCompanySelect.value = "";
+        }
+        if (elements.adminSubmissionsPeriodSelect) {
+          elements.adminSubmissionsPeriodSelect.value = "";
+        }
+        syncAdminSubmissionsClearFiltersBtn();
+        void loadAdminSubmissions();
+      }
+
       function hideAdminCompanyEdit() {
         if (elements.adminCompanyEditWrap) {
           elements.adminCompanyEditWrap.style.display = "none";
@@ -6373,6 +6521,7 @@
           if (!search) {
             companiesList = adminCompaniesTableList;
             fillAdminUsersCompanySelect();
+            fillAdminSubmissionsCompanySelect();
           }
           renderAdminCompaniesTable();
           setCatalogStatus("admin-companies-status", "", "info");
@@ -6514,13 +6663,25 @@
       async function loadAdminSubmissions(options) {
         if (!ADMIN_SALES_SUBMISSIONS_UI || getCurrentRoleId() !== 1) return;
         const toastOnSuccess = options && options.toastOnSuccess;
+        const params = new URLSearchParams();
+        const search = (adminSubmissionsSearchTerm || "").trim();
+        if (search) params.set("q", search);
+        const companySel = elements.adminSubmissionsCompanySelect;
+        if (companySel && companySel.value) {
+          params.set("company_id", companySel.value);
+        }
+        const periodSel = elements.adminSubmissionsPeriodSelect;
+        if (periodSel && periodSel.value) {
+          params.set("since_days", periodSel.value);
+        }
+        const q = params.toString() ? "?" + params.toString() : "";
         setPanelLoading(
           elements.adminSubmissionsLoading,
           true,
           catT("Загрузка…", "Loading…")
         );
         try {
-          const res = await apiFetch("/configurations/submissions", {
+          const res = await apiFetch("/configurations/submissions" + q, {
             method: "GET",
             __globalLoading: false,
           });
@@ -6539,6 +6700,7 @@
           }
           adminSubmissionsList = Array.isArray(data) ? data : [];
           renderAdminSubmissionsTable();
+          syncAdminSubmissionsClearFiltersBtn();
           setCatalogStatus("admin-submissions-status", "", "info");
           if (toastOnSuccess) {
             showToast(
@@ -6565,11 +6727,13 @@
         if (!adminSubmissionsList.length) {
           const tr = document.createElement("tr");
           const td = document.createElement("td");
-          td.colSpan = 9;
-          td.textContent = catT(
-            "Заявок пока нет.",
-            "No sales submissions yet."
-          );
+          td.colSpan = 10;
+          td.textContent = adminSubmissionsFiltersActive()
+            ? catT(
+                "По вашему запросу заявок не найдено.",
+                "No submissions match your filters."
+              )
+            : catT("Заявок пока нет.", "No sales submissions yet.");
           tr.appendChild(td);
           tb.appendChild(tr);
           return;
@@ -6579,6 +6743,7 @@
           const project = row.project || {};
           const user = row.user || {};
           const company = row.company || {};
+          const configId = row.configuration_id;
 
           function addCell(text, className) {
             const td = document.createElement("td");
@@ -6587,7 +6752,7 @@
             tr.appendChild(td);
           }
 
-          addCell(String(row.configuration_id || "—"));
+          addCell(String(configId || "—"));
           addCell(formatAdminSubmissionWhen(row.submitted_at || row.created_at));
           addCell(truncateCellText(project.project_name, 48));
           addCell(
@@ -6614,11 +6779,70 @@
 
           const exportTd = document.createElement("td");
           exportTd.className = "admin-submissions-export-cell";
-          appendRecentConfigExportActions(exportTd, row.configuration_id);
+          appendRecentConfigExportActions(exportTd, configId);
           tr.appendChild(exportTd);
+
+          const actionsTd = document.createElement("td");
+          actionsTd.className = "admin-submission-actions";
+          const deleteBtn = document.createElement("button");
+          deleteBtn.type = "button";
+          deleteBtn.className = "ghost-btn";
+          deleteBtn.textContent = catT("Удалить", "Delete");
+          deleteBtn.addEventListener("click", () => {
+            void deleteAdminSubmission(row);
+          });
+          actionsTd.appendChild(deleteBtn);
+          tr.appendChild(actionsTd);
 
           tb.appendChild(tr);
         });
+      }
+
+      async function deleteAdminSubmission(row) {
+        const configId = Number(row && row.configuration_id);
+        if (!configId) return;
+        const projectName = ((row.project || {}).project_name || "").trim();
+        const label = projectName || "#" + configId;
+        if (
+          !(await adminConfirmDelete(
+            catT(
+              'Удалить заявку "' + label + '" (id ' + configId + ")?",
+              'Delete submission "' + label + '" (id ' + configId + ")?"
+            ),
+            [
+              catT(
+                "Конфигурация и строки спецификации будут удалены без восстановления.",
+                "The configuration and its specification lines will be permanently deleted."
+              ),
+            ]
+          ))
+        ) {
+          return;
+        }
+        try {
+          const res = await apiFetch(
+            "/configurations/" + encodeURIComponent(String(configId)),
+            { method: "DELETE", __globalLoading: false }
+          );
+          const data = await res.json().catch(() => null);
+          if (!res.ok) {
+            setCatalogStatus(
+              "admin-submissions-status",
+              (data && data.detail) || catT("Не удалось удалить", "Delete failed"),
+              "error"
+            );
+            return;
+          }
+          await loadAdminSubmissions();
+          showToast(catT("Заявка удалена", "Submission deleted"), "success");
+        } catch (e) {
+          console.error(e);
+          setCatalogStatus(
+            "admin-submissions-status",
+            catT("Сеть.", "Network error."),
+            "error"
+          );
+        }
       }
 
       function renderAdminUsersTable() {
@@ -10246,6 +10470,26 @@
         if (elements.adminSubmissionsRefreshBtn) {
           elements.adminSubmissionsRefreshBtn.addEventListener("click", () => {
             loadAdminSubmissions({ toastOnSuccess: true });
+          });
+        }
+        bindSearchInputOnEnter(elements.adminSubmissionsSearchInput, () => {
+          applyAdminSubmissionsSearch();
+        });
+        if (elements.adminSubmissionsCompanySelect) {
+          elements.adminSubmissionsCompanySelect.addEventListener("change", () => {
+            syncAdminSubmissionsClearFiltersBtn();
+            void loadAdminSubmissions();
+          });
+        }
+        if (elements.adminSubmissionsPeriodSelect) {
+          elements.adminSubmissionsPeriodSelect.addEventListener("change", () => {
+            syncAdminSubmissionsClearFiltersBtn();
+            void loadAdminSubmissions();
+          });
+        }
+        if (elements.adminSubmissionsClearFiltersBtn) {
+          elements.adminSubmissionsClearFiltersBtn.addEventListener("click", () => {
+            clearAdminSubmissionsFilters();
           });
         }
         syncAdminSubmissionsUiVisibility();

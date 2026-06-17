@@ -4,8 +4,11 @@ from fastapi import FastAPI, Request
 from sqladmin import Admin, ModelView
 from sqladmin.authentication import AuthenticationBackend
 from starlette.responses import RedirectResponse
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
+from app.core.security import verify_password
 from app.db.session import SessionLocal, engine
 from app.models import (
     Product,
@@ -36,20 +39,30 @@ class AdminAuth(AuthenticationBackend):
         # SQLAdmin login page typically sends "username" and "password".
         # We accept either "username" or "email" for convenience.
         username = form.get("username") or form.get("email")
-        password = form.get("password")  # password is mocked in this prototype
+        password = form.get("password")
 
-        if not username:
+        if not username or not password:
+            return False
+
+        email_norm = str(username).strip().lower()
+        if "@" not in email_norm:
             return False
 
         db: Session = SessionLocal()
         try:
-            user = db.query(User).filter(User.email == str(username)).first()
+            user = (
+                db.query(User)
+                .filter(func.lower(func.trim(User.email)) == email_norm)
+                .first()
+            )
             if not user:
                 return False
 
             # RBAC: only admin role can access /admin.
-            # seed.py uses role_id=1 for admin.
             if user.role_id != 1:
+                return False
+
+            if not verify_password(str(password), user.password_hash):
                 return False
 
             request.session.update(
@@ -74,7 +87,7 @@ def setup_admin(app: FastAPI) -> None:
     admin = Admin(
         app,
         engine=engine,
-        authentication_backend=AdminAuth(secret_key="sqladmin-dev-secret"),
+        authentication_backend=AdminAuth(secret_key=settings.jwt_secret),
         # mount point is /admin by default
         title="Product Configurator Admin",
     )

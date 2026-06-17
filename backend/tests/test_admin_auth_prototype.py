@@ -16,11 +16,7 @@ class DummyRequest:
         return self._form_data
 
 
-def test_admin_auth_accepts_wrong_password_for_admin_email() -> None:
-    """
-    Current prototype behavior:
-    Admin SQLAdmin login checks email + role only and ignores password.
-    """
+def test_admin_auth_rejects_wrong_password_for_admin_email() -> None:
     db = SessionLocal()
     try:
         seed_initial_data(db)
@@ -37,16 +33,33 @@ def test_admin_auth_accepts_wrong_password_for_admin_email() -> None:
 
     ok = asyncio.run(backend.login(request))
 
+    assert ok is False
+    assert request.session.get("admin") is None
+
+
+def test_admin_auth_accepts_valid_admin_credentials() -> None:
+    db = SessionLocal()
+    try:
+        seed_initial_data(db)
+    finally:
+        db.close()
+
+    backend = AdminAuth(secret_key="test-secret")
+    request = DummyRequest(
+        {
+            "username": "admin@example.com",
+            "password": "admin123",
+        }
+    )
+
+    ok = asyncio.run(backend.login(request))
+
     assert ok is True
     assert request.session.get("admin") is True
     assert request.session.get("admin_user_id") == 1
 
 
-def test_admin_auth_rejects_non_admin_even_with_any_password() -> None:
-    """
-    Control check:
-    Non-admin users are denied by role gate regardless of password value.
-    """
+def test_admin_auth_rejects_non_admin_even_with_valid_password() -> None:
     db = SessionLocal()
     try:
         seed_initial_data(db)
@@ -57,7 +70,7 @@ def test_admin_auth_rejects_non_admin_even_with_any_password() -> None:
     request = DummyRequest(
         {
             "username": "user@example.com",
-            "password": "any-password",
+            "password": "user123",
         }
     )
 
@@ -67,3 +80,18 @@ def test_admin_auth_rejects_non_admin_even_with_any_password() -> None:
     assert request.session.get("admin") is None
     assert request.session.get("admin_user_id") is None
 
+
+def test_admin_auth_rejects_missing_password() -> None:
+    db = SessionLocal()
+    try:
+        seed_initial_data(db)
+    finally:
+        db.close()
+
+    backend = AdminAuth(secret_key="test-secret")
+    request = DummyRequest({"username": "admin@example.com"})
+
+    ok = asyncio.run(backend.login(request))
+
+    assert ok is False
+    assert request.session.get("admin") is None

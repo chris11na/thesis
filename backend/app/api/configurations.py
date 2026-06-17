@@ -1,9 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user_claims, require_roles
@@ -590,16 +591,54 @@ def export_configuration_specification_csv(
 
 @router.get("/submissions")
 def list_sales_submissions(
+    company_id: Optional[int] = Query(None, ge=1),
+    user_id: Optional[int] = Query(None, ge=1),
+    since_days: Optional[int] = Query(
+        None,
+        ge=1,
+        le=365,
+        description="Only submissions within the last N days",
+    ),
+    q: str | None = Query(
+        None,
+        description="Search by project, user, company, contact, notes, or configuration id",
+    ),
     db: Session = Depends(get_db),
     _: dict = Depends(require_roles(1)),
 ):
-    rows = (
+    query = (
         db.query(Configuration, User, Company)
         .join(User, User.id == Configuration.user_id)
         .join(Company, Company.id == User.company_id)
         .filter(Configuration.submitted_to_sales == True)  # noqa: E712
-        .order_by(Configuration.submitted_at.desc(), Configuration.id.desc())
-        .all()
+    )
+    if company_id is not None:
+        query = query.filter(Company.id == company_id)
+    if user_id is not None:
+        query = query.filter(User.id == user_id)
+    if since_days is not None:
+        cutoff = utc_now_naive() - timedelta(days=since_days)
+        query = query.filter(Configuration.submitted_at >= cutoff)
+
+    search = (q or "").strip().lower()
+    if search:
+        like = f"%{search}%"
+        conds = [
+            func.lower(func.coalesce(Configuration.project_name, "")).like(like),
+            func.lower(func.coalesce(Configuration.project_contact_name, "")).like(like),
+            func.lower(func.coalesce(Configuration.project_contact_email, "")).like(like),
+            func.lower(func.coalesce(Configuration.project_notes, "")).like(like),
+            func.lower(User.name).like(like),
+            func.lower(User.email).like(like),
+            func.lower(Company.name).like(like),
+            func.lower(func.coalesce(Company.domain, "")).like(like),
+        ]
+        if search.isdigit():
+            conds.append(Configuration.id == int(search))
+        query = query.filter(or_(*conds))
+
+    rows = (
+        query.order_by(Configuration.submitted_at.desc(), Configuration.id.desc()).all()
     )
 
     out = []
@@ -635,3 +674,22 @@ def list_sales_submissions(
         )
 
     return out
+
+
+@router.delete("/{configuration_id}")
+def delete_configuration(
+    configuration_id: int,
+    db: Session = Depends(get_db),
+    _: dict = Depends(require_roles(1)),
+):
+    """Admin-only: remove a stored configuration and its line items."""
+    conf = db.query(Configuration).filter(Configuration.id == configuration_id).first()
+    if not conf:
+        raise HTTPException(status_code=404, detail="Configuration not found")
+
+    db.query(ConfigurationItem).filter(
+        ConfigurationItem.configuration_id == configuration_id
+    ).delete(synchronize_session=False)
+    db.delete(conf)
+    db.commit()
+    return {"ok": True, "deleted_configuration_id": configuration_id}

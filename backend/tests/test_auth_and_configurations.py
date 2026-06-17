@@ -1002,3 +1002,113 @@ def test_admin_can_manage_spec_parameters_and_product_spec_values() -> None:
     assert free_delete.status_code == 200
 
     assert client.delete(f"/products/{pid}", headers=headers).status_code == 200
+
+
+def _create_sales_submission(
+    *,
+    project_name: str = "Test submission",
+    project_notes: str | None = None,
+) -> dict:
+    utok = _user_token()
+    payload = {
+        "user_id": 2,
+        "project_name": project_name,
+        "project_contact_name": "Alice Integrator",
+        "project_contact_email": "alice@example.com",
+        "lines": [
+            {
+                "equipment_product_id": 501,
+                "target_ap_count": 10,
+                "addons": [],
+            }
+        ],
+    }
+    if project_notes is not None:
+        payload["project_notes"] = project_notes
+    create = client.post(
+        "/configurations",
+        json=payload,
+        headers={"Authorization": f"Bearer {utok}"},
+    )
+    assert create.status_code == 200, create.text
+    return create.json()
+
+
+def test_admin_can_search_submissions_by_project_name() -> None:
+    body = _create_sales_submission(project_name="Unique Airport Wifi Quote")
+    ah = _admin_headers()
+    found = client.get(
+        "/configurations/submissions",
+        params={"q": "airport wifi"},
+        headers=ah,
+    )
+    assert found.status_code == 200, found.text
+    rows = found.json()
+    assert any(r.get("configuration_id") == body.get("configuration_id") for r in rows)
+
+    missing = client.get(
+        "/configurations/submissions",
+        params={"q": "definitely-not-a-project-name-xyz"},
+        headers=ah,
+    )
+    assert missing.status_code == 200, missing.text
+    assert not any(
+        r.get("configuration_id") == body.get("configuration_id") for r in missing.json()
+    )
+
+
+def test_admin_can_filter_submissions_by_company() -> None:
+    body = _create_sales_submission(project_name="Company filter submission")
+    ah = _admin_headers()
+    all_rows = client.get("/configurations/submissions", headers=ah)
+    assert all_rows.status_code == 200, all_rows.text
+    row = next(
+        x for x in all_rows.json() if x.get("configuration_id") == body.get("configuration_id")
+    )
+    company_id = row["company"]["id"]
+
+    filtered = client.get(
+        "/configurations/submissions",
+        params={"company_id": company_id},
+        headers=ah,
+    )
+    assert filtered.status_code == 200, filtered.text
+    assert any(
+        r.get("configuration_id") == body.get("configuration_id") for r in filtered.json()
+    )
+
+    other_company = 99999 if company_id != 99999 else 99998
+    empty = client.get(
+        "/configurations/submissions",
+        params={"company_id": other_company},
+        headers=ah,
+    )
+    assert empty.status_code == 200, empty.text
+    assert not any(
+        r.get("configuration_id") == body.get("configuration_id") for r in empty.json()
+    )
+
+
+def test_admin_can_delete_submission() -> None:
+    body = _create_sales_submission(project_name="Delete me submission")
+    config_id = body["configuration_id"]
+    ah = _admin_headers()
+
+    deleted = client.delete(f"/configurations/{config_id}", headers=ah)
+    assert deleted.status_code == 200, deleted.text
+    assert deleted.json().get("deleted_configuration_id") == config_id
+
+    submissions = client.get("/configurations/submissions", headers=ah)
+    assert submissions.status_code == 200, submissions.text
+    assert not any(r.get("configuration_id") == config_id for r in submissions.json())
+
+
+def test_non_admin_cannot_delete_submission() -> None:
+    body = _create_sales_submission(project_name="Protected submission")
+    config_id = body["configuration_id"]
+    tok = _user_token()
+    denied = client.delete(
+        f"/configurations/{config_id}",
+        headers={"Authorization": f"Bearer {tok}"},
+    )
+    assert denied.status_code == 403
