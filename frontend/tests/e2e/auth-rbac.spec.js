@@ -21,14 +21,14 @@ test.describe("Frontend auth and RBAC", () => {
 
   test("login as admin shows admin controls", async ({ page }) => {
     await login(page, "admin@example.com", "admin123");
-    await expect(page.locator("#role-badge")).toHaveText("Admin");
+    await expect(page.locator("#role-badge")).toHaveClass(/role-admin/);
     await expect(page.locator("#admin-catalog-block")).toBeVisible();
     await expect(page.locator("#user-configurator-layout")).toBeHidden();
   });
 
   test("login as user hides admin-only block", async ({ page }) => {
     await login(page, "user@example.com", "user123");
-    await expect(page.locator("#role-badge")).toHaveText("User");
+    await expect(page.locator("#role-badge")).toHaveClass(/role-user/);
     await expect(page.locator("#admin-catalog-block")).toBeHidden();
     await expect(page.locator("#user-configurator-layout")).toBeVisible();
   });

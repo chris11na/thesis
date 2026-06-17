@@ -1584,6 +1584,18 @@
         gap: 6px;
       }
 
+      .admin-submissions-export-cell .recent-config-export-actions {
+        margin-top: 0;
+        flex-wrap: wrap;
+      }
+
+      .admin-submission-notes {
+        max-width: 180px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
       .admin-fold-summary::-webkit-details-marker {
         display: none;
       }
@@ -2670,6 +2682,55 @@
             </div>
           </details>
 
+          <details class="admin-fold" id="admin-submissions-fold" open>
+            <summary class="admin-fold-summary" id="admin-fold-submissions">
+              Заявки в отдел продаж
+            </summary>
+            <div class="admin-fold-body">
+              <p class="field-description" id="admin-submissions-help">
+                Конфигурации, отправленные пользователями с указанным названием проекта
+                (sales handoff).
+              </p>
+              <div class="admin-above-table admin-above-table--compact">
+                <button
+                  type="button"
+                  class="secondary-btn"
+                  id="admin-submissions-refresh-btn"
+                >
+                  Обновить список
+                </button>
+                <div id="admin-submissions-status" class="status-area"></div>
+              </div>
+              <div class="catalog-panel" id="admin-submissions-panel">
+                <div
+                  class="catalog-panel-loading-overlay"
+                  id="admin-submissions-loading"
+                  hidden
+                >
+                  Загрузка…
+                </div>
+                <div class="admin-table-scroll admin-table-scroll--flat">
+                  <table class="admin-table" id="admin-submissions-table">
+                    <thead>
+                      <tr>
+                        <th id="th-submissions-id">ID</th>
+                        <th id="th-submissions-date">Отправлено</th>
+                        <th id="th-submissions-project">Проект</th>
+                        <th id="th-submissions-user">Пользователь</th>
+                        <th id="th-submissions-company">Компания</th>
+                        <th id="th-submissions-contact">Контакт</th>
+                        <th id="th-submissions-items">Позиций</th>
+                        <th id="th-submissions-notes">Примечание</th>
+                        <th id="th-submissions-export">Спецификация</th>
+                      </tr>
+                    </thead>
+                    <tbody id="admin-submissions-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </details>
+
           <details class="admin-fold">
             <summary class="admin-fold-summary" id="admin-fold-groups">Группы каталога</summary>
             <div class="admin-fold-body">
@@ -2851,6 +2912,9 @@
     <script>
       // Simple frontend prototype, comments in English
 
+      /** Set false to hide admin sales submissions panel (defense / demo toggle). */
+      const ADMIN_SALES_SUBMISSIONS_UI = true;
+
       const API_BASE = window.APP_API_BASE || "https://thesis-zqvx.onrender.com";
       const UI_LANG_STORAGE_KEY = "ui_lang";
 
@@ -2984,6 +3048,12 @@
         adminUsersPendingBadge: document.getElementById("admin-users-pending-badge"),
         adminUsersLoading: document.getElementById("admin-users-loading"),
         adminUsersTbody: document.getElementById("admin-users-tbody"),
+        adminSubmissionsFold: document.getElementById("admin-submissions-fold"),
+        adminSubmissionsRefreshBtn: document.getElementById(
+          "admin-submissions-refresh-btn"
+        ),
+        adminSubmissionsLoading: document.getElementById("admin-submissions-loading"),
+        adminSubmissionsTbody: document.getElementById("admin-submissions-tbody"),
         adminSpecParamsTbody: document.getElementById("admin-spec-params-tbody"),
         adminSpecParamCode: document.getElementById("admin-spec-param-code"),
         adminSpecParamName: document.getElementById("admin-spec-param-name"),
@@ -3226,6 +3296,55 @@
         if (foldUsersLabel) {
           foldUsersLabel.textContent = isEn ? "Users" : "Пользователи";
         }
+        const foldSubmissions = document.getElementById("admin-fold-submissions");
+        if (foldSubmissions) {
+          foldSubmissions.textContent = isEn
+            ? "Sales submissions"
+            : "Заявки в отдел продаж";
+        }
+        const adminSubmissionsHelp = document.getElementById("admin-submissions-help");
+        if (adminSubmissionsHelp) {
+          adminSubmissionsHelp.textContent = isEn
+            ? "Configurations submitted by users with a project name (sales handoff)."
+            : "Конфигурации, отправленные пользователями с указанным названием проекта (sales handoff).";
+        }
+        if (elements.adminSubmissionsRefreshBtn) {
+          elements.adminSubmissionsRefreshBtn.textContent = isEn
+            ? "Refresh list"
+            : "Обновить список";
+        }
+        const thSubmissionsDate = document.getElementById("th-submissions-date");
+        if (thSubmissionsDate) {
+          thSubmissionsDate.textContent = isEn ? "Submitted" : "Отправлено";
+        }
+        const thSubmissionsProject = document.getElementById("th-submissions-project");
+        if (thSubmissionsProject) {
+          thSubmissionsProject.textContent = isEn ? "Project" : "Проект";
+        }
+        const thSubmissionsUser = document.getElementById("th-submissions-user");
+        if (thSubmissionsUser) {
+          thSubmissionsUser.textContent = isEn ? "User" : "Пользователь";
+        }
+        const thSubmissionsCompany = document.getElementById("th-submissions-company");
+        if (thSubmissionsCompany) {
+          thSubmissionsCompany.textContent = isEn ? "Company" : "Компания";
+        }
+        const thSubmissionsContact = document.getElementById("th-submissions-contact");
+        if (thSubmissionsContact) {
+          thSubmissionsContact.textContent = isEn ? "Contact" : "Контакт";
+        }
+        const thSubmissionsItems = document.getElementById("th-submissions-items");
+        if (thSubmissionsItems) {
+          thSubmissionsItems.textContent = isEn ? "Lines" : "Позиций";
+        }
+        const thSubmissionsNotes = document.getElementById("th-submissions-notes");
+        if (thSubmissionsNotes) {
+          thSubmissionsNotes.textContent = isEn ? "Note" : "Примечание";
+        }
+        const thSubmissionsExport = document.getElementById("th-submissions-export");
+        if (thSubmissionsExport) {
+          thSubmissionsExport.textContent = isEn ? "Specification" : "Спецификация";
+        }
         const foldCatalog = document.getElementById("admin-fold-catalog");
         if (foldCatalog) {
           foldCatalog.textContent = isEn
@@ -3343,6 +3462,7 @@
         if (getCurrentRoleId() === 1) {
           renderAdminCompaniesTable();
           renderAdminProductsTable();
+          renderAdminSubmissionsTable();
           syncAdminProductDrawer();
           refreshAdminProductUserPreview();
         }
@@ -3527,6 +3647,7 @@
         if (getCurrentRoleId() === 1) {
           renderAdminCompaniesTable();
           renderAdminUsersTable();
+          renderAdminSubmissionsTable();
           renderAdminSpecParametersTable();
           renderAdminGroupsTable();
           renderAdminProductsTable();
@@ -3797,6 +3918,7 @@
       let adminUsersPendingCount = 0;
       let adminUsersPendingBadgeDismissed = false;
       let lastAdminUsersPendingCount = 0;
+      let adminSubmissionsList = [];
       let equipmentPickerProductId = null;
 
       function defaultLineState() {
@@ -6370,6 +6492,135 @@
         void loadAdminUsers();
       }
 
+      function syncAdminSubmissionsUiVisibility() {
+        if (!elements.adminSubmissionsFold) return;
+        elements.adminSubmissionsFold.hidden = !ADMIN_SALES_SUBMISSIONS_UI;
+      }
+
+      function formatAdminSubmissionWhen(value) {
+        const text = value == null ? "" : String(value).trim();
+        if (!text) return "—";
+        return text.replace("T", " ").replace(/\+.*$/, "");
+      }
+
+      function formatAdminSubmissionContact(project) {
+        const p = project && typeof project === "object" ? project : {};
+        const name = (p.project_contact_name || "").trim();
+        const email = (p.project_contact_email || "").trim();
+        if (name && email) return name + " · " + email;
+        return name || email || "—";
+      }
+
+      async function loadAdminSubmissions(options) {
+        if (!ADMIN_SALES_SUBMISSIONS_UI || getCurrentRoleId() !== 1) return;
+        const toastOnSuccess = options && options.toastOnSuccess;
+        setPanelLoading(
+          elements.adminSubmissionsLoading,
+          true,
+          catT("Загрузка…", "Loading…")
+        );
+        try {
+          const res = await apiFetch("/configurations/submissions", {
+            method: "GET",
+            __globalLoading: false,
+          });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) {
+            setCatalogStatus(
+              "admin-submissions-status",
+              (data && data.detail) ||
+                catT(
+                  "Не удалось загрузить заявки",
+                  "Could not load sales submissions"
+                ),
+              "error"
+            );
+            return;
+          }
+          adminSubmissionsList = Array.isArray(data) ? data : [];
+          renderAdminSubmissionsTable();
+          setCatalogStatus("admin-submissions-status", "", "info");
+          if (toastOnSuccess) {
+            showToast(
+              catT("Список заявок обновлён", "Submissions list updated"),
+              "success"
+            );
+          }
+        } catch (e) {
+          console.error(e);
+          setCatalogStatus(
+            "admin-submissions-status",
+            catT("Сеть.", "Network error."),
+            "error"
+          );
+        } finally {
+          setPanelLoading(elements.adminSubmissionsLoading, false);
+        }
+      }
+
+      function renderAdminSubmissionsTable() {
+        const tb = elements.adminSubmissionsTbody;
+        if (!tb) return;
+        tb.innerHTML = "";
+        if (!adminSubmissionsList.length) {
+          const tr = document.createElement("tr");
+          const td = document.createElement("td");
+          td.colSpan = 9;
+          td.textContent = catT(
+            "Заявок пока нет.",
+            "No sales submissions yet."
+          );
+          tr.appendChild(td);
+          tb.appendChild(tr);
+          return;
+        }
+        adminSubmissionsList.forEach((row) => {
+          const tr = document.createElement("tr");
+          const project = row.project || {};
+          const user = row.user || {};
+          const company = row.company || {};
+
+          function addCell(text, className) {
+            const td = document.createElement("td");
+            if (className) td.className = className;
+            td.textContent = text;
+            tr.appendChild(td);
+          }
+
+          addCell(String(row.configuration_id || "—"));
+          addCell(formatAdminSubmissionWhen(row.submitted_at || row.created_at));
+          addCell(truncateCellText(project.project_name, 48));
+          addCell(
+            truncateCellText(
+              (user.name || "—") +
+                (user.email ? " · " + user.email : ""),
+              56
+            )
+          );
+          addCell(truncateCellText(company.name || "—", 32));
+          addCell(truncateCellText(formatAdminSubmissionContact(project), 48));
+
+          const itemsTd = document.createElement("td");
+          itemsTd.textContent =
+            row.items_count != null ? String(row.items_count) : "—";
+          tr.appendChild(itemsTd);
+
+          const notesTd = document.createElement("td");
+          notesTd.className = "admin-submission-notes";
+          const notes = (project.project_notes || "").trim();
+          notesTd.textContent = notes ? truncateCellText(notes, 80) : "—";
+          if (notes) notesTd.title = notes;
+          tr.appendChild(notesTd);
+
+          const exportTd = document.createElement("td");
+          exportTd.className = "admin-submissions-export-cell";
+          appendRecentConfigExportActions(exportTd, row.configuration_id);
+          tr.appendChild(exportTd);
+
+          tb.appendChild(tr);
+        });
+      }
+
       function renderAdminUsersTable() {
         const tb = elements.adminUsersTbody;
         if (!tb) return;
@@ -8565,10 +8816,12 @@
         }
         updateRoleBadge(roleIdNumber);
         if (Number(roleId) === 1) {
+          syncAdminSubmissionsUiVisibility();
           (async () => {
             await loadAdminCompanies();
             await refreshAdminUsersPendingCount();
             await loadAdminUsers();
+            await loadAdminSubmissions();
           })();
         }
 
@@ -9990,6 +10243,12 @@
             loadAdminUsers({ toastOnSuccess: true });
           });
         }
+        if (elements.adminSubmissionsRefreshBtn) {
+          elements.adminSubmissionsRefreshBtn.addEventListener("click", () => {
+            loadAdminSubmissions({ toastOnSuccess: true });
+          });
+        }
+        syncAdminSubmissionsUiVisibility();
         if (elements.adminUsersFold) {
           elements.adminUsersFold.addEventListener("toggle", () => {
             if (elements.adminUsersFold.open) {
