@@ -138,14 +138,30 @@ async function pickWifiControllerProduct(page) {
 
   const controller = page
     .locator("#products-list .product-item")
-    .filter({ hasText: /контроллер|controller|VNC-/i })
+    .filter({
+      has: page.locator(".product-name", { hasText: /^VNC-(2000|3000)$/ }),
+    })
     .first();
   await expect(controller).toBeVisible({ timeout: 20_000 });
-  await controller.click();
 
-  await expect(wifiAddonPanel(page).locator("input[type='number']").first()).toBeVisible({
-    timeout: 15_000,
+  const addonsLoad = page.waitForResponse(
+    (response) =>
+      response.url().includes("/compatible-addons") &&
+      response.request().method() === "GET" &&
+      response.ok(),
+    { timeout: 20_000 }
+  );
+  await controller.click();
+  await expect(page.locator("#equipment-picker-overlay")).toBeVisible({
+    timeout: 10_000,
   });
+  await addonsLoad;
+
+  await expect(
+    page
+      .locator("#equipment-picker-overlay .equipment-addon-panel input[type='number']")
+      .first()
+  ).toBeVisible({ timeout: 15_000 });
 }
 
 async function submitConfigurationWithProject(page, projectName) {

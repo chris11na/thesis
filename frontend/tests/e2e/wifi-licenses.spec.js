@@ -6,7 +6,8 @@ test.describe("Wi-Fi controller license picker", () => {
     await loginAsUser(page);
     await pickWifiControllerProduct(page);
 
-    const pillCountBefore = await page.locator("#selected-items-pills .pill").count();
+    const pill = page.locator("#selected-items-pills .pill").first();
+    await expect(pill).toBeVisible();
 
     const panel = wifiAddonPanel(page);
     const apInput = panel.locator("input[type='number']").first();
@@ -22,12 +23,7 @@ test.describe("Wi-Fi controller license picker", () => {
     await panel.getByRole("button", { name: /подобрать|suggest/i }).click();
     await suggestLoad;
 
-    await expect(page.locator("#selected-items-pills .pill")).not.toHaveCount(
-      pillCountBefore,
-      { timeout: 15_000 }
-    );
-    expect(await page.locator("#selected-items-pills .pill").count()).toBeGreaterThan(
-      pillCountBefore
-    );
+    await expect(pill).toContainText(/32/, { timeout: 15_000 });
+    await expect(pill).toContainText(/×\s*1|×1|pack x/i);
   });
 });

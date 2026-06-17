@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from sqlalchemy.orm import Session
 
 from app.models.equipment_group import EquipmentGroup
 from app.models.equipment_subgroup import EquipmentSubgroup
+from app.models.license import License
 from app.models.product import Product
 from app.models.spec_parameter import SpecParameter
 from app.services.equipment_catalog_loader import _set_spec_value
@@ -25,6 +27,17 @@ from app.services.wifi_equipment_parser import (
 WIFI_SUPPORT_SPEC_PARAMETERS: list[dict[str, Any]] = [
     {"code": "support_tier", "name": "Тип поддержки", "sort_order": 10},
 ]
+
+_BUILTIN_AP_RE = re.compile(
+    r"(\d+)\s+точ(?:ек|ки|ка)\s+доступа\s+по-умолчанию",
+    re.IGNORECASE,
+)
+
+_WIFI_LICENSE_PACKS: tuple[tuple[int, str], ...] = (
+    (16, "AP licenses, pack x16"),
+    (32, "AP licenses, pack x32"),
+    (128, "AP licenses, pack x128"),
+)
 
 
 def _ensure_parameters(db: Session, metas: list[dict[str, Any]]) -> dict[str, int]:
@@ -108,3 +121,48 @@ def refresh_wifi_spec_values(db: Session) -> int:
 
     db.flush()
     return updated
+
+
+def seed_wifi_controller_license_packs(db: Session) -> int:
+    """Attach discrete license pack rows to Wi-Fi controller products from catalog."""
+    created = 0
+    wifi_ids = _wifi_product_ids(db)
+    if not wifi_ids:
+        return 0
+
+    for product in db.query(Product).filter(Product.id.in_(wifi_ids)).all():
+        meta = parse_catalog_meta(product) or {}
+        section = str(meta.get("section_title") or "")
+        parsed = parse_wifi_equipment_product(
+            name=product.name or "",
+            description=product.description or "",
+            product_category=(product.product_category or "").upper(),
+            section_title=section,
+        )
+        if parsed.get("wifi_device_type") != "controller":
+            continue
+
+        if product.built_in_license_units is None:
+            match = _BUILTIN_AP_RE.search(product.description or "")
+            if match:
+                product.built_in_license_units = int(match.group(1))
+
+        has_licenses = (
+            db.query(License.id).filter(License.product_id == product.id).first()
+            is not None
+        )
+        if has_licenses:
+            continue
+
+        for units, name in _WIFI_LICENSE_PACKS:
+            db.add(
+                License(
+                    name=name,
+                    product_id=product.id,
+                    units_per_pack=units,
+                )
+            )
+            created += 1
+
+    db.flush()
+    return created

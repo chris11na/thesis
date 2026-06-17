@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from app.db.seed import seed_initial_data
 from app.db.session import SessionLocal
 from app.main import app
+from app.models.license import License
 from app.models.product import Product
 from app.models.role import Role
 from app.services.equipment_catalog_loader import seed_equipment_catalog
@@ -211,3 +212,22 @@ def test_seed_roles_are_admin_and_user_only() -> None:
     finally:
         db.close()
     assert roles == {1: "admin", 2: "user"}
+
+
+def test_wifi_controllers_have_license_packs_after_seed(monkeypatch) -> None:
+    monkeypatch.setenv("SEED_EQUIPMENT_CATALOG", "1")
+    db = SessionLocal()
+    try:
+        seed_initial_data(db)
+        controller = db.query(Product).filter(Product.name == "VNC-2000").first()
+        assert controller is not None
+        assert controller.built_in_license_units == 16
+        packs = (
+            db.query(License)
+            .filter(License.product_id == controller.id)
+            .order_by(License.units_per_pack)
+            .all()
+        )
+        assert [row.units_per_pack for row in packs] == [16, 32, 128]
+    finally:
+        db.close()

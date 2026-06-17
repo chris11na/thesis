@@ -1969,6 +1969,7 @@ async function renderAddonPanel(panel, p) {
           }
         }
         renderProducts();
+        renderSelectedPills();
       } catch (e) {
         console.error(e);
         showImmediateLicenseFeedback(

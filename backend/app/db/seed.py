@@ -185,11 +185,15 @@ def seed_initial_data(db: Session) -> None:
     from app.services.server_spec_seed import refresh_server_spec_values
     from app.services.telephony_spec_seed import refresh_telephony_spec_values
     from app.services.vo_accessory_spec_seed import refresh_vo_accessory_spec_values
-    from app.services.wifi_spec_seed import refresh_wifi_spec_values
+    from app.services.wifi_spec_seed import (
+        refresh_wifi_spec_values,
+        seed_wifi_controller_license_packs,
+    )
 
     refresh_switch_spec_values(db)
     refresh_vo_accessory_spec_values(db)
     refresh_wifi_spec_values(db)
+    seed_wifi_controller_license_packs(db)
     refresh_load_balancer_spec_values(db)
     refresh_management_spec_values(db)
     refresh_firewall_spec_values(db)
