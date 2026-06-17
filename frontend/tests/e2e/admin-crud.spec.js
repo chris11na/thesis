@@ -131,7 +131,7 @@ test.describe("Admin CRUD", () => {
         response.ok(),
       { timeout: 20_000 }
     );
-    await drawer.getByRole("button", { name: /^сохранить$|^save$/i }).click();
+    await drawer.locator(".admin-product-edit-actions button.primary-btn").click();
     await patchReq;
 
     await expect(page.locator("#admin-products-tbody")).toContainText(marker, {
@@ -152,7 +152,7 @@ test.describe("Admin CRUD", () => {
         response.ok(),
       { timeout: 20_000 }
     );
-    await drawer.getByRole("button", { name: /^сохранить$|^save$/i }).click();
+    await drawer.locator(".admin-product-edit-actions button.primary-btn").click();
     await restoreReq;
   });
 });
