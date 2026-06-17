@@ -55,6 +55,8 @@ Copy `backend/.env.example` to `backend/.env` and fill OAuth keys / `RESEND_API_
 docker compose up --build
 ```
 
+SQLite is stored in a Docker named volume (`thesis_backend_data`), not `./backend/app.db`, so a fresh clone works in Codespaces without creating an empty file first. Reset DB: `docker compose down -v`.
+
 - Frontend: `http://localhost:8080`
 - Backend API: `http://localhost:8000`
 - Swagger: `http://localhost:8000/docs`
