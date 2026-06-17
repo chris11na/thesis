@@ -82,18 +82,20 @@ curl -X POST "http://127.0.0.1:8000/auth/logout" ^
   -d "{\"refresh_token\":\"<REFRESH_TOKEN>\"}"
 ```
 
-Get products:
+Get products (requires user or admin token):
 
 ```bash
-curl "http://127.0.0.1:8000/products"
+curl "http://127.0.0.1:8000/products?q=VNC-2000&configurator_only=true" ^
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
-Create configuration:
+Create configuration (use `equipment_product_id` from catalog search, e.g. VNC-2000):
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/configurations" ^
+  -H "Authorization: Bearer <ACCESS_TOKEN>" ^
   -H "Content-Type: application/json" ^
-  -d "{\"user_id\":1,\"items\":[501]}"
+  -d "{\"user_id\":2,\"project_name\":\"API demo\",\"lines\":[{\"equipment_product_id\":<ID>,\"target_ap_count\":32,\"addons\":[]}]}"
 ```
 
 Create user (admin token required):

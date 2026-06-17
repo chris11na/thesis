@@ -11,6 +11,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /app/requirements.txt
 
 COPY app /app/app
+COPY data /app/data
 COPY alembic /app/alembic
 COPY alembic.ini /app/alembic.ini
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh

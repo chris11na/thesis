@@ -119,7 +119,7 @@ Use this order during defense:
    - logout/login as `user@example.com / user123` and show admin panel disappears.
 4. **Configuration (40-60 sec)**
    - login as **user** (`user@example.com / user123`);
-   - create valid configuration (e.g. demo controller product `501`) -> success.
+   - catalog: Wi‑Fi → Оборудование → **VNC-2000** → target AP → submit with project name → export XLSX.
    - note: **admin** cannot create configurations (admin panel only).
 5. **Token flow (30-40 sec)**
    - explain `access + refresh`;

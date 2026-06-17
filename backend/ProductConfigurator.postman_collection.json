@@ -2,7 +2,7 @@
   "info": {
     "name": "Product Configurator API",
     "_postman_id": "d9a0df2f-5ac6-47f9-98b7-86ecfd8561dc",
-    "description": "Import into Postman and set collection variable baseUrl (default http://127.0.0.1:8000).\n\nRun Auth → Login (User) or Login (Admin) first — access/refresh tokens are saved automatically.\nCreate Configuration (User) saves configurationId for export/delete requests.",
+    "description": "Import into Postman and set collection variable baseUrl (default http://127.0.0.1:8000).\n\nRun Auth → Login (User) first — tokens are saved automatically.\nRun Products → Search VNC-2000 before configuration requests (sets equipmentProductId from catalog).\nCreate Configuration saves configurationId for export/delete requests.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -146,7 +146,23 @@
           }
         },
         {
-          "name": "Configuration options (demo product 501)",
+          "name": "Search VNC-2000",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const items = json.items || (Array.isArray(json) ? json : []);",
+                  "const row = items.find((x) => x.name === 'VNC-2000');",
+                  "if (row && row.id != null) {",
+                  "  pm.collectionVariables.set('equipmentProductId', String(row.id));",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [
@@ -155,7 +171,29 @@
                 "value": "Bearer {{accessToken}}"
               }
             ],
-            "url": "{{baseUrl}}/products/501/configuration-options"
+            "url": {
+              "raw": "{{baseUrl}}/products?q=VNC-2000&configurator_only=true&page_size=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"],
+              "query": [
+                { "key": "q", "value": "VNC-2000" },
+                { "key": "configurator_only", "value": "true" },
+                { "key": "page_size", "value": "5" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Configuration options (VNC-2000)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{equipmentProductId}}/configuration-options"
           }
         }
       ]
@@ -192,28 +230,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"user_id\": {{userId}},\n  \"project_name\": \"Postman demo project\",\n  \"project_contact_name\": \"Demo Contact\",\n  \"project_contact_email\": \"user@example.com\",\n  \"project_notes\": \"Created from Postman collection\",\n  \"lines\": [\n    {\n      \"equipment_product_id\": 501,\n      \"target_ap_count\": 10,\n      \"addons\": []\n    }\n  ]\n}"
-            },
-            "url": "{{baseUrl}}/configurations"
-          }
-        },
-        {
-          "name": "Create (legacy items)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"user_id\": {{userId}},\n  \"items\": [501]\n}"
+              "raw": "{\n  \"user_id\": {{userId}},\n  \"project_name\": \"Postman demo project\",\n  \"project_contact_name\": \"Demo Contact\",\n  \"project_contact_email\": \"user@example.com\",\n  \"project_notes\": \"Created from Postman collection\",\n  \"lines\": [\n    {\n      \"equipment_product_id\": {{equipmentProductId}},\n      \"target_ap_count\": 32,\n      \"addons\": []\n    }\n  ]\n}"
             },
             "url": "{{baseUrl}}/configurations"
           }
@@ -391,6 +408,10 @@
     {
       "key": "configurationId",
       "value": "1"
+    },
+    {
+      "key": "equipmentProductId",
+      "value": ""
     }
   ]
 }
