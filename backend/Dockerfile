@@ -1,27 +1,22 @@
 FROM python:3.11-slim
 
-# Set work directory
 WORKDIR /app
 
-# Install system dependencies (if needed later, extend this list)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
 COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /app/requirements.txt
 
-# Copy application code
 COPY app /app/app
+COPY alembic /app/alembic
+COPY alembic.ini /app/alembic.ini
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 
-# SQLite file is created on startup (create_all + seed); empty file keeps volume mount predictable
-RUN touch /app/app.db
+RUN chmod +x /app/docker-entrypoint.sh && touch /app/app.db
 
-# Expose FastAPI default port
 EXPOSE 8000
 
-# Run using uvicorn
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
-
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
