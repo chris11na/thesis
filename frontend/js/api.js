@@ -36,10 +36,6 @@ function setCatalogStatus(areaId, message, type = "info") {
   el.appendChild(div);
 }
 
-/**
- * Modal confirm for admin deletes (embedded browsers often block window.confirm).
- * @returns {Promise<boolean>}
-
 function refreshAdminProductUi() {
   if (getCurrentRoleId() !== 1) return;
   renderAdminProductsTable();

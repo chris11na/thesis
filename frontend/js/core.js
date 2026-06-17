@@ -1137,7 +1137,6 @@ function appConfirmDialog({
   });
 }
 
- */
 function adminConfirmDelete(subjectLine, consequenceLines) {
     const bullets = (consequenceLines || [])
       .filter(Boolean)
