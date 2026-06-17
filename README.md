@@ -15,11 +15,15 @@ Static UI is split by concern (prototype decomposition):
 |------|------|
 | `index.html` | Markup and shell (~780 lines) |
 | `css/index.css` | Styles |
-| `js/index.js` | Application logic |
+| `js/core.js` | Shared constants, DOM refs, i18n, catalog state |
+| `js/api.js` | Auth tokens and `apiFetch` |
+| `js/configurator.js` | User catalog, selection state, configuration submit |
+| `js/admin.js` | Admin panel (companies, users, catalog editor) |
+| `js/index.js` | Bootstrap: `init()`, event wiring |
 | `api-config.js` | API origin resolver (local vs Render) |
 | `login.html` | Auth page (still self-contained) |
 
-Further split of `js/index.js` into modules (`api.js`, `admin.js`, `configurator.js`) is the natural next step if the UI grows beyond the thesis prototype.
+Regenerate modules from a monolith backup with `python scripts/split_index_modules.py` (expects `js/index.monolith.js` or run once from the current bundle).
 
 ## Local run (without Docker)
 
@@ -72,7 +76,7 @@ GitHub Actions workflow:
 Detailed manual + automated testing scenarios:
 
 - `diploma/TESTING.md` (English; local copy under `diploma/`, not tracked in git)
-- Frontend Playwright e2e in `frontend/tests/e2e` (**19 scenarios** in 12 spec files; shared helpers in `helpers.js`)
+- Frontend Playwright e2e in `frontend/tests/e2e` (**27 scenarios** in 15 spec files; shared helpers in `helpers.js`)
 
 | E2E spec | Scenarios |
 |----------|-----------|
@@ -80,12 +84,15 @@ Detailed manual + automated testing scenarios:
 | `auth-errors.spec.js` | wrong password, unknown email domain |
 | `logout.spec.js` | logout + token cleanup |
 | `register-approve.spec.js` | registration → admin approve → login |
+| `oauth.spec.js` | providers API, Microsoft link, OAuth error query |
 | `configuration-flow.spec.js` | happy-path submit + export dialog |
 | `configuration-errors.spec.js` | missing project / empty cart |
 | `export-download.spec.js` | XLSX + CSV download |
 | `catalog-search.spec.js` | user product search |
 | `wifi-licenses.spec.js` | AP target + license pack suggestion |
-| `admin-panel.spec.js` | companies list, admin catalog search |
+| `service-tier.spec.js` | VPS / VPSN support tier on pill |
+| `admin-panel.spec.js` | companies list, catalog search, create user |
+| `admin-crud.spec.js` | company create/edit/delete, product create/edit |
 | `admin-submissions.spec.js` | sales submissions list + search |
 | `i18n.spec.js` | RU/EN toggle on login and index |
 

@@ -192,17 +192,46 @@ def test_oauth_providers_includes_yandex_flag() -> None:
 
 
 def test_license_pack_prefers_single_x32_for_need_17() -> None:
+    db = SessionLocal()
+    try:
+        seed_equipment_catalog(db)
+        from app.services.equipment_groups_seed import assign_products_to_subgroups
+        from app.services.wifi_spec_seed import (
+            refresh_wifi_spec_values,
+            seed_wifi_controller_license_packs,
+        )
+
+        assign_products_to_subgroups(db)
+        refresh_wifi_spec_values(db)
+        seed_wifi_controller_license_packs(db)
+        db.commit()
+        controller = db.query(Product).filter(Product.name == "VNC-2000").first()
+        assert controller is not None, "expected VNC-2000 from equipment catalog"
+        pack_x32 = (
+            db.query(License)
+            .filter(
+                License.product_id == controller.id,
+                License.units_per_pack == 32,
+            )
+            .first()
+        )
+        assert pack_x32 is not None
+        controller_id = controller.id
+        pack_x32_id = pack_x32.id
+    finally:
+        db.close()
+
     tok = _user_token()
     r = client.get(
-        "/products/501/license-pack-suggestion",
+        f"/products/{controller_id}/license-pack-suggestion",
         params={"target_ap_count": 33},
         headers={"Authorization": f"Bearer {tok}"},
     )
     assert r.status_code == 200, r.text
     data = r.json()
-    rows_522 = [x for x in data["suggestion"] if x["license_id"] == 522]
-    assert len(rows_522) == 1
-    assert rows_522[0]["quantity"] == 1
+    rows_x32 = [x for x in data["suggestion"] if x["license_id"] == pack_x32_id]
+    assert len(rows_x32) == 1
+    assert rows_x32[0]["quantity"] == 1
 
 
 def test_seed_roles_are_admin_and_user_only() -> None:

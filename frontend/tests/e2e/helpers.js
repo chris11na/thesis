@@ -179,6 +179,91 @@ async function submitConfigurationWithProject(page, projectName) {
   });
 }
 
+async function openAdminCompaniesFold(page) {
+  await page.locator(".admin-fold--companies").evaluate((el) => {
+    el.open = true;
+  });
+}
+
+async function openAdminCatalogFold(page) {
+  await page.locator("#admin-fold-catalog").evaluate((el) => {
+    el.closest("details").open = true;
+  });
+}
+
+async function confirmAdminDialog(page) {
+  await expect(page.locator("#admin-confirm-overlay")).toBeVisible({
+    timeout: 10_000,
+  });
+  await page.click("#admin-confirm-ok");
+  await expect(page.locator("#admin-confirm-overlay")).toBeHidden({
+    timeout: 10_000,
+  });
+}
+
+async function openSwitchesEquipmentCatalog(page) {
+  await expect(page.locator("#products-search-input")).toBeVisible({
+    timeout: 20_000,
+  });
+
+  const switchesGroup = page
+    .locator("#catalog-groups-grid .catalog-nav-card")
+    .filter({ hasText: /коммутатор/i })
+    .first();
+  await expect(switchesGroup).toBeVisible({ timeout: 20_000 });
+
+  const productsLoad = waitForProductsApi(page);
+  await switchesGroup.click();
+  await page
+    .locator("#catalog-subgroups-grid .catalog-nav-card-title")
+    .filter({ hasText: /^Оборудование$/ })
+    .first()
+    .click();
+  await productsLoad;
+}
+
+async function pickSwitchProduct(page, namePattern) {
+  await openSwitchesEquipmentCatalog(page);
+
+  const searchLoad = waitForProductsApi(page);
+  await page.fill("#products-search-input", "VA1800");
+  await page.press("#products-search-input", "Enter");
+  await searchLoad;
+
+  const product = page
+    .locator("#products-list .product-item")
+    .filter({
+      has: page.locator(".product-name", { hasText: namePattern }),
+    })
+    .first();
+  await expect(product).toBeVisible({ timeout: 20_000 });
+
+  const addonsLoad = page.waitForResponse(
+    (response) =>
+      response.url().includes("/compatible-addons") &&
+      response.request().method() === "GET" &&
+      response.ok(),
+    { timeout: 20_000 }
+  );
+  await product.click();
+  await expect(page.locator("#equipment-picker-overlay")).toBeVisible({
+    timeout: 10_000,
+  });
+  await addonsLoad;
+
+  const panel = equipmentAddonPanel(page);
+  await expect(panel).toBeVisible({ timeout: 15_000 });
+  return panel;
+}
+
+function equipmentAddonPanel(page) {
+  return page
+    .locator(
+      "#equipment-picker-overlay .equipment-addon-panel, #products-list .equipment-addon-panel"
+    )
+    .first();
+}
+
 module.exports = {
   login,
   loginAsUser,
@@ -191,8 +276,14 @@ module.exports = {
   waitForCatalogProducts,
   clickCreateConfigForValidation,
   wifiAddonPanel,
+  equipmentAddonPanel,
   openWifiEquipmentCatalog,
+  openSwitchesEquipmentCatalog,
   pickFirstCatalogProduct,
   pickWifiControllerProduct,
+  pickSwitchProduct,
   submitConfigurationWithProject,
+  openAdminCompaniesFold,
+  openAdminCatalogFold,
+  confirmAdminDialog,
 };

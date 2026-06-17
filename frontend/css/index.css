@@ -2008,6 +2008,11 @@ details.admin-fold[open] > .admin-fold-summary::before {
   padding-bottom: 6px;
 }
 
+.admin-user-add-block {
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+}
+
 .admin-fold--companies .admin-fold-body {
   padding-bottom: 4px;
 }

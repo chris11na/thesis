@@ -1,8 +1,8 @@
 """
 Pytest loads this file before test modules.
 
-Tests use an isolated SQLite file. Demo equipment is not seeded in production;
-tests get minimal sample products (501/502) after purge.
+Tests use an isolated SQLite file. Production seed loads the real catalog (id 1000+);
+pytest also inserts fixed-id sample products 501/502 for configuration API tests.
 """
 import os
 import sys

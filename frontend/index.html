@@ -506,6 +506,56 @@
                 </table>
               </div>
               </div>
+              <div class="admin-below-table admin-user-add-block">
+                <h4 class="admin-form-block-title" id="add-user-title">Добавить пользователя</h4>
+                <p class="field-description" id="admin-new-user-domain-hint">
+                  Email должен совпадать с доменом выбранной организации.
+                </p>
+                <div class="admin-inline">
+                  <div class="field-group">
+                    <div class="field-label" id="add-user-name-label">Имя</div>
+                    <input type="text" id="admin-new-user-name" autocomplete="name" />
+                  </div>
+                  <div class="field-group">
+                    <div class="field-label" id="add-user-email-label">Email</div>
+                    <input
+                      type="email"
+                      id="admin-new-user-email"
+                      autocomplete="off"
+                    />
+                  </div>
+                  <div class="field-group">
+                    <div class="field-label" id="add-user-password-label">Пароль</div>
+                    <input
+                      type="password"
+                      id="admin-new-user-password"
+                      autocomplete="new-password"
+                    />
+                  </div>
+                  <div class="field-group">
+                    <div class="field-label" id="add-user-company-label">Организация</div>
+                    <select
+                      class="admin-select"
+                      id="admin-new-user-company-select"
+                      aria-label="Организация"
+                    ></select>
+                  </div>
+                  <div class="field-group">
+                    <div class="field-label" id="add-user-role-label">Роль</div>
+                    <select
+                      class="admin-select"
+                      id="admin-new-user-role-select"
+                      aria-label="Роль"
+                    >
+                      <option value="2">Пользователь</option>
+                      <option value="1">Администратор</option>
+                    </select>
+                  </div>
+                  <button type="button" class="secondary-btn" id="admin-add-user-btn">
+                    Создать пользователя
+                  </button>
+                </div>
+              </div>
             </div>
           </details>
 
@@ -772,6 +822,10 @@
     </div>
 
     <script src="api-config.js"></script>
+    <script src="js/core.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/configurator.js"></script>
+    <script src="js/admin.js"></script>
     <script src="js/index.js"></script>
   </body>
 </html>

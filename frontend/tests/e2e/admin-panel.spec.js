@@ -33,4 +33,31 @@ test.describe("Admin panel", () => {
     expect(count).toBeGreaterThan(0);
     await expect(rows.first()).toContainText(/VNC|контроллер|controller|Wi/i);
   });
+
+  test("admin can create user via POST /users form", async ({ page }) => {
+    await loginAsAdmin(page);
+
+    await page.locator("#admin-users-fold").evaluate((el) => {
+      el.open = true;
+    });
+
+    const email = `e2e-admin-create-${Date.now()}@example.com`;
+    await page.fill("#admin-new-user-name", "E2E Created User");
+    await page.fill("#admin-new-user-email", email);
+    await page.fill("#admin-new-user-password", "e2epass1");
+
+    const createReq = page.waitForResponse(
+      (response) =>
+        response.url().includes("/users") &&
+        response.request().method() === "POST" &&
+        response.ok(),
+      { timeout: 20_000 }
+    );
+    await page.click("#admin-add-user-btn");
+    await createReq;
+
+    await expect(page.locator("#admin-users-tbody")).toContainText(email, {
+      timeout: 15_000,
+    });
+  });
 });

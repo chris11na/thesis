@@ -100,7 +100,9 @@ def seed_equipment_catalog(
     """
     Upsert catalog rows from backend/data/equipment_catalog.json.
 
-    Products are keyed by article (stored in Product.name). Demo rows 501–504 are untouched.
+    Products are keyed by article (stored in Product.name). New catalog rows get ids
+    from CATALOG_ID_START (1000+). Legacy demo ids 501–504 are not seeded in production
+    (see seed purge); pytest may still insert fixed-id sample products separately.
     """
     document = load_equipment_catalog_document(path)
     products = document.get("products") or []

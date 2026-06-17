@@ -6,6 +6,17 @@ def _read(path: str) -> str:
     return (root / path).read_text(encoding="utf-8")
 
 
+def _frontend_js_bundle() -> str:
+    parts = [
+        "frontend/js/core.js",
+        "frontend/js/api.js",
+        "frontend/js/configurator.js",
+        "frontend/js/admin.js",
+        "frontend/js/index.js",
+    ]
+    return "\n".join(_read(p) for p in parts)
+
+
 def test_login_page_has_login_controls() -> None:
     html = _read("frontend/login.html")
     assert 'id="login-btn"' in html
@@ -22,21 +33,36 @@ def test_login_page_has_login_controls() -> None:
 
 def test_index_has_session_logout_and_auth_status() -> None:
     html = _read("frontend/index.html")
-    js = _read("frontend/js/index.js")
+    js = _frontend_js_bundle()
     assert 'id="clear-token-btn"' in html
     assert 'id="auth-status-area"' in html
     assert "login.html" in js
 
 
+def test_index_loads_split_js_modules() -> None:
+    html = _read("frontend/index.html")
+    for src in (
+        "js/core.js",
+        "js/api.js",
+        "js/configurator.js",
+        "js/admin.js",
+        "js/index.js",
+    ):
+        assert f'src="{src}"' in html
+
+
 def test_frontend_contains_role_badge_and_admin_block() -> None:
     html = _read("frontend/index.html")
-    js = _read("frontend/js/index.js")
+    js = _frontend_js_bundle()
     assert 'id="role-badge"' in html
     assert 'id="admin-catalog-block"' in html
     assert 'assets/logo.png' in html
     assert 'id="admin-products-search-input"' in html
     assert 'id="admin-users-search-input"' in html
     assert 'id="admin-users-pending-badge"' in html
+    assert 'id="admin-add-user-btn"' in html
+    assert "createAdminUser" in js
+    assert '"/users"' in js
     assert 'id="admin-companies-search-input"' in html
     assert 'id="admin-submissions-fold"' in html
     assert 'id="admin-submissions-tbody"' in html
@@ -57,7 +83,7 @@ def test_frontend_contains_role_badge_and_admin_block() -> None:
 
 def test_frontend_contains_token_refresh_and_logout_flow() -> None:
     html = _read("frontend/index.html")
-    js = _read("frontend/js/index.js")
+    js = _frontend_js_bundle()
     assert 'href="css/index.css"' in html
     assert 'src="js/index.js"' in html
     assert "REFRESH_TOKEN_STORAGE_KEY" in js
@@ -68,7 +94,7 @@ def test_frontend_contains_token_refresh_and_logout_flow() -> None:
 
 
 def test_frontend_contains_configuration_guard_for_missing_login() -> None:
-    js = _read("frontend/js/index.js")
+    js = _frontend_js_bundle()
     assert "function beginCreateConfigurationFlow()" in js
     assert "if (!accessToken)" in js
     assert "/configurations" in js
