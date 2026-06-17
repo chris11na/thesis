@@ -11,21 +11,16 @@ test.describe("Specification export download", () => {
     await pickFirstCatalogProduct(page);
     await submitConfigurationWithProject(page, `E2E xlsx ${Date.now()}`);
 
-    const xlsxLoad = page.waitForResponse(
-      (response) =>
-        response.url().includes("/specification.xlsx") &&
-        response.request().method() === "GET" &&
-        response.ok(),
-      { timeout: 20_000 }
-    );
-    await page.click("#config-export-xlsx-btn");
-    const response = await xlsxLoad;
+    const [download] = await Promise.all([
+      page.waitForEvent("download", { timeout: 20_000 }),
+      page.click("#config-export-xlsx-btn"),
+    ]);
 
-    expect(response.headers()["content-type"] || "").toMatch(
-      /spreadsheet|excel|octet-stream/i
-    );
-    const body = await response.body();
-    expect(body.byteLength).toBeGreaterThan(100);
+    expect(download.suggestedFilename()).toMatch(/\.xlsx$/i);
+    const savePath = await download.path();
+    expect(savePath).toBeTruthy();
+    const fs = require("fs");
+    expect(fs.statSync(savePath).size).toBeGreaterThan(100);
   });
 
   test("export dialog downloads CSV specification file", async ({ page }) => {
@@ -33,18 +28,15 @@ test.describe("Specification export download", () => {
     await pickFirstCatalogProduct(page);
     await submitConfigurationWithProject(page, `E2E csv ${Date.now()}`);
 
-    const csvLoad = page.waitForResponse(
-      (response) =>
-        response.url().includes("/specification.csv") &&
-        response.request().method() === "GET" &&
-        response.ok(),
-      { timeout: 20_000 }
-    );
-    await page.click("#config-export-csv-btn");
-    const response = await csvLoad;
+    const [download] = await Promise.all([
+      page.waitForEvent("download", { timeout: 20_000 }),
+      page.click("#config-export-csv-btn"),
+    ]);
 
-    expect(response.headers()["content-type"] || "").toMatch(/csv|text\/plain/i);
-    const text = await response.text();
-    expect(text.length).toBeGreaterThan(10);
+    expect(download.suggestedFilename()).toMatch(/\.csv$/i);
+    const savePath = await download.path();
+    expect(savePath).toBeTruthy();
+    const fs = require("fs");
+    expect(fs.statSync(savePath).size).toBeGreaterThan(10);
   });
 });

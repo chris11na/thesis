@@ -1,5 +1,9 @@
 const { test, expect } = require("@playwright/test");
-const { loginAsUser, pickFirstCatalogProduct } = require("./helpers");
+const {
+  loginAsUser,
+  pickFirstCatalogProduct,
+  clickCreateConfigForValidation,
+} = require("./helpers");
 
 test.describe("Configuration validation errors", () => {
   test("submit without project name shows toast error", async ({ page }) => {
@@ -7,7 +11,7 @@ test.describe("Configuration validation errors", () => {
     await pickFirstCatalogProduct(page);
 
     await page.fill("#project-name-input", "");
-    await page.click("#create-config-btn");
+    await clickCreateConfigForValidation(page);
 
     await expect(page.locator("#app-toast-host")).toContainText(
       /проект|project/i,
@@ -23,7 +27,7 @@ test.describe("Configuration validation errors", () => {
     });
 
     await page.fill("#project-name-input", "E2E empty config");
-    await page.click("#create-config-btn");
+    await clickCreateConfigForValidation(page);
 
     await expect(page.locator("#app-toast-host")).toContainText(
       /позици|line|select|выбери/i,

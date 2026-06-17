@@ -792,8 +792,8 @@
             return;
           }
           if (json && json.status === "pending") {
-            setAuthStatus(i18n[currentLang].registerPending, "success");
             showPanel("login");
+            setAuthStatus(i18n[currentLang].registerPending, "success");
             return;
           }
           storeTokensAndGo(json);

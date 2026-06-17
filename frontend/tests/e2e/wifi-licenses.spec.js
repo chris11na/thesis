@@ -1,5 +1,5 @@
 const { test, expect } = require("@playwright/test");
-const { loginAsUser, pickWifiControllerProduct } = require("./helpers");
+const { loginAsUser, pickWifiControllerProduct, wifiAddonPanel } = require("./helpers");
 
 test.describe("Wi-Fi controller license picker", () => {
   test("target AP suggestion adds license pills", async ({ page }) => {
@@ -8,7 +8,8 @@ test.describe("Wi-Fi controller license picker", () => {
 
     const pillCountBefore = await page.locator("#selected-items-pills .pill").count();
 
-    const apInput = page.locator(".equipment-addon-panel input[type='number']").first();
+    const panel = wifiAddonPanel(page);
+    const apInput = panel.locator("input[type='number']").first();
     await apInput.fill("32");
 
     const suggestLoad = page.waitForResponse(
@@ -18,10 +19,7 @@ test.describe("Wi-Fi controller license picker", () => {
         response.ok(),
       { timeout: 20_000 }
     );
-    await page
-      .locator(".equipment-addon-panel")
-      .getByRole("button", { name: /подобрать|suggest/i })
-      .click();
+    await panel.getByRole("button", { name: /подобрать|suggest/i }).click();
     await suggestLoad;
 
     await expect(page.locator("#selected-items-pills .pill")).not.toHaveCount(

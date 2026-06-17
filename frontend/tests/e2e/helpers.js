@@ -26,7 +26,16 @@ async function loginAsAdmin(page) {
   });
 }
 
+async function dismissConfigExportDialogIfOpen(page) {
+  const dialog = page.locator("#config-export-dialog[open]");
+  if (await dialog.isVisible().catch(() => false)) {
+    await page.click("#config-export-close-btn");
+    await expect(dialog).toBeHidden({ timeout: 10_000 });
+  }
+}
+
 async function logout(page) {
+  await dismissConfigExportDialogIfOpen(page);
   const logoutReq = page
     .waitForResponse(
       (response) =>
@@ -38,6 +47,35 @@ async function logout(page) {
   await page.click("#clear-token-btn");
   await logoutReq;
   await page.waitForURL(/login\.html/, { timeout: 15_000 });
+}
+
+function catalogProductItems(page) {
+  return page
+    .locator("#products-list .product-item")
+    .filter({ has: page.locator(".product-name") });
+}
+
+async function waitForCatalogProducts(page) {
+  const items = catalogProductItems(page);
+  await expect(items.first()).toBeVisible({ timeout: 20_000 });
+  return items;
+}
+
+async function clickCreateConfigForValidation(page) {
+  // Submit stays disabled until the form looks valid; force-enable to hit validation toasts.
+  await page.evaluate(() => {
+    const btn = document.getElementById("create-config-btn");
+    if (btn) btn.disabled = false;
+  });
+  await page.click("#create-config-btn");
+}
+
+function wifiAddonPanel(page) {
+  return page
+    .locator(
+      "#equipment-picker-overlay .equipment-addon-panel, #products-list .equipment-addon-panel"
+    )
+    .first();
 }
 
 async function waitForProductsApi(page, method = "GET") {
@@ -100,13 +138,12 @@ async function pickWifiControllerProduct(page) {
 
   const controller = page
     .locator("#products-list .product-item")
-    .filter({ hasText: /контроллер|controller/i })
+    .filter({ hasText: /контроллер|controller|VNC-/i })
     .first();
   await expect(controller).toBeVisible({ timeout: 20_000 });
   await controller.click();
-  await dismissEquipmentPickerIfOpen(page);
 
-  await expect(page.locator(".equipment-addon-panel input[type='number']").first()).toBeVisible({
+  await expect(wifiAddonPanel(page).locator("input[type='number']").first()).toBeVisible({
     timeout: 15_000,
   });
 }
@@ -133,6 +170,11 @@ module.exports = {
   logout,
   waitForProductsApi,
   dismissEquipmentPickerIfOpen,
+  dismissConfigExportDialogIfOpen,
+  catalogProductItems,
+  waitForCatalogProducts,
+  clickCreateConfigForValidation,
+  wifiAddonPanel,
   openWifiEquipmentCatalog,
   pickFirstCatalogProduct,
   pickWifiControllerProduct,
