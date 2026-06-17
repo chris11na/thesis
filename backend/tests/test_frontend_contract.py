@@ -22,13 +22,15 @@ def test_login_page_has_login_controls() -> None:
 
 def test_index_has_session_logout_and_auth_status() -> None:
     html = _read("frontend/index.html")
+    js = _read("frontend/js/index.js")
     assert 'id="clear-token-btn"' in html
     assert 'id="auth-status-area"' in html
-    assert "login.html" in html
+    assert "login.html" in js
 
 
 def test_frontend_contains_role_badge_and_admin_block() -> None:
     html = _read("frontend/index.html")
+    js = _read("frontend/js/index.js")
     assert 'id="role-badge"' in html
     assert 'id="admin-catalog-block"' in html
     assert 'assets/logo.png' in html
@@ -41,29 +43,32 @@ def test_frontend_contains_role_badge_and_admin_block() -> None:
     assert 'id="admin-submissions-search-input"' in html
     assert 'id="admin-submissions-company-select"' in html
     assert 'id="admin-submissions-period-select"' in html
-    assert "/configurations/submissions" in html
-    assert "deleteAdminSubmission" in html
-    assert "ADMIN_SALES_SUBMISSIONS_UI" in html
+    assert "/configurations/submissions" in js
+    assert "deleteAdminSubmission" in js
+    assert "ADMIN_SALES_SUBMISSIONS_UI" in js
     assert 'id="user-switch-filters"' in html
     assert 'id="admin-switch-filters"' in html
-    assert "SWITCH_FILTER_DEFS" in html
-    assert "VO_FILTER_DEFS" in html
-    assert "WIFI_EQUIPMENT_FILTER_DEFS" in html
-    assert "VLB_EQUIPMENT_FILTER_DEFS" in html
+    assert "SWITCH_FILTER_DEFS" in js
+    assert "VO_FILTER_DEFS" in js
+    assert "WIFI_EQUIPMENT_FILTER_DEFS" in js
+    assert "VLB_EQUIPMENT_FILTER_DEFS" in js
     assert 'id="admin-spec-params-tbody"' in html
 
 
 def test_frontend_contains_token_refresh_and_logout_flow() -> None:
     html = _read("frontend/index.html")
-    assert "REFRESH_TOKEN_STORAGE_KEY" in html
-    assert "/auth/refresh" in html
-    assert "/auth/logout" in html
-    assert "async function refreshAccessToken()" in html
-    assert "async function apiFetch(" in html
+    js = _read("frontend/js/index.js")
+    assert 'href="css/index.css"' in html
+    assert 'src="js/index.js"' in html
+    assert "REFRESH_TOKEN_STORAGE_KEY" in js
+    assert "/auth/refresh" in js
+    assert "/auth/logout" in js
+    assert "async function refreshAccessToken()" in js
+    assert "async function apiFetch(" in js
 
 
 def test_frontend_contains_configuration_guard_for_missing_login() -> None:
-    html = _read("frontend/index.html")
-    assert "function beginCreateConfigurationFlow()" in html
-    assert "if (!accessToken)" in html
-    assert "/configurations" in html
+    js = _read("frontend/js/index.js")
+    assert "function beginCreateConfigurationFlow()" in js
+    assert "if (!accessToken)" in js
+    assert "/configurations" in js

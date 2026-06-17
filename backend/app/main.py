@@ -12,6 +12,7 @@ from app.db.session import SessionLocal
 from app.models.product import Product
 from app.db.seed import seed_initial_data
 from app.core.config import settings
+from app.core.log_sanitize import sanitize_for_log
 from app.admin import setup_admin
 
 
@@ -89,8 +90,8 @@ async def log_requests_and_responses(request: Request, call_next):
         request.url.path,
         response.status_code,
         duration_ms,
-        req_body,
-        resp_body,
+        sanitize_for_log(req_body),
+        sanitize_for_log(resp_body),
     )
     return response
 

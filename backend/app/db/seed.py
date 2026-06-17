@@ -85,13 +85,19 @@ def seed_initial_data(db: Session) -> None:
     Demo equipment (501–504) is no longer seeded; existing demo rows are purged on startup.
     """
 
-    # Roles
+    # Roles (admin=1, user=2)
     if db.query(Role).filter(Role.id == 1).first() is None:
         db.add(Role(id=1, name="admin"))
     if db.query(Role).filter(Role.id == 2).first() is None:
         db.add(Role(id=2, name="user"))
-    if db.query(Role).filter(Role.id == 3).first() is None:
-        db.add(Role(id=3, name="guest"))
+
+    guest_role = db.query(Role).filter(Role.id == 3).first()
+    if guest_role is not None:
+        in_use = (
+            db.query(User).filter(User.role_id == 3).first() is not None
+        )
+        if not in_use:
+            db.delete(guest_role)
 
     # Company
     if db.query(Company).filter(Company.id == 1).first() is None:

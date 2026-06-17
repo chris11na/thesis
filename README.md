@@ -7,6 +7,20 @@
 - **Module** и **License** — отдельные сущности со связью **многие-к-одному** с `Product` (`product_id`). Это осознанный выбор вместо одной абстрактной таблицы `Option` и связи M:N: у модулей и лицензий разные обязательные поля (скорость, form factor vs `units_per_pack`), проще валидация и SQL-запросы, понятнее предметная область (трансиверы и пакеты лицензий).
 - **`rules_json`** на продукте — **исполняемый** декларативный слой: при разборе API применяет правила типов `filter` (скорости модулей), `limit` (макс. число модулей), `license` (встроенные AP). Первое подходящее правило в массиве **перекрывает** значение соответствующей колонки (`module_speeds_json`, `max_module_slots`, `built_in_license_units`) для рантайма конфигуратора и валидации `POST /configurations`. Ответ `GET /products/{id}/configuration-options` содержит уже **эффективные** значения и поле `rules_runtime_sources`, откуда взялось каждое ограничение (`rules_json` или `column`).
 
+## Frontend layout
+
+Static UI is split by concern (prototype decomposition):
+
+| Path | Role |
+|------|------|
+| `index.html` | Markup and shell (~780 lines) |
+| `css/index.css` | Styles |
+| `js/index.js` | Application logic |
+| `api-config.js` | API origin resolver (local vs Render) |
+| `login.html` | Auth page (still self-contained) |
+
+Further split of `js/index.js` into modules (`api.js`, `admin.js`, `configurator.js`) is the natural next step if the UI grows beyond the thesis prototype.
+
 ## Local run (without Docker)
 
 Backend:
@@ -58,7 +72,22 @@ GitHub Actions workflow:
 Detailed manual + automated testing scenarios:
 
 - `diploma/TESTING.md` (English; local copy under `diploma/`, not tracked in git)
-- Frontend Playwright e2e in `frontend/tests/e2e`
+- Frontend Playwright e2e in `frontend/tests/e2e` (**19 scenarios** in 12 spec files; shared helpers in `helpers.js`)
+
+| E2E spec | Scenarios |
+|----------|-----------|
+| `auth-rbac.spec.js` | redirect, admin/user RBAC |
+| `auth-errors.spec.js` | wrong password, unknown email domain |
+| `logout.spec.js` | logout + token cleanup |
+| `register-approve.spec.js` | registration → admin approve → login |
+| `configuration-flow.spec.js` | happy-path submit + export dialog |
+| `configuration-errors.spec.js` | missing project / empty cart |
+| `export-download.spec.js` | XLSX + CSV download |
+| `catalog-search.spec.js` | user product search |
+| `wifi-licenses.spec.js` | AP target + license pack suggestion |
+| `admin-panel.spec.js` | companies list, admin catalog search |
+| `admin-submissions.spec.js` | sales submissions list + search |
+| `i18n.spec.js` | RU/EN toggle on login and index |
 
 ## Demo Script (3-5 min)
 

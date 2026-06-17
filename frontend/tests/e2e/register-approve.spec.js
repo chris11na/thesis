@@ -1,23 +1,18 @@
 const { test, expect } = require("@playwright/test");
+const {
+  login,
+  loginAsAdmin,
+  loginAsUser,
+  logout,
+  pickFirstCatalogProduct,
+  submitConfigurationWithProject,
+} = require("./helpers");
 
-async function login(page, email, password) {
-  await page.goto("/login.html");
-  await page.fill("#login-email-input", email);
-  await page.fill("#login-password-input", password);
-  await page.click("#login-btn");
-  await page.waitForURL(/index\.html/, { timeout: 20_000 });
-}
-
-async function logout(page) {
-  await page.click("#clear-token-btn");
-  await page.waitForURL(/login\.html/, { timeout: 15_000 });
-}
-
-async function waitForUsersApi(page, method = "GET") {
+async function waitForSubmissionsApi(page) {
   return page.waitForResponse(
     (response) =>
-      /\/users(\?|$)/.test(response.url()) &&
-      response.request().method() === method &&
+      response.url().includes("/configurations/submissions") &&
+      response.request().method() === "GET" &&
       response.ok(),
     { timeout: 20_000 }
   );
@@ -53,16 +48,18 @@ test.describe("Registration and admin approval", () => {
     );
     await expect(page).toHaveURL(/login\.html/);
 
-    await login(page, "admin@example.com", "admin123");
-    await expect(page.locator("#admin-users-fold")).toBeVisible({
-      timeout: 10_000,
-    });
-
+    await loginAsAdmin(page);
     await page.locator("#admin-users-fold").evaluate((el) => {
       el.open = true;
     });
 
-    const usersLoad = waitForUsersApi(page, "GET");
+    const usersLoad = page.waitForResponse(
+      (response) =>
+        /\/users(\?|$)/.test(response.url()) &&
+        response.request().method() === "GET" &&
+        response.ok(),
+      { timeout: 20_000 }
+    );
     await page.click("#admin-users-refresh-btn");
     await usersLoad;
 

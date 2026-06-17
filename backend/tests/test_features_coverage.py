@@ -8,6 +8,7 @@ from app.db.seed import seed_initial_data
 from app.db.session import SessionLocal
 from app.main import app
 from app.models.product import Product
+from app.models.role import Role
 from app.services.equipment_catalog_loader import seed_equipment_catalog
 
 client = TestClient(app)
@@ -201,3 +202,12 @@ def test_license_pack_prefers_single_x32_for_need_17() -> None:
     rows_522 = [x for x in data["suggestion"] if x["license_id"] == 522]
     assert len(rows_522) == 1
     assert rows_522[0]["quantity"] == 1
+
+
+def test_seed_roles_are_admin_and_user_only() -> None:
+    db = SessionLocal()
+    try:
+        roles = {row.id: row.name for row in db.query(Role).all()}
+    finally:
+        db.close()
+    assert roles == {1: "admin", 2: "user"}
