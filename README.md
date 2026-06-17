@@ -49,6 +49,8 @@ Frontend:
 
 ## Docker run (backend + frontend)
 
+Copy `backend/.env.example` to `backend/.env` and fill OAuth keys / `RESEND_API_KEY` if needed. Compose loads that file into the backend container (`env_file`); `FRONTEND_URL` is overridden to `http://127.0.0.1:8080` for the nginx frontend.
+
 ```bash
 docker compose up --build
 ```

@@ -10,9 +10,12 @@ services:
       - "8000:8000"
     volumes:
       - ./backend/app.db:/app/app.db
+    env_file:
+      - ./backend/.env
     environment:
-      # Add environment variables here if needed later
-      - PYTHONUNBUFFERED=1
+      PYTHONUNBUFFERED: "1"
+      # OAuth redirect after sign-in; override local .env (often :5500 for Playwright).
+      FRONTEND_URL: http://127.0.0.1:8080
     restart: unless-stopped
 
   frontend:
