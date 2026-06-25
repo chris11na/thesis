@@ -8,7 +8,7 @@ from typing import Any
 VFW_TYPE_CODE = "VFW"
 
 VFW_EQUIPMENT_SPEC_PARAMETERS: list[dict[str, Any]] = [
-    {"code": "vfw_item_type", "name": "Тип", "sort_order": 10},
+    {"code": "vfw_item_type", "name": "Тип межсетевого экрана (VFW)", "sort_order": 10},
 ]
 
 _CERTIFICATE_RE = re.compile(r"^сертификат", re.IGNORECASE)

@@ -8,7 +8,7 @@ from typing import Any
 WIFI_EQUIPMENT_TYPE_CODES = frozenset({"VNC", "VAP"})
 
 WIFI_EQUIPMENT_SPEC_PARAMETERS: list[dict[str, Any]] = [
-    {"code": "wifi_device_type", "name": "Тип", "sort_order": 10},
+    {"code": "wifi_device_type", "name": "Тип Wi‑Fi устройства", "sort_order": 10},
 ]
 
 _CONNECTION_CERT_RE = re.compile(r"сертификат\s+на\s+подключение", re.IGNORECASE)

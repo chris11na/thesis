@@ -18,7 +18,7 @@ from app.services.telephony_equipment_parser import (
 )
 
 SUPPORT_TIER_SPEC_PARAMETERS = [
-    {"code": "support_tier", "name": "Тип поддержки", "sort_order": 10},
+    {"code": "support_tier", "name": "Уровень сервиса (VPS / VPSN)", "sort_order": 10},
 ]
 
 

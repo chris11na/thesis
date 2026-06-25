@@ -8,7 +8,7 @@ from typing import Any
 VLB_TYPE_CODE = "VLB"
 
 VLB_EQUIPMENT_SPEC_PARAMETERS: list[dict[str, Any]] = [
-    {"code": "vlb_device_type", "name": "Тип", "sort_order": 10},
+    {"code": "vlb_device_type", "name": "Тип балансировщика (VLB)", "sort_order": 10},
 ]
 
 _INTERFACE_MODULE_RE = re.compile(r"^интерфейсный\s+модуль", re.IGNORECASE)

@@ -1,5 +1,15 @@
 // Admin panel: companies, users, catalog editor, submissions.
 
+function formatSpecParameterOptionLabel(sp) {
+  if (!sp) return "";
+  const name = (sp.name || sp.code || "").trim();
+  const code = (sp.code || "").trim();
+  if (name && code && name !== code) {
+    return name + " (" + code + ")";
+  }
+  return name || code || ("#" + sp.id);
+}
+
 function closeAdminProductDrawer() {
   const overlay = elements.adminProductDrawerOverlay;
   const body = elements.adminProductDrawerBody;
@@ -2444,7 +2454,7 @@ function buildAdminProductEditPanel(p, opts) {
     specParameters.forEach((sp) => {
       const opt = document.createElement("option");
       opt.value = String(sp.id);
-      opt.textContent = sp.name || sp.code || ("#" + sp.id);
+      opt.textContent = formatSpecParameterOptionLabel(sp);
       sel.appendChild(opt);
     });
     if (initialParameterId != null) sel.value = String(initialParameterId);

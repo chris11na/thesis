@@ -25,7 +25,7 @@ from app.services.wifi_equipment_parser import (
 )
 
 WIFI_SUPPORT_SPEC_PARAMETERS: list[dict[str, Any]] = [
-    {"code": "support_tier", "name": "Тип поддержки", "sort_order": 10},
+    {"code": "support_tier", "name": "Уровень сервиса (VPS / VPSN)", "sort_order": 10},
 ]
 
 _BUILTIN_AP_RE = re.compile(

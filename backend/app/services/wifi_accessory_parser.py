@@ -6,7 +6,7 @@ import re
 from typing import Any
 
 WIFI_ACCESSORY_SPEC_PARAMETERS: list[dict[str, Any]] = [
-    {"code": "wifi_accessory_kind", "name": "Тип", "sort_order": 10},
+    {"code": "wifi_accessory_kind", "name": "Тип Wi‑Fi аксессуара", "sort_order": 10},
 ]
 
 _ENCLOSURE_RE = re.compile(r"корпус", re.IGNORECASE)

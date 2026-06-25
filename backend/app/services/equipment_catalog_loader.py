@@ -57,12 +57,16 @@ def _ensure_equipment_type_parameter(db: Session) -> int:
     if row is None:
         row = SpecParameter(
             code="equipment_type",
-            name="Equipment type",
+            name="Код типа оборудования",
             sort_order=5,
             is_active=True,
         )
         db.add(row)
         db.flush()
+    else:
+        row.name = "Код типа оборудования"
+        row.sort_order = 5
+        row.is_active = True
     return row.id
 
 

@@ -8,7 +8,7 @@ from typing import Any
 VS_TYPE_CODE = "VS"
 
 VS_MANAGEMENT_SPEC_PARAMETERS: list[dict[str, Any]] = [
-    {"code": "vs_item_type", "name": "Тип", "sort_order": 10},
+    {"code": "vs_item_type", "name": "Тип V-Sense (VS)", "sort_order": 10},
 ]
 
 _CERTIFICATE_RE = re.compile(r"^сертификат\s+на\s+право\s+подключения", re.IGNORECASE)

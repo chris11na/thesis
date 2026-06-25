@@ -8,7 +8,7 @@ from typing import Any
 VO_TYPE_CODE = "VO"
 
 VO_ACCESSORY_SPEC_PARAMETERS: list[dict[str, Any]] = [
-    {"code": "vo_item_type", "name": "Тип", "sort_order": 10},
+    {"code": "vo_item_type", "name": "Тип VO (модуль / кабель)", "sort_order": 10},
 ]
 
 _CABLE_RE = re.compile(r"^кабель", re.IGNORECASE)

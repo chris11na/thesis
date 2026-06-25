@@ -12,7 +12,7 @@ from app.services.equipment_catalog_loader import _set_spec_value
 from app.services.service_catalog import parse_catalog_meta
 
 SUPPORT_TIER_SPEC_PARAMETERS = [
-    {"code": "support_tier", "name": "Тип поддержки", "sort_order": 10},
+    {"code": "support_tier", "name": "Уровень сервиса (VPS / VPSN)", "sort_order": 10},
 ]
 
 

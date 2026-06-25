@@ -9,7 +9,7 @@ VCM_TYPE_CODE = "VCM"
 VP_TYPE_CODE = "VP"
 
 TELEPHONY_EQUIPMENT_SPEC_PARAMETERS: list[dict[str, Any]] = [
-    {"code": "telephony_item_type", "name": "Тип", "sort_order": 10},
+    {"code": "telephony_item_type", "name": "Тип телефонии (VCM / VP)", "sort_order": 10},
 ]
 
 _EXPANSION_MODULE_RE = re.compile(r"^модуль\s+расширения", re.IGNORECASE)
