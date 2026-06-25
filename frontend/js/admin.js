@@ -2403,6 +2403,18 @@ function adminHydrateRulesSplitFromProduct(p, split) {
   return split;
 }
 
+const ADMIN_SERVICE_TYPE_CODES = new Set(["VPS", "VPSN"]);
+
+function adminProductShowsConfiguratorEditor(p, createMode) {
+  if (createMode) return true;
+  if (!p) return false;
+  const kind = String(p.product_kind || "equipment").trim().toLowerCase();
+  if (kind !== "equipment") return false;
+  const cat = String(p.product_category || "").trim().toUpperCase();
+  if (ADMIN_SERVICE_TYPE_CODES.has(cat)) return false;
+  return true;
+}
+
 function adminBuildRulesJsonFromWizard(
   chkSpeed,
   speedText,
@@ -2451,6 +2463,7 @@ function adminBuildRulesJsonFromWizard(
 function buildAdminProductEditPanel(p, opts) {
   const createMode = !!(opts && opts.createMode);
   const isEn = uiLang === "en";
+  const showConfiguratorEditor = adminProductShowsConfiguratorEditor(p, createMode);
   const modeKey = createMode ? "new" : String(p.id);
   const wrap = document.createElement("div");
   wrap.className = "admin-product-edit-panel";
@@ -2530,20 +2543,6 @@ function buildAdminProductEditPanel(p, opts) {
   addSpecRowBtn.className = "secondary-btn admin-spec-add-row-btn";
   addSpecRowBtn.textContent = isEn ? "Add parameter" : "Добавить параметр";
   specValuesBlock.appendChild(addSpecRowBtn);
-  const fallbackLabel = document.createElement("label");
-  fallbackLabel.style.marginTop = "10px";
-  fallbackLabel.textContent = isEn
-    ? "Extra search text (optional)"
-    : "Дополнительный текст для поиска (необязательно)";
-  specValuesBlock.appendChild(fallbackLabel);
-  const fallbackSpecs = document.createElement("textarea");
-  fallbackSpecs.className = "admin-textarea-specs";
-  fallbackSpecs.rows = 3;
-  fallbackSpecs.placeholder = isEn
-    ? "Optional extra text included in catalog search"
-    : "Необязательно: доп. текст, участвует в поиске по каталогу";
-  fallbackSpecs.value = p.technical_specs || "";
-  specValuesBlock.appendChild(fallbackSpecs);
   grid.appendChild(specValuesBlock);
 
   function specValueOptionsForParameter(parameterId) {
@@ -2706,11 +2705,16 @@ function buildAdminProductEditPanel(p, opts) {
     inpCategory
   );
 
-  const rulesSplit = adminHydrateRulesSplitFromProduct(
-    p,
-    adminSplitProductRulesJson(p.rules_json)
-  );
-  const preservedRulesRest = rulesSplit.rest.slice();
+  let radSimple;
+  let radJson;
+  let speedRw;
+  let modRw;
+  let licRw;
+  let inpSpeedCsv;
+  let inpModOv;
+  let inpLicOv;
+  let taRules;
+  let preservedRulesRest = [];
 
   for (const sv of p.technical_spec_values || []) {
     const pid = sv.parameter_id;
@@ -2723,6 +2727,13 @@ function buildAdminProductEditPanel(p, opts) {
       adminSpecValueOptionsByParamId[pid].push(val);
     }
   }
+
+  if (showConfiguratorEditor) {
+  const rulesSplit = adminHydrateRulesSplitFromProduct(
+    p,
+    adminSplitProductRulesJson(p.rules_json)
+  );
+  preservedRulesRest = rulesSplit.rest.slice();
 
   const rulesBlock = document.createElement("div");
   rulesBlock.className = "edit-grid-cell-wide";
@@ -2737,11 +2748,11 @@ function buildAdminProductEditPanel(p, opts) {
 
   const modeRow = document.createElement("div");
   modeRow.className = "admin-rules-mode-row";
-  const radSimple = document.createElement("input");
+  radSimple = document.createElement("input");
   radSimple.type = "radio";
   radSimple.name = "admin-rules-mode-" + modeKey;
   radSimple.id = "admin-rules-simple-" + modeKey;
-  const radJson = document.createElement("input");
+  radJson = document.createElement("input");
   radJson.type = "radio";
   radJson.name = "admin-rules-mode-" + modeKey;
   radJson.id = "admin-rules-json-" + modeKey;
@@ -2783,34 +2794,34 @@ function buildAdminProductEditPanel(p, opts) {
     return { row, chk };
   }
 
-  const inpSpeedCsv = document.createElement("input");
+  inpSpeedCsv = document.createElement("input");
   inpSpeedCsv.type = "text";
   inpSpeedCsv.placeholder = "1, 10";
-  const speedRw = makeWizardRow(
+  speedRw = makeWizardRow(
     "admin-r-speed-" + modeKey,
     isEn ? "Limit module speeds (Gbps)" : "Ограничить скорости модулей (Гбит/с)",
     inpSpeedCsv
   );
   wiz.appendChild(speedRw.row);
 
-  const inpModOv = document.createElement("input");
+  inpModOv = document.createElement("input");
   inpModOv.type = "number";
   inpModOv.min = "0";
   inpModOv.step = "1";
   inpModOv.placeholder = "";
-  const modRw = makeWizardRow(
+  modRw = makeWizardRow(
     "admin-r-mod-" + modeKey,
     isEn ? "Set max modules" : "Задать максимум модулей",
     inpModOv
   );
   wiz.appendChild(modRw.row);
 
-  const inpLicOv = document.createElement("input");
+  inpLicOv = document.createElement("input");
   inpLicOv.type = "number";
   inpLicOv.min = "0";
   inpLicOv.step = "1";
   inpLicOv.placeholder = "";
-  const licRw = makeWizardRow(
+  licRw = makeWizardRow(
     "admin-r-lic-" + modeKey,
     isEn ? "Set built-in AP" : "Задать встроенные AP",
     inpLicOv
@@ -2825,7 +2836,7 @@ function buildAdminProductEditPanel(p, opts) {
   labJson.textContent = isEn ? "Rules array (JSON)" : "Массив правил (JSON)";
   labJson.style.display = "block";
   labJson.style.marginBottom = "4px";
-  const taRules = document.createElement("textarea");
+  taRules = document.createElement("textarea");
   taRules.className = "admin-textarea-rules";
   taRules.rows = 10;
   taRules.spellcheck = false;
@@ -2904,15 +2915,16 @@ function buildAdminProductEditPanel(p, opts) {
   });
 
   grid.appendChild(rulesBlock);
+  }
 
   wrap.appendChild(grid);
 
-  if (!createMode) {
+  if (!createMode && showConfiguratorEditor) {
     const catalogHost = document.createElement("div");
     catalogHost.className = "admin-product-catalog-editor";
     wrap.appendChild(catalogHost);
     void loadProductCatalogEditorUi(p.id, catalogHost);
-  } else {
+  } else if (createMode) {
     const createHint = document.createElement("div");
     createHint.className = "field-description";
     createHint.textContent =
@@ -2920,6 +2932,13 @@ function buildAdminProductEditPanel(p, opts) {
         ? "Click 'Create and add components' - this product opens right away, then you can add modules and license packs."
         : "Нажмите «Создать и добавить компоненты» — после этого откроется этот же продукт, и можно будет сразу добавить модули и пакеты лицензий.";
     wrap.appendChild(createHint);
+  } else {
+    const serviceNote = document.createElement("div");
+    serviceNote.className = "field-description";
+    serviceNote.textContent = isEn
+      ? "Service and accessory items are catalog rows only — configurator modules and license packs are not used."
+      : "Сервисы и аксессуары — только строки каталога; модули и пакеты лицензий конфигуратора здесь не нужны.";
+    wrap.appendChild(serviceNote);
   }
 
   const actions = document.createElement("div");
@@ -2956,9 +2975,9 @@ function buildAdminProductEditPanel(p, opts) {
     const body = {
       name: inpName.value.trim(),
       description: taDesc.value.trim(),
-      technical_specs: (fallbackSpecs.value || "").trim() || "—",
+      technical_specs:
+        (p.technical_specs && String(p.technical_specs).trim()) || "—",
       technical_spec_values: collectSpecValuesFromEditor(),
-      product_kind: "equipment",
       product_category:
         inpCategory.value.trim() === ""
           ? null
@@ -2966,25 +2985,49 @@ function buildAdminProductEditPanel(p, opts) {
     };
     const subVal = selSubgroup.value.trim();
     body.subgroup_id = subVal === "" ? null : parseInt(subVal, 10);
-    body.built_in_license_units = null;
-    body.module_speeds_json = null;
-    body.max_module_slots = null;
-    if (radJson.checked) {
-      const rulesRaw = (taRules.value || "").trim();
-      if (rulesRaw === "") {
-        body.rules_json = null;
+    if (createMode || showConfiguratorEditor) {
+      if (createMode) body.product_kind = "equipment";
+      body.built_in_license_units = null;
+      body.module_speeds_json = null;
+      body.max_module_slots = null;
+      if (radJson.checked) {
+        const rulesRaw = (taRules.value || "").trim();
+        if (rulesRaw === "") {
+          body.rules_json = null;
+        } else {
+          try {
+            const j = JSON.parse(rulesRaw);
+            const arr = Array.isArray(j) ? j : [j];
+            body.rules_json = arr.length ? JSON.stringify(arr) : null;
+          } catch (e) {
+            setCatalogStatus(
+              "admin-products-status",
+              catT(
+                "Правила (JSON): невалидный JSON.",
+                "Rules (JSON): invalid JSON."
+              ),
+              "error"
+            );
+            isSavingProduct = false;
+            btnSave.textContent = saveDefaultLabel;
+            syncSaveEnabled();
+            return;
+          }
+        }
       } else {
-        try {
-          const j = JSON.parse(rulesRaw);
-          const arr = Array.isArray(j) ? j : [j];
-          body.rules_json = arr.length ? JSON.stringify(arr) : null;
-        } catch (e) {
+        const built = adminBuildRulesJsonFromWizard(
+          speedRw.chk.checked,
+          inpSpeedCsv.value,
+          modRw.chk.checked,
+          inpModOv.value,
+          licRw.chk.checked,
+          inpLicOv.value,
+          preservedRulesRest
+        );
+        if (built.error) {
           setCatalogStatus(
             "admin-products-status",
-            catT(
-              "Правила (JSON): невалидный JSON.",
-              "Rules (JSON): invalid JSON."
-            ),
+            built.error,
             "error"
           );
           isSavingProduct = false;
@@ -2992,27 +3035,9 @@ function buildAdminProductEditPanel(p, opts) {
           syncSaveEnabled();
           return;
         }
+        body.rules_json =
+          built.rules.length > 0 ? JSON.stringify(built.rules) : null;
       }
-    } else {
-      const built = adminBuildRulesJsonFromWizard(
-        speedRw.chk.checked,
-        inpSpeedCsv.value,
-        modRw.chk.checked,
-        inpModOv.value,
-        licRw.chk.checked,
-        inpLicOv.value,
-        preservedRulesRest
-      );
-      if (built.error) {
-        setCatalogStatus(
-          "admin-products-status",
-          built.error,
-          "error"
-        );
-        return;
-      }
-      body.rules_json =
-        built.rules.length > 0 ? JSON.stringify(built.rules) : null;
     }
     try {
       if (createMode) await createAdminProductFromDrawer(body);
