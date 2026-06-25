@@ -1,6 +1,6 @@
 import json
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
@@ -369,34 +369,30 @@ def _apply_exact_spec_filter(query, db: Session, code: str, value: str):
     return query.filter(Product.id.in_(matching_ids))
 
 
-@router.get("")
-def list_products(
-    q: str | None = Query(None, description="Search by name, description, specs"),
-    product_kind: str | None = Query(None),
-    product_category: str | None = Query(None, description="Equipment type code, e.g. VA"),
-    subgroup_id: int | None = Query(None, ge=1),
-    group_id: int | None = Query(None, ge=1),
-    spec_parameter_code: str | None = Query(None),
-    spec_value: str | None = Query(None),
-    switch_layer: str | None = Query(None),
-    rj45_ports: str | None = Query(None),
-    copper_speed: str | None = Query(None),
-    poe_plus: str | None = Query(None),
-    optic_ports: str | None = Query(None),
-    optic_speed: str | None = Query(None),
-    combo_ports: str | None = Query(None),
-    vo_item_type: str | None = Query(None, description="VO accessory type: cable or module"),
-    vlb_device_type: str | None = Query(None),
-    vs_item_type: str | None = Query(None),
-    vfw_item_type: str | None = Query(None),
-    telephony_item_type: str | None = Query(None),
-    wifi_device_type: str | None = Query(None),
-    wifi_accessory_kind: str | None = Query(None),
-    support_tier: str | None = Query(None),
-    configurator_only: bool = Query(False),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500),
-    db: Session = Depends(get_db),
+_RESERVED_PRODUCT_LIST_PARAMS = frozenset(
+    {
+        "q",
+        "product_kind",
+        "product_category",
+        "subgroup_id",
+        "group_id",
+        "spec_parameter_code",
+        "spec_value",
+        "configurator_only",
+        "page",
+        "page_size",
+    }
+)
+
+
+def _catalog_scope_query(
+    db: Session,
+    *,
+    product_kind: str | None = None,
+    product_category: str | None = None,
+    subgroup_id: int | None = None,
+    group_id: int | None = None,
+    configurator_only: bool = False,
 ):
     query = db.query(Product)
 
@@ -419,6 +415,122 @@ def list_products(
     if configurator_only:
         query = query.filter(func.lower(Product.product_kind) == "equipment")
 
+    return query
+
+
+def _active_spec_parameter_codes(db: Session) -> set[str]:
+    return {
+        code
+        for (code,) in db.query(SpecParameter.code)
+        .filter(SpecParameter.is_active == True)  # noqa: E712
+        .all()
+    }
+
+
+def _apply_request_spec_filters(query, db: Session, request: Request):
+    active_codes = _active_spec_parameter_codes(db)
+    if not active_codes:
+        return query
+    applied: set[str] = set()
+    for key, raw in request.query_params.multi_items():
+        if key in _RESERVED_PRODUCT_LIST_PARAMS:
+            continue
+        if key not in active_codes or key in applied:
+            continue
+        val = (raw or "").strip()
+        if not val:
+            continue
+        query = _apply_exact_spec_filter(query, db, key, val)
+        applied.add(key)
+    return query
+
+
+@router.get("/spec-filter-options")
+def list_spec_filter_options(
+    product_kind: str | None = Query(None),
+    product_category: str | None = Query(None),
+    subgroup_id: int | None = Query(None, ge=1),
+    group_id: int | None = Query(None, ge=1),
+    configurator_only: bool = Query(False),
+    db: Session = Depends(get_db),
+):
+    """Distinct spec-parameter values for products in the current catalog scope."""
+    scoped = _catalog_scope_query(
+        db,
+        product_kind=product_kind,
+        product_category=product_category,
+        subgroup_id=subgroup_id,
+        group_id=group_id,
+        configurator_only=configurator_only,
+    )
+    scoped_ids = scoped.with_entities(Product.id).scalar_subquery()
+    rows = (
+        db.query(
+            SpecParameter.id,
+            SpecParameter.code,
+            SpecParameter.name,
+            SpecParameter.sort_order,
+            ProductSpecValue.value,
+        )
+        .join(
+            ProductSpecValue,
+            ProductSpecValue.parameter_id == SpecParameter.id,
+        )
+        .filter(SpecParameter.is_active == True)  # noqa: E712
+        .filter(ProductSpecValue.product_id.in_(scoped_ids))
+        .order_by(
+            SpecParameter.sort_order,
+            SpecParameter.id,
+            ProductSpecValue.value,
+        )
+        .all()
+    )
+    grouped: dict[str, dict] = {}
+    for param_id, code, name, sort_order, value in rows:
+        val = (value or "").strip()
+        if not val:
+            continue
+        bucket = grouped.get(code)
+        if bucket is None:
+            bucket = {
+                "id": param_id,
+                "code": code,
+                "name": name,
+                "sort_order": sort_order,
+                "values": [],
+            }
+            grouped[code] = bucket
+        if val not in bucket["values"]:
+            bucket["values"].append(val)
+    return sorted(grouped.values(), key=lambda x: (x["sort_order"], x["id"]))
+
+
+@router.get("")
+def list_products(
+    request: Request,
+    q: str | None = Query(
+        None, description="Search by name, description, specs, and spec values"
+    ),
+    product_kind: str | None = Query(None),
+    product_category: str | None = Query(None, description="Equipment type code, e.g. VA"),
+    subgroup_id: int | None = Query(None, ge=1),
+    group_id: int | None = Query(None, ge=1),
+    spec_parameter_code: str | None = Query(None),
+    spec_value: str | None = Query(None),
+    configurator_only: bool = Query(False),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
+    query = _catalog_scope_query(
+        db,
+        product_kind=product_kind,
+        product_category=product_category,
+        subgroup_id=subgroup_id,
+        group_id=group_id,
+        configurator_only=configurator_only,
+    )
+
     code = (spec_parameter_code or "").strip().lower()
     value = (spec_value or "").strip().lower()
     if code and value:
@@ -430,51 +542,22 @@ def list_products(
             ProductSpecValue.value_search.contains(value),
         )
 
-    switch_filters = {
-        "switch_layer": switch_layer,
-        "rj45_ports": rj45_ports,
-        "copper_speed": copper_speed,
-        "poe_plus": poe_plus,
-        "optic_ports": optic_ports,
-        "optic_speed": optic_speed,
-        "combo_ports": combo_ports,
-    }
-    for spec_code, spec_val in switch_filters.items():
-        if (spec_val or "").strip():
-            query = _apply_exact_spec_filter(query, db, spec_code, spec_val)
-
-    if (vo_item_type or "").strip():
-        query = _apply_exact_spec_filter(query, db, "vo_item_type", vo_item_type)
-
-    wifi_filters = {
-        "wifi_device_type": wifi_device_type,
-        "wifi_accessory_kind": wifi_accessory_kind,
-        "support_tier": support_tier,
-    }
-    for spec_code, spec_val in wifi_filters.items():
-        if (spec_val or "").strip():
-            query = _apply_exact_spec_filter(query, db, spec_code, spec_val)
-
-    if (vlb_device_type or "").strip():
-        query = _apply_exact_spec_filter(query, db, "vlb_device_type", vlb_device_type)
-
-    if (vs_item_type or "").strip():
-        query = _apply_exact_spec_filter(query, db, "vs_item_type", vs_item_type)
-
-    if (vfw_item_type or "").strip():
-        query = _apply_exact_spec_filter(query, db, "vfw_item_type", vfw_item_type)
-
-    if (telephony_item_type or "").strip():
-        query = _apply_exact_spec_filter(query, db, "telephony_item_type", telephony_item_type)
+    query = _apply_request_spec_filters(query, db, request)
 
     search = (q or "").strip().lower()
     if search:
         like = f"%{search}%"
+        spec_product_ids = (
+            db.query(ProductSpecValue.product_id)
+            .filter(ProductSpecValue.value_search.like(like))
+            .distinct()
+        )
         search_filters = [
             func.lower(Product.name).like(like),
             func.lower(Product.description).like(like),
             func.lower(Product.technical_specs).like(like),
             func.lower(func.coalesce(Product.product_category, "")).like(like),
+            Product.id.in_(spec_product_ids),
         ]
         if search.isdigit():
             search_filters.append(Product.id == int(search))

@@ -1445,20 +1445,96 @@ function visibleCatalogSubgroups(group) {
 }
 
 function activeCatalogFilterDefs() {
-  if (isSwitchesEquipmentCatalogContext()) return SWITCH_FILTER_DEFS;
-  if (isSwitchesAccessoriesCatalogContext()) return VO_FILTER_DEFS;
-  if (isWifiEquipmentCatalogContext()) return WIFI_EQUIPMENT_FILTER_DEFS;
-  if (isWifiAccessoriesCatalogContext()) return WIFI_ACCESSORY_FILTER_DEFS;
-  if (isWifiSupportCatalogContext()) return WIFI_SUPPORT_FILTER_DEFS;
-  if (isLoadBalancerEquipmentCatalogContext()) return VLB_EQUIPMENT_FILTER_DEFS;
-  if (isLoadBalancerSupportCatalogContext()) return WIFI_SUPPORT_FILTER_DEFS;
-  if (isManagementEquipmentCatalogContext()) return VS_MANAGEMENT_EQUIPMENT_FILTER_DEFS;
-  if (isFirewallEquipmentCatalogContext()) return VFW_EQUIPMENT_FILTER_DEFS;
-  if (isFirewallSupportCatalogContext()) return WIFI_SUPPORT_FILTER_DEFS;
-  if (isServerSupportCatalogContext()) return WIFI_SUPPORT_FILTER_DEFS;
-  if (isTelephonyEquipmentCatalogContext()) return TELEPHONY_EQUIPMENT_FILTER_DEFS;
-  if (isTelephonySupportCatalogContext()) return WIFI_SUPPORT_FILTER_DEFS;
-  return [];
+  return catalogFilterDefs;
+}
+
+function buildProductCatalogScopeParams() {
+  const params = new URLSearchParams();
+  const isAdmin = getCurrentRoleId() === 1;
+  if (isAdmin) {
+    if (adminCatalogSubgroupFilter) {
+      params.set("subgroup_id", adminCatalogSubgroupFilter);
+    } else if (adminCatalogGroupFilter) {
+      params.set("group_id", adminCatalogGroupFilter);
+    }
+  } else if (catalogSubgroupId) {
+    params.set("subgroup_id", String(catalogSubgroupId));
+  }
+
+  const activeSub = isAdmin
+    ? adminCatalogSubgroupFilter
+      ? catalogGroups
+          .flatMap((g) => g.subgroups || [])
+          .find((s) => String(s.id) === String(adminCatalogSubgroupFilter))
+      : null
+    : selectedCatalogSubgroup();
+  const globalSearch = userCatalogGlobalSearchActive();
+  if (!isAdmin && !globalSearch && isConfiguratorEquipmentSubgroup(activeSub)) {
+    params.set("configurator_only", "true");
+  }
+  return params;
+}
+
+async function loadCatalogSpecFilterOptions() {
+  const scope = buildProductCatalogScopeParams();
+  if (!scope.has("subgroup_id") && !scope.has("group_id")) {
+    catalogFilterDefs = [];
+    catalogFilters = {};
+    return;
+  }
+
+  const preserved = { ...catalogFilters };
+  try {
+    const response = await apiFetch(
+      "/products/spec-filter-options?" + scope.toString(),
+      { method: "GET", __globalLoading: false }
+    );
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !Array.isArray(data)) {
+      catalogFilterDefs = [];
+      catalogFilters = {};
+      return;
+    }
+
+    catalogFilterDefs = data.map((item) => {
+      const name = item.name || item.code || "";
+      const values = Array.isArray(item.values) ? item.values : [];
+      return {
+        code: item.code,
+        labelRu: name,
+        labelEn: name,
+        options: values.map((value) => ({
+          value,
+          labelRu: value,
+          labelEn: value,
+        })),
+      };
+    });
+    catalogFilters = {};
+    for (const def of catalogFilterDefs) {
+      catalogFilters[def.code] = preserved[def.code] || "";
+    }
+  } catch (error) {
+    console.error("Failed to load spec filter options:", error);
+    catalogFilterDefs = [];
+    catalogFilters = {};
+  }
+}
+
+function formatProductSpecValuesLine(p) {
+  const specs = Array.isArray(p.technical_spec_values)
+    ? p.technical_spec_values
+    : [];
+  if (!specs.length) return "";
+  return specs
+    .map((row) => {
+      const label = row.parameter_name || row.parameter_code || "";
+      const value = row.value != null ? String(row.value).trim() : "";
+      if (!label || !value) return "";
+      return label + ": " + value;
+    })
+    .filter(Boolean)
+    .join(" · ");
 }
 
 function activeCatalogFilterState() {
@@ -1585,7 +1661,7 @@ function applyProductCatalogQuery(resetPage) {
 
 function clearProductSpecFilter() {
   productSearchTerm = "";
-  for (const def of ALL_CATALOG_FILTER_DEFS) {
+  for (const def of catalogFilterDefs) {
     catalogFilters[def.code] = "";
   }
   renderCatalogFilterControls();
@@ -2078,6 +2154,14 @@ function renderProducts() {
       desc.textContent = formatProductDescriptionForDisplay(descText);
     }
 
+    const specLine = formatProductSpecValuesLine(p);
+    if (specLine) {
+      const specEl = document.createElement("div");
+      specEl.className = "product-spec-values";
+      specEl.textContent = specLine;
+      desc.appendChild(specEl);
+    }
+
     const cat = (p.product_category || "").toUpperCase();
     if (cat === "VPS" || cat === "VPSN") {
       const dur =
@@ -2485,7 +2569,7 @@ async function loadProducts() {
     setPanelLoading(elements.adminProductsLoading, false);
   }
 
-  await Promise.all([loadCatalogGroups(), loadSpecParametersForAdmin()]);
+  await Promise.all([loadCatalogSpecFilterOptions(), loadSpecParametersForAdmin()]);
   renderCatalogFilterControls();
   syncCatalogFiltersVisibility();
   syncProductFilterInputsFromState();

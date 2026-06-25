@@ -74,10 +74,9 @@ def test_frontend_contains_role_badge_and_admin_block() -> None:
     assert "ADMIN_SALES_SUBMISSIONS_UI" in js
     assert 'id="user-switch-filters"' in html
     assert 'id="admin-switch-filters"' in html
-    assert "SWITCH_FILTER_DEFS" in js
-    assert "VO_FILTER_DEFS" in js
-    assert "WIFI_EQUIPMENT_FILTER_DEFS" in js
-    assert "VLB_EQUIPMENT_FILTER_DEFS" in js
+    assert "catalogFilterDefs" in js
+    assert "loadCatalogSpecFilterOptions" in js
+    assert "/products/spec-filter-options" in js
     assert 'id="admin-spec-params-tbody"' in html
 
 
