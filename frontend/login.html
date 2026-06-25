@@ -2,7 +2,7 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <title>Вход и регистрация</title>
+    <title></title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       * {
@@ -50,6 +50,7 @@
       .brand-row {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 12px;
         margin-bottom: 6px;
       }
@@ -264,10 +265,7 @@
     <div class="card">
       <div class="brand-row">
         <img class="brand-logo" src="assets/logo.png" alt="" />
-        <div class="card-header-row" style="margin-bottom:0;flex:1">
-          <h1 id="login-title">Вход и регистрация</h1>
-          <button type="button" class="lang-toggle-btn" id="lang-toggle-btn">RU</button>
-        </div>
+        <button type="button" class="lang-toggle-btn" id="lang-toggle-btn">RU</button>
       </div>
 
       <div class="tab-row">
@@ -378,7 +376,6 @@
 
       const i18n = {
         ru: {
-          title: "Вход и регистрация",
           tabLogin: "Вход",
           tabRegister: "Регистрация",
           email: "Email",
@@ -415,7 +412,6 @@
           registerErrorFallback: "Ошибка регистрации",
         },
         en: {
-          title: "Sign in or sign up",
           tabLogin: "Sign in",
           tabRegister: "Sign up",
           email: "Email",
@@ -474,7 +470,6 @@
         localStorage.setItem(UI_LANG_STORAGE_KEY, currentLang);
         document.documentElement.lang = currentLang;
         const t = i18n[currentLang];
-        document.getElementById("login-title").textContent = t.title;
         tabLoginBtn.textContent = t.tabLogin;
         tabRegisterBtn.textContent = t.tabRegister;
         document.getElementById("login-email-label").textContent = t.email;

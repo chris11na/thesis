@@ -115,7 +115,6 @@ function syncAuthUI() {
   const roleIdNumber = data && data.role_id != null ? Number(data.role_id) : null;
 
   const isAdmin = Number(roleId) === 1;
-  syncPageTitle();
   if (elements.userMainStack) {
     elements.userMainStack.style.display = isAdmin ? "none" : "flex";
   }

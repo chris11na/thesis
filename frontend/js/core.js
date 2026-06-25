@@ -52,7 +52,6 @@ function truncateCellText(value, maxLen) {
 // Fallback when GET /products fails: isolated test product ids may still be 501/502.
 const elements = {
   langToggleBtn: document.getElementById("lang-toggle-btn"),
-  appPageTitle: document.getElementById("app-page-title"),
   productsList: document.getElementById("products-list"),
   catalogNav: document.getElementById("catalog-nav"),
   catalogBreadcrumb: document.getElementById("catalog-breadcrumb"),
@@ -296,15 +295,6 @@ function catalogProductGroupPath(p) {
     return groupLabel + " / " + subLabel;
   }
   return subLabel !== "—" ? subLabel : groupLabel;
-}
-
-function syncPageTitle() {
-  if (!elements.appPageTitle) return;
-  const isAdmin = getCurrentRoleId() === 1;
-  elements.appPageTitle.textContent = isAdmin
-    ? catT("Администрирование", "Administration")
-    : catT("Конфигуратор", "Configurator");
-  document.title = elements.appPageTitle.textContent;
 }
 
 function syncLoadingLabels() {
@@ -839,7 +829,6 @@ function applyUiLanguage(lang) {
     );
   }
   syncLoadingLabels();
-  syncPageTitle();
   if (accessToken) {
     const data = parseJwt(accessToken);
     const roleId =
