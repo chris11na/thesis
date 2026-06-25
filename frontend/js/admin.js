@@ -2597,18 +2597,6 @@ function buildAdminProductEditPanel(p, opts) {
   }
   addSpecRowBtn.addEventListener("click", () => addSpecRow(null, ""));
 
-  const inpCategory = document.createElement("input");
-  inpCategory.type = "text";
-  inpCategory.placeholder = "VA, VNC, VPS…";
-  inpCategory.value = p.product_category || "";
-  addFieldStack(
-    isEn ? "Equipment type code" : "Код типа оборудования",
-    inpCategory,
-    isEn
-      ? "Short code (e.g. VA, VNC). Used for type filter in the catalog and VPS/VPSN logic. Not the same as catalog group."
-      : "Короткий код (VA, VNC, VPS…). По нему работает фильтр «Тип оборудования» в каталоге и логика сервисов. Это не группа каталога."
-  );
-
   const selSubgroup = document.createElement("select");
   const emptySubOpt = document.createElement("option");
   emptySubOpt.value = "";
@@ -2634,6 +2622,18 @@ function buildAdminProductEditPanel(p, opts) {
       : "В каком разделе каталога показывается товар. Новую группу или подгруппу создают в Admin → «Группы каталога», не здесь."
   );
 
+  const inpCategory = document.createElement("input");
+  inpCategory.type = "text";
+  inpCategory.placeholder = "VA, VNC, VPS…";
+  inpCategory.value = p.product_category || "";
+  addFieldStack(
+    isEn ? "Equipment type code (optional)" : "Код типа оборудования (необязательно)",
+    inpCategory,
+    isEn
+      ? "From catalog import (type_code), not from the product name. Powers the «Equipment type» filter and service rules. Leave empty for manual products."
+      : "Берётся из импорта каталога (type_code), не из названия. Нужен для фильтра «Тип оборудования» и сервисной логики. Для ручных товаров можно оставить пустым."
+  );
+
   const rulesSplit = adminHydrateRulesSplitFromProduct(
     p,
     adminSplitProductRulesJson(p.rules_json)
@@ -2650,13 +2650,6 @@ function buildAdminProductEditPanel(p, opts) {
     ? "Configurator settings"
     : "Настройки конфигуратора";
   rulesBlock.appendChild(rulesBlockTitle);
-  const rulesBlockHint = document.createElement("div");
-  rulesBlockHint.className = "field-description";
-  rulesBlockHint.style.marginBottom = "8px";
-  rulesBlockHint.textContent = isEn
-    ? "Saved as rules_json. Values from legacy DB columns are shown here until you save."
-    : "Сохраняется в rules_json. Старые значения из колонок БД подставляются сюда до первого сохранения.";
-  rulesBlock.appendChild(rulesBlockHint);
 
   const modeRow = document.createElement("div");
   modeRow.className = "admin-rules-mode-row";
