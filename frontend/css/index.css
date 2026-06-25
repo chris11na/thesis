@@ -2221,6 +2221,19 @@ select.admin-select {
   .catalog-toolbar-filters--users {
     grid-template-columns: 1fr;
   }
+
+  .admin-users-filters-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-users-filters-row .admin-select {
+    width: 100%;
+  }
+
+  .admin-users-filters-row .secondary-btn {
+    align-self: flex-start;
+  }
 }
 
 .admin-catalog-toolbar {
@@ -2304,14 +2317,6 @@ select.admin-select {
   max-height: none;
   overflow: auto;
   margin-top: 8px;
-}
-
-.admin-catalog-table-scroll .admin-table thead th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: #f8fafc;
-  box-shadow: 0 1px 0 #e5e7eb;
 }
 
 .catalog-toolbar-search--with-btn {
@@ -2414,17 +2419,56 @@ select.admin-select {
 
 .admin-companies-table-scroll {
   flex: 1;
-  /* min-height: 120px; */
   max-height: none;
   overflow: auto;
 }
 
-.admin-companies-table-scroll .admin-table thead th {
+.admin-area .admin-panel-table-scroll {
+  overflow: auto;
+  max-width: 100%;
+  max-height: min(360px, calc(100vh - 320px));
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.admin-companies-panel .admin-panel-table-scroll,
+.admin-catalog-panel .admin-panel-table-scroll {
+  max-height: none;
+}
+
+.admin-area .admin-panel-table-scroll .admin-table,
+.admin-area .admin-panel-table-scroll .admin-groups-table {
+  width: max-content;
+  min-width: 100%;
+  margin-top: 0;
+}
+
+.admin-area .admin-panel-table-scroll thead th {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: #f8fafc;
+  background: #f3f4f6;
   box-shadow: 0 1px 0 #e5e7eb;
+}
+
+.admin-users-toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  grid-template-columns: none;
+}
+
+.admin-users-toolbar .admin-users-search-row {
+  width: 100%;
+}
+
+.admin-users-filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
 }
 
 .admin-submissions-toolbar {

@@ -741,6 +741,9 @@ function applyUiLanguage(lang) {
   if (elements.adminSpecParamName) {
     elements.adminSpecParamName.placeholder = isEn ? "Name" : "Название";
   }
+  if (elements.adminSpecParamSort) {
+    elements.adminSpecParamSort.placeholder = isEn ? "Order" : "порядок";
+  }
   if (elements.adminSpecParamAddBtn) {
     elements.adminSpecParamAddBtn.textContent = isEn
       ? "Add parameter"
