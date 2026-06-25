@@ -670,10 +670,10 @@
                   placeholder="Название группы"
                   style="flex: 1; min-width: 180px"
                 />
-                <button type="button" class="primary-btn" id="admin-add-group-btn">
+                <button type="button" class="secondary-btn" id="admin-add-group-btn">
                   Создать группу
                 </button>
-                <button type="button" class="secondary-btn" id="admin-reclassify-btn">
+                <button type="button" class="ghost-btn danger" id="admin-reclassify-btn">
                   Переклассифицировать товары
                 </button>
               </div>
@@ -698,8 +698,44 @@
             <summary class="admin-fold-summary" id="admin-fold-catalog">Каталог: оборудование</summary>
             <div class="admin-fold-body admin-catalog-fold-body">
               <div class="admin-catalog-create-bar">
-                <button type="button" class="primary-btn" id="admin-add-product-btn">
-                  Создать новый продукт
+                <button
+                  type="button"
+                  class="secondary-btn admin-open-drawer-btn"
+                  id="admin-add-product-btn"
+                >
+                  <svg
+                    class="btn-icon"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <rect
+                      x="1.5"
+                      y="2.5"
+                      width="13"
+                      height="11"
+                      rx="1.5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.25"
+                    />
+                    <path
+                      d="M5.5 2.5v11"
+                      stroke="currentColor"
+                      stroke-width="1.25"
+                    />
+                    <path
+                      d="M8.5 8h3M10 6.5 11.5 8 10 9.5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.25"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  <span class="admin-add-product-btn-label">Создать новый продукт</span>
                 </button>
                 <div id="admin-products-status" class="status-area"></div>
               </div>

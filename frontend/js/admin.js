@@ -296,7 +296,7 @@ function renderAdminGroupsTable() {
     const tdActions = document.createElement("td");
     const addSubBtn = document.createElement("button");
     addSubBtn.type = "button";
-    addSubBtn.className = "secondary-btn";
+    addSubBtn.className = "ghost-btn danger";
     addSubBtn.textContent = catT("Добавить подгруппу", "Add subgroup");
     addSubBtn.addEventListener("click", () => {
       void addAdminSubgroup(group.id);
@@ -1016,7 +1016,7 @@ function renderAdminSubmissionsTable() {
     actionsTd.className = "admin-submission-actions";
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";
-    deleteBtn.className = "ghost-btn";
+    deleteBtn.className = "ghost-btn danger";
     deleteBtn.textContent = catT("Удалить", "Delete");
     deleteBtn.addEventListener("click", () => {
       void deleteAdminSubmission(row);
@@ -1342,7 +1342,7 @@ function renderAdminSpecParametersTable() {
     const actTd = document.createElement("td");
     const delBtn = document.createElement("button");
     delBtn.type = "button";
-    delBtn.className = "ghost-btn";
+    delBtn.className = "ghost-btn danger";
     delBtn.textContent = catT("Удалить", "Delete");
     delBtn.addEventListener("click", () => {
       void deleteAdminSpecParameter(sp.id);
@@ -2652,7 +2652,7 @@ function buildAdminProductEditPanel(p, opts) {
     });
     const delBtn = document.createElement("button");
     delBtn.type = "button";
-    delBtn.className = "danger-btn";
+    delBtn.className = "ghost-btn danger";
     delBtn.textContent = isEn ? "Delete" : "Удалить";
     delBtn.addEventListener("click", () => row.remove());
     row.appendChild(sel);

@@ -580,9 +580,12 @@ function applyUiLanguage(lang) {
       : "Поиск по названию или домену (Enter)";
   }
   if (elements.adminAddProductBtn) {
-    elements.adminAddProductBtn.textContent = isEn
-      ? "Create new product"
-      : "Создать новый продукт";
+    const labelEl = elements.adminAddProductBtn.querySelector(
+      ".admin-add-product-btn-label"
+    );
+    const text = isEn ? "Create new product" : "Создать новый продукт";
+    if (labelEl) labelEl.textContent = text;
+    else elements.adminAddProductBtn.textContent = text;
   }
   if (elements.adminUsersCompanySelect) {
     fillAdminUsersCompanySelect();

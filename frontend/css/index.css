@@ -1185,6 +1185,14 @@ body.debug-ui-on .selected-items-count {
   cursor: default;
 }
 
+.secondary-btn .btn-icon,
+.admin-open-drawer-btn .btn-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
 .btn-caption {
   font-size: 11px;
   color: #6b7280;
