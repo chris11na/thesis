@@ -335,7 +335,7 @@
         <div class="card-body">
           <details class="admin-fold admin-fold--companies">
             <summary class="admin-fold-summary" id="admin-fold-companies">Организации и домены</summary>
-            <div class="admin-fold-body">
+            <div class="admin-fold-body admin-companies-fold-body">
               <div class="catalog-toolbar">
                 <div class="catalog-toolbar-search catalog-toolbar-search--with-btn">
                 <input
@@ -353,7 +353,7 @@
                 </button>
                 </div>
               </div>
-              <div class="catalog-panel" id="admin-companies-panel">
+              <div class="catalog-panel admin-companies-panel" id="admin-companies-panel">
                 <div
                   class="catalog-panel-loading-overlay"
                   id="admin-companies-loading"
@@ -361,7 +361,7 @@
                 >
                   Загрузка…
                 </div>
-                <div class="admin-table-scroll admin-table-scroll--flat">
+                <div class="admin-table-scroll admin-companies-table-scroll">
                 <table class="admin-table" id="admin-companies-table">
                   <thead>
                     <tr>
@@ -381,13 +381,13 @@
                 style="display: none; margin-top: 4px"
               >
                 <h4 class="admin-form-block-title" id="edit-company-title">Изменить организацию</h4>
-                <div class="admin-inline" style="align-items: flex-end; flex-wrap: wrap">
+                <div class="admin-inline admin-company-form-row">
                   <input type="hidden" id="admin-company-edit-id" value="" />
-                  <div class="field-group">
+                  <div class="field-group admin-company-field">
                     <div class="field-label" id="edit-company-name-label">Название</div>
                     <input type="text" id="admin-company-edit-name" placeholder="Название" />
                   </div>
-                  <div class="field-group">
+                  <div class="field-group admin-company-field">
                     <div class="field-label" id="edit-company-domain-label">Домен email</div>
                     <div class="input-with-prefix">
                       <span class="input-prefix" aria-hidden="true">@</span>
@@ -410,12 +410,12 @@
               <div class="admin-below-table admin-org-add-block">
                 <h4 class="admin-form-block-title" id="add-company-title">Добавить организацию</h4>
                 <div id="admin-companies-status" class="status-area"></div>
-                <div class="admin-inline">
-                  <div class="field-group">
+                <div class="admin-inline admin-company-form-row">
+                  <div class="field-group admin-company-field">
                     <div class="field-label" id="add-company-name-label">Название</div>
                     <input type="text" id="admin-company-name" placeholder="Acme Inc" />
                   </div>
-                  <div class="field-group">
+                  <div class="field-group admin-company-field">
                     <div class="field-label" id="add-company-domain-label">Домен email</div>
                     <div class="input-with-prefix">
                       <span class="input-prefix" aria-hidden="true">@</span>
@@ -560,8 +560,8 @@
             </summary>
             <div class="admin-fold-body">
               <div class="admin-above-table admin-above-table--compact">
-                <div class="catalog-toolbar">
-                  <div class="catalog-toolbar-search catalog-toolbar-search--with-btn">
+                <div class="catalog-toolbar admin-submissions-toolbar">
+                  <div class="catalog-toolbar-search catalog-toolbar-search--with-btn admin-submissions-search-row">
                     <input
                       type="search"
                       id="admin-submissions-search-input"
@@ -576,7 +576,7 @@
                       Найти
                     </button>
                   </div>
-                  <div class="catalog-toolbar-filters catalog-toolbar-filters--users">
+                  <div class="catalog-toolbar-filters admin-submissions-filters-row">
                     <select
                       class="admin-select"
                       id="admin-submissions-company-select"
@@ -594,18 +594,20 @@
                     </select>
                     <button
                       type="button"
-                      class="secondary-btn"
-                      id="admin-submissions-refresh-btn"
-                    >
-                      Обновить список
-                    </button>
-                    <button
-                      type="button"
                       class="secondary-btn products-spec-filter-clear"
                       id="admin-submissions-clear-filters-btn"
                       hidden
                     >
                       Сбросить
+                    </button>
+                  </div>
+                  <div class="admin-submissions-refresh-row">
+                    <button
+                      type="button"
+                      class="secondary-btn"
+                      id="admin-submissions-refresh-btn"
+                    >
+                      Обновить список
                     </button>
                   </div>
                 </div>

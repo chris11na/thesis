@@ -2330,17 +2330,20 @@ select.admin-select {
   display: flex;
   align-items: center;
   min-width: 0;
+  width: 220px;
+  height: 32px;
+  box-sizing: border-box;
   border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border-radius: 6px;
   background: #fff;
   overflow: hidden;
 }
 
 .input-with-prefix .input-prefix {
-  padding: 6px 0 6px 10px;
+  padding: 0 0 0 8px;
   color: #64748b;
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 32px;
   user-select: none;
   flex-shrink: 0;
 }
@@ -2348,10 +2351,13 @@ select.admin-select {
 .input-with-prefix input {
   flex: 1;
   min-width: 0;
+  width: auto;
+  height: 100%;
   border: none;
   background: transparent;
-  padding: 6px 10px 6px 4px;
+  padding: 0 8px 0 4px;
   font-size: 13px;
+  border-radius: 0;
 }
 
 .input-with-prefix input:focus {
@@ -2378,4 +2384,69 @@ select.admin-select {
 .password-toggle-btn {
   flex-shrink: 0;
   white-space: nowrap;
+}
+
+.admin-company-form-row {
+  align-items: flex-end;
+}
+
+.admin-company-field input[type="text"],
+.admin-company-field input[type="email"] {
+  width: 220px;
+  height: 32px;
+  box-sizing: border-box;
+}
+
+.admin-companies-fold-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.admin-companies-panel {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: min(360px, calc(100vh - 320px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.admin-companies-table-scroll {
+  flex: 1;
+  min-height: 120px;
+  max-height: none;
+  overflow: auto;
+}
+
+.admin-companies-table-scroll .admin-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f8fafc;
+  box-shadow: 0 1px 0 #e5e7eb;
+}
+
+.admin-submissions-toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  grid-template-columns: none;
+}
+
+.admin-submissions-toolbar .admin-submissions-search-row {
+  width: 100%;
+}
+
+.admin-submissions-filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-submissions-refresh-row {
+  display: flex;
+  align-items: center;
 }
