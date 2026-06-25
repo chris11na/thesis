@@ -274,8 +274,10 @@ function renderAdminGroupsTable() {
   tbody.innerHTML = "";
   catalogGroups.forEach((group) => {
     const tr = document.createElement("tr");
+    const tdCode = document.createElement("td");
+    tdCode.textContent = group.code || "—";
     const tdName = document.createElement("td");
-    tdName.textContent = (group.name || "—") + " (" + (group.code || "—") + ")";
+    tdName.textContent = group.name || "—";
     const tdSubs = document.createElement("td");
     const ul = document.createElement("ul");
     ul.className = "admin-subgroup-list";
@@ -302,6 +304,7 @@ function renderAdminGroupsTable() {
       void addAdminSubgroup(group.id);
     });
     tdActions.appendChild(addSubBtn);
+    tr.appendChild(tdCode);
     tr.appendChild(tdName);
     tr.appendChild(tdSubs);
     tr.appendChild(tdCount);
@@ -540,29 +543,11 @@ function fillAdminNewUserRoleSelect() {
   sel.value = prev;
 }
 
-function syncAdminNewUserEmailHint() {
-  const hint = document.getElementById("admin-new-user-domain-hint");
-  if (!hint) return;
-  const sel = elements.adminNewUserCompanySelect;
-  if (!sel || !sel.value) {
-    hint.textContent = catT(
-      "Email должен совпадать с доменом выбранной организации.",
-      "Email must match the selected company domain."
-    );
-    return;
-  }
-  const company = companiesList.find((c) => String(c.id) === sel.value);
-  if (!company) {
-    hint.textContent = catT(
-      "Email должен совпадать с доменом выбранной организации.",
-      "Email must match the selected company domain."
-    );
-    return;
-  }
-  hint.textContent = catT(
-    "Домен email: @" + company.domain,
-    "Email domain: @" + company.domain
-  );
+function normalizeCompanyDomainInput(raw) {
+  return String(raw || "")
+    .trim()
+    .replace(/^@+/, "")
+    .toLowerCase();
 }
 
 function fillAdminSubmissionsCompanySelect() {
@@ -713,7 +698,6 @@ async function refreshCompaniesListForSelect() {
     companiesList = Array.isArray(data) ? data : [];
     fillAdminUsersCompanySelect();
     fillAdminNewUserCompanySelect();
-    syncAdminNewUserEmailHint();
   } catch (e) {
     console.error(e);
   }
@@ -750,7 +734,6 @@ async function loadAdminCompanies() {
       companiesList = adminCompaniesTableList;
       fillAdminUsersCompanySelect();
       fillAdminNewUserCompanySelect();
-      syncAdminNewUserEmailHint();
       fillAdminSubmissionsCompanySelect();
     }
     renderAdminCompaniesTable();
@@ -1475,7 +1458,7 @@ async function deleteAdminCompany(c) {
 async function saveAdminCompany() {
   const id = Number(elements.adminCompanyEditId && elements.adminCompanyEditId.value);
   const name = (elements.adminCompanyEditName.value || "").trim();
-  const domain = (elements.adminCompanyEditDomain.value || "").trim();
+  const domain = normalizeCompanyDomainInput(elements.adminCompanyEditDomain.value);
   if (!id || id <= 0) {
     setCatalogStatus(
       "admin-companies-status",
@@ -1525,7 +1508,7 @@ async function saveAdminCompany() {
 
 async function addAdminCompany() {
   const name = (elements.adminCompanyName.value || "").trim();
-  const domain = (elements.adminCompanyDomain.value || "").trim();
+  const domain = normalizeCompanyDomainInput(elements.adminCompanyDomain.value);
   if (!name || !domain) {
     setCatalogStatus(
       "admin-companies-status",

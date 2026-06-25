@@ -173,6 +173,11 @@ async function init() {
   bindSearchInputOnEnter(elements.adminSubmissionsSearchInput, () => {
     applyAdminSubmissionsSearch();
   });
+  if (elements.adminSubmissionsSearchBtn) {
+    elements.adminSubmissionsSearchBtn.addEventListener("click", () => {
+      applyAdminSubmissionsSearch();
+    });
+  }
   if (elements.adminSubmissionsCompanySelect) {
     elements.adminSubmissionsCompanySelect.addEventListener("change", () => {
       syncAdminSubmissionsClearFiltersBtn();
@@ -212,9 +217,30 @@ async function init() {
       void createAdminUser();
     });
   }
-  if (elements.adminNewUserCompanySelect) {
-    elements.adminNewUserCompanySelect.addEventListener("change", () => {
-      syncAdminNewUserEmailHint();
+  if (elements.adminNewUserPasswordToggle && elements.adminNewUserPassword) {
+    elements.adminNewUserPasswordToggle.addEventListener("click", () => {
+      const input = elements.adminNewUserPassword;
+      const btn = elements.adminNewUserPasswordToggle;
+      const show = input.type === "password";
+      input.type = show ? "text" : "password";
+      btn.setAttribute("aria-pressed", show ? "true" : "false");
+      btn.textContent = show
+        ? uiLang === "en"
+          ? "Hide"
+          : "Скрыть"
+        : uiLang === "en"
+          ? "Show"
+          : "Показать";
+      btn.setAttribute(
+        "aria-label",
+        show
+          ? uiLang === "en"
+            ? "Hide password"
+            : "Скрыть пароль"
+          : uiLang === "en"
+            ? "Show password"
+            : "Показать пароль"
+      );
     });
   }
 
@@ -226,6 +252,11 @@ async function init() {
   bindSearchInputOnEnter(elements.adminCompaniesSearchInput, () => {
     applyAdminCompaniesSearch();
   });
+  if (elements.adminCompaniesSearchBtn) {
+    elements.adminCompaniesSearchBtn.addEventListener("click", () => {
+      applyAdminCompaniesSearch();
+    });
+  }
   if (elements.adminSaveCompanyBtn) {
     elements.adminSaveCompanyBtn.addEventListener("click", () => {
       saveAdminCompany();

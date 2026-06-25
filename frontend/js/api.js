@@ -128,7 +128,7 @@ function syncAuthUI() {
     loadRecentConfigurations();
   }
   if (elements.headerBlurbAdmin) {
-    elements.headerBlurbAdmin.style.display = isAdmin ? "" : "none";
+    elements.headerBlurbAdmin.style.display = "none";
   }
   updateCreateConfigBtnState();
   if (elements.adminArea) {

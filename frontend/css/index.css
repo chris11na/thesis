@@ -2313,3 +2313,69 @@ select.admin-select {
   background: #f8fafc;
   box-shadow: 0 1px 0 #e5e7eb;
 }
+
+.catalog-toolbar-search--with-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.catalog-toolbar-search--with-btn input[type="search"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.input-with-prefix {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.input-with-prefix .input-prefix {
+  padding: 6px 0 6px 10px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.4;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.input-with-prefix input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 6px 10px 6px 4px;
+  font-size: 13px;
+}
+
+.input-with-prefix input:focus {
+  outline: none;
+}
+
+.input-with-prefix:focus-within {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.password-field-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.password-field-wrap input {
+  flex: 1;
+  min-width: 120px;
+}
+
+.password-toggle-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}

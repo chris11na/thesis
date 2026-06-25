@@ -142,6 +142,9 @@ const elements = {
   adminNewUserName: document.getElementById("admin-new-user-name"),
   adminNewUserEmail: document.getElementById("admin-new-user-email"),
   adminNewUserPassword: document.getElementById("admin-new-user-password"),
+  adminNewUserPasswordToggle: document.getElementById(
+    "admin-new-user-password-toggle"
+  ),
   adminNewUserCompanySelect: document.getElementById(
     "admin-new-user-company-select"
   ),
@@ -150,6 +153,9 @@ const elements = {
   adminSubmissionsFold: document.getElementById("admin-submissions-fold"),
   adminSubmissionsSearchInput: document.getElementById(
     "admin-submissions-search-input"
+  ),
+  adminSubmissionsSearchBtn: document.getElementById(
+    "admin-submissions-search-btn"
   ),
   adminSubmissionsCompanySelect: document.getElementById(
     "admin-submissions-company-select"
@@ -174,6 +180,7 @@ const elements = {
   adminCompanyDomain: document.getElementById("admin-company-domain"),
   adminAddCompanyBtn: document.getElementById("admin-add-company-btn"),
   adminCompaniesSearchInput: document.getElementById("admin-companies-search-input"),
+  adminCompaniesSearchBtn: document.getElementById("admin-companies-search-btn"),
   adminCompaniesLoading: document.getElementById("admin-companies-loading"),
   adminCompaniesTbody: document.getElementById("admin-companies-tbody"),
   adminCompanyEditWrap: document.getElementById("admin-company-edit-wrap"),
@@ -335,11 +342,7 @@ function applyUiLanguage(lang) {
       : "Информация о проекте";
   }
   const adminDomainHelp = document.getElementById("admin-domain-help");
-  if (adminDomainHelp) {
-    adminDomainHelp.innerHTML = isEn
-      ? 'Allowed email domain (e.g. <code>aaa.ru</code>): user sign-up and sign-in are linked to the company with this domain.'
-      : 'Разрешённый домен почты (например <code>aaa.ru</code>): регистрация и вход пользователей привязаны к компании с этим доменом.';
-  }
+  if (adminDomainHelp) adminDomainHelp.remove();
   if (elements.projectNameInput) {
     elements.projectNameInput.placeholder = isEn ? "Project name" : "Название проекта";
   }
@@ -374,9 +377,8 @@ function applyUiLanguage(lang) {
   renderCatalogFilterControls();
   syncCatalogFiltersVisibility();
   if (elements.headerBlurbAdmin) {
-    elements.headerBlurbAdmin.textContent = isEn
-      ? "Manage companies, users, and the equipment catalog."
-      : "Здесь вы управляете организациями, пользователями и каталогом.";
+    elements.headerBlurbAdmin.textContent = "";
+    elements.headerBlurbAdmin.style.display = "none";
   }
   const productsCardSubtitle = document.getElementById("products-card-subtitle");
   if (productsCardSubtitle) {
@@ -414,11 +416,7 @@ function applyUiLanguage(lang) {
       : "Заявки в отдел продаж";
   }
   const adminSubmissionsHelp = document.getElementById("admin-submissions-help");
-  if (adminSubmissionsHelp) {
-    adminSubmissionsHelp.textContent = isEn
-      ? "Configurations submitted by users with a project name (sales handoff)."
-      : "Конфигурации, отправленные пользователями с указанным названием проекта (sales handoff).";
-  }
+  if (adminSubmissionsHelp) adminSubmissionsHelp.remove();
   if (elements.adminSubmissionsRefreshBtn) {
     elements.adminSubmissionsRefreshBtn.textContent = isEn
       ? "Refresh list"
@@ -426,8 +424,11 @@ function applyUiLanguage(lang) {
   }
   if (elements.adminSubmissionsSearchInput) {
     elements.adminSubmissionsSearchInput.placeholder = isEn
-      ? "Search project, user, company, ID (Enter)"
-      : "Поиск по проекту, пользователю, компании, ID (Enter)";
+      ? "Search project, user, company, ID"
+      : "Поиск по проекту, пользователю, компании, ID";
+  }
+  if (elements.adminSubmissionsSearchBtn) {
+    elements.adminSubmissionsSearchBtn.textContent = isEn ? "Find" : "Найти";
   }
   if (elements.adminSubmissionsClearFiltersBtn) {
     elements.adminSubmissionsClearFiltersBtn.textContent = isEn
@@ -566,8 +567,8 @@ function applyUiLanguage(lang) {
   }
   if (elements.adminUsersSearchInput) {
     elements.adminUsersSearchInput.placeholder = isEn
-      ? "Search by name, email or company (Enter)"
-      : "Поиск по имени, email или компании (Enter)";
+      ? "Search by name, email or company"
+      : "Поиск по имени, email или компании";
   }
   if (elements.adminAddCompanyBtn) {
     elements.adminAddCompanyBtn.textContent = isEn
@@ -576,8 +577,11 @@ function applyUiLanguage(lang) {
   }
   if (elements.adminCompaniesSearchInput) {
     elements.adminCompaniesSearchInput.placeholder = isEn
-      ? "Search by name or domain (Enter)"
-      : "Поиск по названию или домену (Enter)";
+      ? "Search by name or domain"
+      : "Поиск по названию или домену";
+  }
+  if (elements.adminCompaniesSearchBtn) {
+    elements.adminCompaniesSearchBtn.textContent = isEn ? "Find" : "Найти";
   }
   if (elements.adminAddProductBtn) {
     const labelEl = elements.adminAddProductBtn.querySelector(
@@ -605,7 +609,7 @@ function applyUiLanguage(lang) {
   }
   const addUserEmailLabel = document.getElementById("add-user-email-label");
   if (addUserEmailLabel) {
-    addUserEmailLabel.textContent = "Email";
+    addUserEmailLabel.textContent = isEn ? "Login (email)" : "Логин (email)";
   }
   const addUserPasswordLabel = document.getElementById("add-user-password-label");
   if (addUserPasswordLabel) {
@@ -619,9 +623,28 @@ function applyUiLanguage(lang) {
   if (addUserRoleLabel) {
     addUserRoleLabel.textContent = isEn ? "Role" : "Роль";
   }
+  if (elements.adminNewUserPasswordToggle) {
+    const shown = elements.adminNewUserPasswordToggle.getAttribute("aria-pressed") === "true";
+    elements.adminNewUserPasswordToggle.textContent = shown
+      ? isEn
+        ? "Hide"
+        : "Скрыть"
+      : isEn
+        ? "Show"
+        : "Показать";
+    elements.adminNewUserPasswordToggle.setAttribute(
+      "aria-label",
+      shown
+        ? isEn
+          ? "Hide password"
+          : "Скрыть пароль"
+        : isEn
+          ? "Show password"
+          : "Показать пароль"
+    );
+  }
   fillAdminNewUserCompanySelect();
   fillAdminNewUserRoleSelect();
-  syncAdminNewUserEmailHint();
   if (elements.adminSubmissionsCompanySelect) {
     fillAdminSubmissionsCompanySelect();
   }
@@ -684,15 +707,23 @@ function applyUiLanguage(lang) {
   if (foldGroups) {
     foldGroups.textContent = isEn ? "Catalog groups" : "Группы каталога";
   }
+  const adminNewGroupCodeLabel = document.getElementById(
+    "admin-new-group-code-label"
+  );
+  if (adminNewGroupCodeLabel) {
+    adminNewGroupCodeLabel.textContent = isEn ? "Code" : "Код";
+  }
+  const adminNewGroupNameLabel = document.getElementById(
+    "admin-new-group-name-label"
+  );
+  if (adminNewGroupNameLabel) {
+    adminNewGroupNameLabel.textContent = isEn ? "Name" : "Название";
+  }
   if (elements.adminNewGroupCode) {
-    elements.adminNewGroupCode.placeholder = isEn
-      ? "Code (latin)"
-      : "Код (латиница)";
+    elements.adminNewGroupCode.placeholder = isEn ? "wifi" : "wifi";
   }
   if (elements.adminNewGroupName) {
-    elements.adminNewGroupName.placeholder = isEn
-      ? "Group name"
-      : "Название группы";
+    elements.adminNewGroupName.placeholder = isEn ? "Wi‑Fi" : "Wi‑Fi";
   }
   if (elements.adminAddGroupBtn) {
     elements.adminAddGroupBtn.textContent = isEn
@@ -723,8 +754,10 @@ function applyUiLanguage(lang) {
   if (thSpecParamsOrder) thSpecParamsOrder.textContent = isEn ? "Order" : "Порядок";
   const thSpecParamsActive = document.getElementById("th-spec-params-active");
   if (thSpecParamsActive) thSpecParamsActive.textContent = isEn ? "Active" : "Активен";
+  const thGroupsCode = document.getElementById("th-groups-code");
+  if (thGroupsCode) thGroupsCode.textContent = isEn ? "Code" : "Код";
   const thGroupsName = document.getElementById("th-groups-name");
-  if (thGroupsName) thGroupsName.textContent = isEn ? "Group" : "Группа";
+  if (thGroupsName) thGroupsName.textContent = isEn ? "Name" : "Название";
   const thGroupsSubgroups = document.getElementById("th-groups-subgroups");
   if (thGroupsSubgroups) {
     thGroupsSubgroups.textContent = isEn ? "Subgroups" : "Подгруппы";

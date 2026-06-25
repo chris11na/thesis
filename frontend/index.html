@@ -31,7 +31,6 @@
           />
           <div>
             <h1 id="app-page-title">Конфигуратор</h1>
-            <p id="header-blurb-admin" style="display: none"></p>
           </div>
         </div>
         <div class="header-user-cluster">
@@ -337,18 +336,21 @@
           <details class="admin-fold admin-fold--companies">
             <summary class="admin-fold-summary" id="admin-fold-companies">Организации и домены</summary>
             <div class="admin-fold-body">
-              <p class="field-description" id="admin-domain-help">
-                Разрешённый домен почты (например <code>aaa.ru</code>): регистрация и
-                вход пользователей привязаны к компании с этим доменом.
-              </p>
               <div class="catalog-toolbar">
-                <div class="catalog-toolbar-search">
+                <div class="catalog-toolbar-search catalog-toolbar-search--with-btn">
                 <input
                   type="search"
                   id="admin-companies-search-input"
-                  placeholder="Поиск по названию или домену (Enter)"
+                  placeholder="Поиск по названию или домену"
                   autocomplete="off"
                 />
+                <button
+                  type="button"
+                  class="secondary-btn"
+                  id="admin-companies-search-btn"
+                >
+                  Найти
+                </button>
                 </div>
               </div>
               <div class="catalog-panel" id="admin-companies-panel">
@@ -387,11 +389,15 @@
                   </div>
                   <div class="field-group">
                     <div class="field-label" id="edit-company-domain-label">Домен email</div>
-                    <input
-                      type="text"
-                      id="admin-company-edit-domain"
-                      placeholder="example.com"
-                    />
+                    <div class="input-with-prefix">
+                      <span class="input-prefix" aria-hidden="true">@</span>
+                      <input
+                        type="text"
+                        id="admin-company-edit-domain"
+                        placeholder="example.com"
+                        autocomplete="off"
+                      />
+                    </div>
                   </div>
                   <button type="button" class="primary-btn" id="admin-save-company-btn">
                     Сохранить
@@ -411,48 +417,20 @@
                   </div>
                   <div class="field-group">
                     <div class="field-label" id="add-company-domain-label">Домен email</div>
-                    <input
-                      type="text"
-                      id="admin-company-domain"
-                      placeholder="example.com"
-                    />
+                    <div class="input-with-prefix">
+                      <span class="input-prefix" aria-hidden="true">@</span>
+                      <input
+                        type="text"
+                        id="admin-company-domain"
+                        placeholder="example.com"
+                        autocomplete="off"
+                      />
+                    </div>
                   </div>
                   <button type="button" class="secondary-btn" id="admin-add-company-btn">
                     Добавить организацию
                   </button>
                 </div>
-              </div>
-            </div>
-          </details>
-
-          <details class="admin-fold">
-            <summary class="admin-fold-summary" id="admin-fold-spec-params">
-              Параметры характеристик
-            </summary>
-            <div class="admin-fold-body">
-              <div id="admin-spec-params-status" class="status-area"></div>
-              <div class="admin-table-scroll">
-                <table class="admin-table" id="admin-spec-params-table">
-                  <thead>
-                    <tr>
-                      <th id="th-spec-params-id">ID</th>
-                      <th id="th-spec-params-code">Код</th>
-                      <th id="th-spec-params-name">Название</th>
-                      <th id="th-spec-params-order">Порядок</th>
-                      <th id="th-spec-params-active">Активен</th>
-                      <th id="th-spec-params-actions"></th>
-                    </tr>
-                  </thead>
-                  <tbody id="admin-spec-params-tbody"></tbody>
-                </table>
-              </div>
-              <div class="admin-inline admin-below-table">
-                <input type="text" id="admin-spec-param-code" placeholder="code" />
-                <input type="text" id="admin-spec-param-name" placeholder="Name" />
-                <input type="number" id="admin-spec-param-sort" placeholder="10" />
-                <button type="button" class="secondary-btn" id="admin-spec-param-add-btn">
-                  Добавить параметр
-                </button>
               </div>
             </div>
           </details>
@@ -473,7 +451,7 @@
                   <input
                     type="search"
                     id="admin-users-search-input"
-                    placeholder="Поиск по имени, email или компании (Enter)"
+                    placeholder="Поиск по имени, email или компании"
                     autocomplete="off"
                   />
                   </div>
@@ -518,38 +496,7 @@
               </div>
               <div class="admin-below-table admin-user-add-block">
                 <h4 class="admin-form-block-title" id="add-user-title">Добавить пользователя</h4>
-                <p class="field-description" id="admin-new-user-domain-hint">
-                  Email должен совпадать с доменом выбранной организации.
-                </p>
-                <div class="admin-inline">
-                  <div class="field-group">
-                    <div class="field-label" id="add-user-name-label">Имя</div>
-                    <input type="text" id="admin-new-user-name" autocomplete="name" />
-                  </div>
-                  <div class="field-group">
-                    <div class="field-label" id="add-user-email-label">Email</div>
-                    <input
-                      type="email"
-                      id="admin-new-user-email"
-                      autocomplete="off"
-                    />
-                  </div>
-                  <div class="field-group">
-                    <div class="field-label" id="add-user-password-label">Пароль</div>
-                    <input
-                      type="password"
-                      id="admin-new-user-password"
-                      autocomplete="new-password"
-                    />
-                  </div>
-                  <div class="field-group">
-                    <div class="field-label" id="add-user-company-label">Организация</div>
-                    <select
-                      class="admin-select"
-                      id="admin-new-user-company-select"
-                      aria-label="Организация"
-                    ></select>
-                  </div>
+                <div class="admin-inline admin-user-add-form">
                   <div class="field-group">
                     <div class="field-label" id="add-user-role-label">Роль</div>
                     <select
@@ -560,6 +507,44 @@
                       <option value="2">Пользователь</option>
                       <option value="1">Администратор</option>
                     </select>
+                  </div>
+                  <div class="field-group">
+                    <div class="field-label" id="add-user-company-label">Организация</div>
+                    <select
+                      class="admin-select"
+                      id="admin-new-user-company-select"
+                      aria-label="Организация"
+                    ></select>
+                  </div>
+                  <div class="field-group">
+                    <div class="field-label" id="add-user-name-label">Имя</div>
+                    <input type="text" id="admin-new-user-name" autocomplete="name" />
+                  </div>
+                  <div class="field-group">
+                    <div class="field-label" id="add-user-email-label">Логин (email)</div>
+                    <input
+                      type="email"
+                      id="admin-new-user-email"
+                      autocomplete="off"
+                    />
+                  </div>
+                  <div class="field-group">
+                    <div class="field-label" id="add-user-password-label">Пароль</div>
+                    <div class="password-field-wrap">
+                      <input
+                        type="password"
+                        id="admin-new-user-password"
+                        autocomplete="new-password"
+                      />
+                      <button
+                        type="button"
+                        class="ghost-btn password-toggle-btn"
+                        id="admin-new-user-password-toggle"
+                        aria-pressed="false"
+                      >
+                        Показать
+                      </button>
+                    </div>
                   </div>
                   <button type="button" class="secondary-btn" id="admin-add-user-btn">
                     Создать пользователя
@@ -574,19 +559,22 @@
               Заявки в отдел продаж
             </summary>
             <div class="admin-fold-body">
-              <p class="field-description" id="admin-submissions-help">
-                Конфигурации, отправленные пользователями с указанным названием проекта
-                (sales handoff).
-              </p>
               <div class="admin-above-table admin-above-table--compact">
                 <div class="catalog-toolbar">
-                  <div class="catalog-toolbar-search">
+                  <div class="catalog-toolbar-search catalog-toolbar-search--with-btn">
                     <input
                       type="search"
                       id="admin-submissions-search-input"
-                      placeholder="Поиск по проекту, пользователю, компании, ID (Enter)"
+                      placeholder="Поиск по проекту, пользователю, компании, ID"
                       autocomplete="off"
                     />
+                    <button
+                      type="button"
+                      class="secondary-btn"
+                      id="admin-submissions-search-btn"
+                    >
+                      Найти
+                    </button>
                   </div>
                   <div class="catalog-toolbar-filters catalog-toolbar-filters--users">
                     <select
@@ -657,19 +645,25 @@
           <details class="admin-fold">
             <summary class="admin-fold-summary" id="admin-fold-groups">Группы каталога</summary>
             <div class="admin-fold-body">
-              <div class="admin-inline" style="margin-bottom: 10px">
-                <input
-                  type="text"
-                  id="admin-new-group-code"
-                  placeholder="Код (латиница)"
-                  style="max-width: 140px"
-                />
-                <input
-                  type="text"
-                  id="admin-new-group-name"
-                  placeholder="Название группы"
-                  style="flex: 1; min-width: 180px"
-                />
+              <div class="admin-inline admin-groups-create-row" style="margin-bottom: 10px">
+                <div class="field-group" style="max-width: 140px">
+                  <div class="field-label" id="admin-new-group-code-label">Код</div>
+                  <input
+                    type="text"
+                    id="admin-new-group-code"
+                    placeholder="wifi"
+                    autocomplete="off"
+                  />
+                </div>
+                <div class="field-group" style="flex: 1; min-width: 180px">
+                  <div class="field-label" id="admin-new-group-name-label">Название</div>
+                  <input
+                    type="text"
+                    id="admin-new-group-name"
+                    placeholder="Wi‑Fi"
+                    autocomplete="off"
+                  />
+                </div>
                 <button type="button" class="secondary-btn" id="admin-add-group-btn">
                   Создать группу
                 </button>
@@ -681,7 +675,8 @@
                 <table class="admin-groups-table" id="admin-groups-table">
                   <thead>
                     <tr>
-                      <th id="th-groups-name">Группа</th>
+                      <th id="th-groups-code">Код</th>
+                      <th id="th-groups-name">Название</th>
                       <th id="th-groups-subgroups">Подгруппы</th>
                       <th id="th-groups-count">Товаров</th>
                       <th id="th-groups-actions">Действия</th>
@@ -691,6 +686,38 @@
                 </table>
               </div>
               <div class="status-area" id="admin-groups-status"></div>
+            </div>
+          </details>
+
+          <details class="admin-fold">
+            <summary class="admin-fold-summary" id="admin-fold-spec-params">
+              Параметры характеристик
+            </summary>
+            <div class="admin-fold-body">
+              <div id="admin-spec-params-status" class="status-area"></div>
+              <div class="admin-table-scroll">
+                <table class="admin-table" id="admin-spec-params-table">
+                  <thead>
+                    <tr>
+                      <th id="th-spec-params-id">ID</th>
+                      <th id="th-spec-params-code">Код</th>
+                      <th id="th-spec-params-name">Название</th>
+                      <th id="th-spec-params-order">Порядок</th>
+                      <th id="th-spec-params-active">Активен</th>
+                      <th id="th-spec-params-actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-spec-params-tbody"></tbody>
+                </table>
+              </div>
+              <div class="admin-inline admin-below-table">
+                <input type="text" id="admin-spec-param-code" placeholder="code" />
+                <input type="text" id="admin-spec-param-name" placeholder="Name" />
+                <input type="number" id="admin-spec-param-sort" placeholder="10" />
+                <button type="button" class="secondary-btn" id="admin-spec-param-add-btn">
+                  Добавить параметр
+                </button>
+              </div>
             </div>
           </details>
 
