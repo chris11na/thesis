@@ -2569,7 +2569,11 @@ async function loadProducts() {
     setPanelLoading(elements.adminProductsLoading, false);
   }
 
-  await Promise.all([loadCatalogSpecFilterOptions(), loadSpecParametersForAdmin()]);
+  await Promise.all([
+    loadCatalogGroups(),
+    loadCatalogSpecFilterOptions(),
+    loadSpecParametersForAdmin(),
+  ]);
   renderCatalogFilterControls();
   syncCatalogFiltersVisibility();
   syncProductFilterInputsFromState();
