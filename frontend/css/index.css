@@ -2414,7 +2414,7 @@ select.admin-select {
 
 .admin-companies-table-scroll {
   flex: 1;
-  min-height: 120px;
+  /* min-height: 120px; */
   max-height: none;
   overflow: auto;
 }
