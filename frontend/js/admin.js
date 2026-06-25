@@ -87,6 +87,82 @@ function openAdminProductCreateDrawer() {
   openAdminProductDrawer(draft, { createMode: true });
 }
 
+function populateAdminCatalogCategorySelect() {
+  const sel = elements.adminCatalogCategorySelect;
+  if (!sel) return;
+  const prev = adminCatalogCategoryFilter || sel.value || "";
+  const allLabel = catT("Все типы", "All types");
+  sel.innerHTML = "";
+  const allOpt = document.createElement("option");
+  allOpt.value = "";
+  allOpt.textContent = allLabel;
+  sel.appendChild(allOpt);
+  equipmentTypeOptions.forEach((row) => {
+    const code = (row.code || "").trim();
+    if (!code) return;
+    const opt = document.createElement("option");
+    opt.value = code;
+    const label = (row.label_ru || row.label || code).trim();
+    opt.textContent = label === code ? code : code + " — " + label;
+    sel.appendChild(opt);
+  });
+  if (prev && Array.from(sel.options).some((o) => o.value === prev)) {
+    sel.value = prev;
+  } else {
+    sel.value = "";
+    adminCatalogCategoryFilter = "";
+  }
+  fitNativeSelectToContent(sel);
+}
+
+async function loadEquipmentTypeOptions() {
+  try {
+    const res = await apiFetch("/products/equipment-types", {
+      method: "GET",
+      __globalLoading: false,
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !Array.isArray(data)) {
+      equipmentTypeOptions = [];
+      return;
+    }
+    equipmentTypeOptions = data;
+  } catch (e) {
+    console.error(e);
+    equipmentTypeOptions = [];
+  }
+  populateAdminCatalogCategorySelect();
+  populateUserCatalogCategorySelect();
+}
+
+function populateUserCatalogCategorySelect() {
+  const sel = elements.catalogCategorySelect;
+  if (!sel) return;
+  const prev = catalogCategoryFilter || sel.value || "";
+  const allLabel = catT("Все типы", "All types");
+  sel.innerHTML = "";
+  const allOpt = document.createElement("option");
+  allOpt.value = "";
+  allOpt.textContent = allLabel;
+  sel.appendChild(allOpt);
+  equipmentTypeOptions.forEach((row) => {
+    const code = (row.code || "").trim();
+    if (!code) return;
+    const opt = document.createElement("option");
+    opt.value = code;
+    const label = (row.label_ru || row.label || code).trim();
+    opt.textContent = label === code ? code : code + " — " + label;
+    sel.appendChild(opt);
+  });
+  if (prev && Array.from(sel.options).some((o) => o.value === prev)) {
+    sel.value = prev;
+  } else {
+    sel.value = "";
+    catalogCategoryFilter = "";
+  }
+  fitNativeSelectToContent(sel);
+}
+
 function populateAdminCatalogGroupSelect() {
   const sel = elements.adminCatalogGroupSelect;
   if (!sel) return;
@@ -2408,12 +2484,18 @@ function buildAdminProductEditPanel(p, opts) {
   specValuesRows.style.display = "grid";
   specValuesRows.style.gap = "8px";
   specValuesBlock.appendChild(specValuesRows);
+  const fallbackLabel = document.createElement("label");
+  fallbackLabel.style.marginTop = "10px";
+  fallbackLabel.textContent = isEn
+    ? "Extra search text (optional)"
+    : "Дополнительный текст для поиска (необязательно)";
+  specValuesBlock.appendChild(fallbackLabel);
   const fallbackSpecs = document.createElement("textarea");
   fallbackSpecs.className = "admin-textarea-specs";
-  fallbackSpecs.rows = 4;
+  fallbackSpecs.rows = 3;
   fallbackSpecs.placeholder = isEn
-    ? "Legacy plain text specs (optional)"
-    : "Устаревший текст характеристик (необязательно)";
+    ? "Optional extra text included in catalog search"
+    : "Необязательно: доп. текст, участвует в поиске по каталогу";
   fallbackSpecs.value = p.technical_specs || "";
   specValuesBlock.appendChild(fallbackSpecs);
   const addSpecRowBtn = document.createElement("button");
@@ -2491,14 +2573,14 @@ function buildAdminProductEditPanel(p, opts) {
 
   const inpCategory = document.createElement("input");
   inpCategory.type = "text";
-  inpCategory.placeholder = "";
+  inpCategory.placeholder = "VA, VNC, VPS…";
   inpCategory.value = p.product_category || "";
   addFieldStack(
-    isEn ? "Category (label)" : "Категория",
+    isEn ? "Equipment type code" : "Код типа оборудования",
     inpCategory,
     isEn
-      ? "Optional short label in the catalog (e.g. type of device)."
-      : "Необязательная короткая метка в каталоге (например, тип устройства)."
+      ? "Short code (e.g. VA, VNC). Used for type filter in the catalog and VPS/VPSN logic. Not the same as catalog group."
+      : "Короткий код (VA, VNC, VPS…). По нему работает фильтр «Тип оборудования» в каталоге и логика сервисов. Это не группа каталога."
   );
 
   const selSubgroup = document.createElement("select");
@@ -2522,9 +2604,48 @@ function buildAdminProductEditPanel(p, opts) {
     isEn ? "Catalog subgroup" : "Подгруппа каталога",
     selSubgroup,
     isEn
-      ? "Group and subgroup where this product appears in the catalog."
-      : "Группа и подгруппа, в которой продукт отображается в каталоге."
+      ? "Where the product appears in the catalog. To create a new group or subgroup, use Admin → Catalog groups — not in this form."
+      : "В каком разделе каталога показывается товар. Новую группу или подгруппу создают в Admin → «Группы каталога», не здесь."
   );
+
+  const legacyConfigDetails = document.createElement("details");
+  legacyConfigDetails.className = "admin-legacy-config-fields";
+  legacyConfigDetails.open = Boolean(
+    p.built_in_license_units != null ||
+      (p.max_module_slots != null && p.max_module_slots !== "") ||
+      (p.module_speeds_json && String(p.module_speeds_json).trim())
+  );
+  const legacySummary = document.createElement("summary");
+  legacySummary.textContent = isEn
+    ? "Configurator columns (optional if rules below are set)"
+    : "Колонки конфигуратора (если ниже заданы «Правила» — можно не заполнять)";
+  legacyConfigDetails.appendChild(legacySummary);
+  const legacyHint = document.createElement("div");
+  legacyHint.className = "field-description";
+  legacyHint.style.margin = "8px 0 10px";
+  legacyHint.textContent = isEn
+    ? "These DB fields are used when matching rules are empty. Prefer «Simple mode» in the rules block below."
+    : "Используются конфигуратором, если в «Правилах» нет перекрытия. Обычно достаточно блока «Простая настройка» ниже.";
+  legacyConfigDetails.appendChild(legacyHint);
+  const legacyGrid = document.createElement("div");
+  legacyGrid.className = "edit-grid";
+  legacyConfigDetails.appendChild(legacyGrid);
+
+  function addLegacyField(labelText, inputEl, hintText) {
+    const cell = document.createElement("div");
+    const lab = document.createElement("label");
+    lab.textContent = labelText;
+    cell.appendChild(lab);
+    cell.appendChild(inputEl);
+    if (hintText) {
+      const h = document.createElement("div");
+      h.className = "field-description";
+      h.style.marginTop = "4px";
+      h.textContent = hintText;
+      cell.appendChild(h);
+    }
+    legacyGrid.appendChild(cell);
+  }
 
   const inpBuilt = document.createElement("input");
   inpBuilt.type = "number";
@@ -2534,24 +2655,24 @@ function buildAdminProductEditPanel(p, opts) {
   if (p.built_in_license_units != null) {
     inpBuilt.value = String(p.built_in_license_units);
   }
-  addFieldStack(
+  addLegacyField(
     isEn ? "Built-in AP (licenses)" : "Встроенные AP (лицензии)",
     inpBuilt,
     isEn
-      ? "Built-in licensed AP units; empty means none."
-      : "Встроенные лицензируемые AP; пусто — нет."
+      ? "For Wi‑Fi controllers only. Empty means none."
+      : "Только для Wi‑Fi контроллеров. Пусто — нет."
   );
 
   const inpSpeeds = document.createElement("input");
   inpSpeeds.type = "text";
-  inpSpeeds.placeholder = "";
+  inpSpeeds.placeholder = "[1, 10]";
   inpSpeeds.value = p.module_speeds_json || "";
-  addFieldStack(
-    isEn ? "Module speeds in catalog (JSON)" : "Скорости модулей в каталоге (JSON)",
+  addLegacyField(
+    isEn ? "Allowed module speeds (JSON)" : "Допустимые скорости модулей (JSON)",
     inpSpeeds,
     isEn
-      ? "Array of Gbps numbers, e.g. [1, 10]. Empty means no filter."
-      : "Массив чисел в Гбит/с, например [1, 10]. Пусто — без фильтра."
+      ? "Fallback if rules do not set speeds. Example: [1, 10]."
+      : "Запасной вариант, если в «Правилах» скорости не заданы. Пример: [1, 10]."
   );
 
   const inpSlots = document.createElement("input");
@@ -2562,13 +2683,15 @@ function buildAdminProductEditPanel(p, opts) {
   if (p.max_module_slots != null) {
     inpSlots.value = String(p.max_module_slots);
   }
-  addFieldStack(
+  addLegacyField(
     isEn ? "Max modules (total per product)" : "Макс. модулей (всего на продукт)",
     inpSlots,
     isEn
-      ? "Total module slots limit in configuration; empty means no limit."
-      : "Общий лимит слотов по модулям в конфигурации; пусто — без лимита."
+      ? "Fallback slot limit for transceivers. Empty means no limit."
+      : "Запасной лимит слотов под модули. Пусто — без лимита."
   );
+
+  grid.appendChild(legacyConfigDetails);
 
   const rulesSplit = adminSplitProductRulesJson(p.rules_json);
   const preservedRulesRest = rulesSplit.rest.slice();

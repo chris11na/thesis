@@ -71,6 +71,8 @@ const elements = {
   ),
   adminCatalogGroupSelect: document.getElementById("admin-catalog-group-select"),
   adminCatalogSubgroupSelect: document.getElementById("admin-catalog-subgroup-select"),
+  adminCatalogCategorySelect: document.getElementById("admin-catalog-category-select"),
+  catalogCategorySelect: document.getElementById("catalog-category-select"),
   adminGroupsTbody: document.getElementById("admin-groups-tbody"),
   adminNewGroupCode: document.getElementById("admin-new-group-code"),
   adminNewGroupName: document.getElementById("admin-new-group-name"),
@@ -827,6 +829,9 @@ let catalogGroupId = null;
 let catalogSubgroupId = null;
 let adminCatalogGroupFilter = "";
 let adminCatalogSubgroupFilter = "";
+let adminCatalogCategoryFilter = "";
+let catalogCategoryFilter = "";
+let equipmentTypeOptions = [];
 let specParameters = [];
 /** Loaded from GET /products/spec-filter-options for the active catalog scope. */
 let catalogFilterDefs = [];

@@ -1760,7 +1760,34 @@ select.admin-select {
 }
 
 .catalog-toolbar-filters--admin-nav {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.catalog-toolbar-filters--category {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-legacy-config-fields {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.admin-legacy-config-fields summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.admin-legacy-config-fields .edit-grid {
+  margin-top: 8px;
 }
 
 .catalog-switch-filters {

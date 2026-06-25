@@ -1472,6 +1472,12 @@ function buildProductCatalogScopeParams() {
   if (!isAdmin && !globalSearch && isConfiguratorEquipmentSubgroup(activeSub)) {
     params.set("configurator_only", "true");
   }
+  if (isAdmin && adminCatalogCategoryFilter) {
+    params.set("product_category", adminCatalogCategoryFilter);
+  }
+  if (!isAdmin && catalogCategoryFilter) {
+    params.set("product_category", catalogCategoryFilter);
+  }
   return params;
 }
 
@@ -1619,7 +1625,11 @@ function syncProductFilterInputsFromState() {
 function hasActiveCatalogFilters() {
   const defs = activeCatalogFilterDefs();
   const state = activeCatalogFilterState();
-  return defs.some((def) => Boolean((state[def.code] || "").trim()));
+  return (
+    defs.some((def) => Boolean((state[def.code] || "").trim())) ||
+    Boolean(adminCatalogCategoryFilter) ||
+    Boolean(catalogCategoryFilter)
+  );
 }
 
 function syncProductSpecFilterUi() {
@@ -1663,6 +1673,14 @@ function applyProductCatalogQuery(resetPage) {
 
 function clearProductSpecFilter() {
   productSearchTerm = "";
+  adminCatalogCategoryFilter = "";
+  catalogCategoryFilter = "";
+  if (elements.adminCatalogCategorySelect) {
+    elements.adminCatalogCategorySelect.value = "";
+  }
+  if (elements.catalogCategorySelect) {
+    elements.catalogCategorySelect.value = "";
+  }
   for (const def of catalogFilterDefs) {
     catalogFilters[def.code] = "";
   }
@@ -1725,6 +1743,9 @@ function syncUserCatalogPanels() {
   }
   if (elements.catalogProductsToolbar) {
     elements.catalogProductsToolbar.hidden = !wizard;
+  }
+  if (elements.catalogCategorySelect) {
+    elements.catalogCategorySelect.hidden = !wizard || !showProductResults;
   }
   if (elements.userProductsPanel) {
     elements.userProductsPanel.hidden = wizard ? !showProductResults : false;
@@ -1925,6 +1946,7 @@ async function loadCatalogGroups() {
     console.error(e);
     catalogGroups = [];
   }
+  await loadEquipmentTypeOptions();
   renderCatalogNavigation();
   populateAdminCatalogGroupSelect();
   renderAdminGroupsTable();
@@ -2466,8 +2488,14 @@ async function loadProducts() {
     } else if (adminCatalogGroupFilter) {
       params.set("group_id", adminCatalogGroupFilter);
     }
+    if (adminCatalogCategoryFilter) {
+      params.set("product_category", adminCatalogCategoryFilter);
+    }
   } else if (catalogSubgroupId) {
     params.set("subgroup_id", String(catalogSubgroupId));
+  }
+  if (!isAdmin && catalogCategoryFilter) {
+    params.set("product_category", catalogCategoryFilter);
   }
 
   const activeSub = isAdmin

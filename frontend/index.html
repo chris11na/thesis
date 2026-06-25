@@ -83,6 +83,16 @@
                 id="user-switch-filters"
                 hidden
               ></div>
+              <div class="catalog-toolbar-filters catalog-toolbar-filters--category">
+                <select
+                  class="catalog-native-select"
+                  id="catalog-category-select"
+                  aria-label="Тип оборудования"
+                  hidden
+                >
+                  <option value="">Все типы</option>
+                </select>
+              </div>
               <div class="catalog-toolbar-clear">
                 <button
                   type="button"
@@ -710,6 +720,13 @@
                     aria-label="Подгруппа каталога"
                   >
                     <option value="">Все подгруппы</option>
+                  </select>
+                  <select
+                    class="catalog-native-select"
+                    id="admin-catalog-category-select"
+                    aria-label="Тип оборудования"
+                  >
+                    <option value="">Все типы</option>
                   </select>
                 </div>
                 <div

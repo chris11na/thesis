@@ -77,6 +77,19 @@ async function init() {
       applyProductCatalogQuery(true);
     });
   }
+  if (elements.adminCatalogCategorySelect) {
+    elements.adminCatalogCategorySelect.addEventListener("change", () => {
+      adminCatalogCategoryFilter =
+        elements.adminCatalogCategorySelect.value || "";
+      applyProductCatalogQuery(true);
+    });
+  }
+  if (elements.catalogCategorySelect) {
+    elements.catalogCategorySelect.addEventListener("change", () => {
+      catalogCategoryFilter = elements.catalogCategorySelect.value || "";
+      applyProductCatalogQuery(true);
+    });
+  }
   if (elements.adminAddGroupBtn) {
     elements.adminAddGroupBtn.addEventListener("click", () => {
       void addAdminGroup();
