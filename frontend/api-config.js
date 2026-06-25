@@ -13,7 +13,7 @@
     if (host === "127.0.0.1" || host === "localhost") {
       return "http://127.0.0.1:8000";
     }
-    return "https://thesis-zqvx.onrender.com";
+    return "https://thesis-spec-filters-api.onrender.com";
   }
 
   global.APP_API_BASE = resolveApiBase();
