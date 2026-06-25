@@ -23,7 +23,7 @@ test.describe("Specification export download", () => {
     expect(fs.statSync(savePath).size).toBeGreaterThan(100);
   });
 
-  test("export dialog downloads CSV specification file", async ({ page }) => {
+  test("export dialog downloads CSV specification zip (RU + EN)", async ({ page }) => {
     await loginAsUser(page);
     await pickFirstCatalogProduct(page);
     await submitConfigurationWithProject(page, `E2E csv ${Date.now()}`);
@@ -33,7 +33,7 @@ test.describe("Specification export download", () => {
       page.click("#config-export-csv-btn"),
     ]);
 
-    expect(download.suggestedFilename()).toMatch(/\.csv$/i);
+    expect(download.suggestedFilename()).toMatch(/spec-bilingual\.zip$/i);
     const savePath = await download.path();
     expect(savePath).toBeTruthy();
     const fs = require("fs");

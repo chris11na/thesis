@@ -73,7 +73,19 @@ def _email_subject_and_body(
         f"Contact email: {(conf.project_contact_email or '').strip() or '—'}",
         f"Submitted by: {user.name} <{user.email}>",
         "",
-        "Specification is attached as an Excel (.xlsx) file.",
+        "Specification is attached as Excel (.xlsx) with Russian and English worksheets.",
+        "",
+        "---",
+        "",
+        "Новая конфигурация отправлена из конфигуратора.",
+        "",
+        f"ID конфигурации: {conf.id}",
+        f"Проект: {project}",
+        f"Контакт: {(conf.project_contact_name or '').strip() or '—'}",
+        f"Email контакта: {(conf.project_contact_email or '').strip() or '—'}",
+        f"Отправил(а): {user.name} <{user.email}>",
+        "",
+        "Спецификация во вложении — Excel (.xlsx) с листами на русском и английском.",
     ]
     notes = (conf.project_notes or "").strip()
     if notes:

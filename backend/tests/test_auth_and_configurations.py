@@ -614,15 +614,40 @@ def test_export_configuration_specification_xlsx_and_csv() -> None:
     assert xlsx.content[:2] == b"PK"
     assert len(xlsx.content) > 200
 
+    from io import BytesIO
+
+    from openpyxl import load_workbook
+
+    wb = load_workbook(BytesIO(xlsx.content))
+    assert wb.sheetnames == ["Спецификация", "Specification"]
+    ru_ws = wb["Спецификация"]
+    assert ru_ws["A1"].value == "Спецификация конфигурации"
+    assert ru_ws["A3"].value == "ID конфигурации"
+    en_ws = wb["Specification"]
+    assert en_ws["A1"].value == "Configuration specification"
+    assert en_ws["A3"].value == "Configuration ID"
+
     csv_resp = client.get(
         f"/configurations/{configuration_id}/specification.csv",
         headers=headers,
     )
     assert csv_resp.status_code == 200, csv_resp.text
-    assert "text/csv" in csv_resp.headers["content-type"]
-    body = csv_resp.content.decode("utf-8-sig")
-    assert "Export test" in body
-    assert "Equipment" in body
+    assert csv_resp.headers["content-type"] == "application/zip"
+    assert csv_resp.content[:2] == b"PK"
+    import zipfile
+
+    with zipfile.ZipFile(BytesIO(csv_resp.content)) as zf:
+        names = sorted(zf.namelist())
+        assert names == [
+            f"configuration-{configuration_id}-spec-en.csv",
+            f"configuration-{configuration_id}-spec-ru.csv",
+        ]
+        ru_body = zf.read(names[1]).decode("utf-8-sig")
+        en_body = zf.read(names[0]).decode("utf-8-sig")
+    assert "Export test" in ru_body
+    assert "Оборудование" in ru_body
+    assert "Export test" in en_body
+    assert "Equipment" in en_body
 
 
 def test_create_structured_configuration_rejects_insufficient_licenses() -> None:

@@ -2851,8 +2851,8 @@ function configExportLeadText(exportCtx) {
       : "Не удалось отправить на почту: " + exportCtx.emailError;
   }
   const intro = isEn
-    ? "You can also download the specification as Excel or CSV."
-    : "При необходимости скачайте спецификацию в Excel или CSV.";
+    ? "You can also download the specification in Excel (RU + EN sheets) or CSV (RU + EN zip)."
+    : "При необходимости скачайте спецификацию: Excel (листы RU + EN) или CSV (архив RU + EN).";
   return [idPart, projectPart, emailPart, intro].filter(Boolean).join(". ");
 }
 
@@ -2881,13 +2881,13 @@ function syncConfigExportDialogLabels(exportCtx) {
   }
   if (elements.configExportXlsxBtn) {
     elements.configExportXlsxBtn.textContent = isEn
-      ? "Download Excel (.xlsx)"
-      : "Скачать Excel (.xlsx)";
+      ? "Download Excel (RU + EN)"
+      : "Скачать Excel (RU + EN)";
   }
   if (elements.configExportCsvBtn) {
     elements.configExportCsvBtn.textContent = isEn
-      ? "Download CSV (Google Sheets)"
-      : "Скачать CSV (Google Таблицы)";
+      ? "Download CSV (RU + EN)"
+      : "Скачать CSV (RU + EN)";
   }
   if (elements.configExportCloseBtn) {
     elements.configExportCloseBtn.textContent = isEn ? "Close" : "Закрыть";
@@ -2911,14 +2911,14 @@ function appendRecentConfigExportActions(parent, configurationId) {
   const xlsxBtn = document.createElement("button");
   xlsxBtn.type = "button";
   xlsxBtn.className = "secondary-btn recent-config-export-btn";
-  xlsxBtn.textContent = catT("Скачать Excel", "Download Excel");
+  xlsxBtn.textContent = catT("Excel RU+EN", "Excel RU+EN");
   xlsxBtn.addEventListener("click", () => {
     void downloadConfigurationExportFile(configurationId, "xlsx");
   });
   const csvBtn = document.createElement("button");
   csvBtn.type = "button";
   csvBtn.className = "secondary-btn recent-config-export-btn";
-  csvBtn.textContent = catT("Скачать CSV", "Download CSV");
+  csvBtn.textContent = catT("CSV RU+EN", "CSV RU+EN");
   csvBtn.addEventListener("click", () => {
     void downloadConfigurationExportFile(configurationId, "csv");
   });
@@ -2929,7 +2929,7 @@ function appendRecentConfigExportActions(parent, configurationId) {
 
 async function downloadConfigurationExportFile(configurationId, format) {
   if (!configurationId || !accessToken) return false;
-  const ext = format === "csv" ? "csv" : "xlsx";
+  const ext = format === "csv" ? "zip" : "xlsx";
   const dialogOpen =
     elements.configExportDialog &&
     elements.configExportDialog.open;
@@ -2974,7 +2974,10 @@ async function downloadConfigurationExportFile(configurationId, format) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "configuration-" + configurationId + "-spec." + ext;
+    link.download =
+      format === "csv"
+        ? "configuration-" + configurationId + "-spec-bilingual.zip"
+        : "configuration-" + configurationId + "-spec." + ext;
     link.style.display = "none";
     document.body.appendChild(link);
     link.click();

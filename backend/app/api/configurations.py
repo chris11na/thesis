@@ -550,6 +550,8 @@ def _get_configuration_for_export(
 
 
 def _export_filename(configuration_id: int, ext: str) -> str:
+    if ext == "zip":
+        return f"configuration-{configuration_id}-spec-bilingual.zip"
     return f"configuration-{configuration_id}-spec.{ext}"
 
 
@@ -582,9 +584,9 @@ def export_configuration_specification_csv(
     content = specification_to_csv_bytes(conf=conf, specification=specification)
     return Response(
         content=content,
-        media_type="text/csv; charset=utf-8",
+        media_type="application/zip",
         headers={
-            "Content-Disposition": f'attachment; filename="{_export_filename(configuration_id, "csv")}"'
+            "Content-Disposition": f'attachment; filename="{_export_filename(configuration_id, "zip")}"'
         },
     )
 
