@@ -2354,6 +2354,32 @@ function adminSplitProductRulesJson(raw) {
   return { speedAllowed, modulesMax, licenseIncluded, rest, parseError: false };
 }
 
+function adminHydrateRulesSplitFromProduct(p, split) {
+  if (!p || !split) return split;
+  if (
+    split.speedAllowed == null &&
+    p.module_speeds_json &&
+    String(p.module_speeds_json).trim()
+  ) {
+    try {
+      const arr = JSON.parse(String(p.module_speeds_json));
+      if (Array.isArray(arr)) {
+        const nums = arr
+          .map((x) => parseInt(x, 10))
+          .filter((n) => Number.isFinite(n));
+        if (nums.length) split.speedAllowed = nums;
+      }
+    } catch (_) {}
+  }
+  if (split.modulesMax == null && p.max_module_slots != null) {
+    split.modulesMax = p.max_module_slots;
+  }
+  if (split.licenseIncluded == null && p.built_in_license_units != null) {
+    split.licenseIncluded = p.built_in_license_units;
+  }
+  return split;
+}
+
 function adminBuildRulesJsonFromWizard(
   chkSpeed,
   speedText,
@@ -2608,92 +2634,10 @@ function buildAdminProductEditPanel(p, opts) {
       : "В каком разделе каталога показывается товар. Новую группу или подгруппу создают в Admin → «Группы каталога», не здесь."
   );
 
-  const legacyConfigDetails = document.createElement("details");
-  legacyConfigDetails.className = "admin-legacy-config-fields";
-  legacyConfigDetails.open = Boolean(
-    p.built_in_license_units != null ||
-      (p.max_module_slots != null && p.max_module_slots !== "") ||
-      (p.module_speeds_json && String(p.module_speeds_json).trim())
+  const rulesSplit = adminHydrateRulesSplitFromProduct(
+    p,
+    adminSplitProductRulesJson(p.rules_json)
   );
-  const legacySummary = document.createElement("summary");
-  legacySummary.textContent = isEn
-    ? "Configurator columns (optional if rules below are set)"
-    : "Колонки конфигуратора (если ниже заданы «Правила» — можно не заполнять)";
-  legacyConfigDetails.appendChild(legacySummary);
-  const legacyHint = document.createElement("div");
-  legacyHint.className = "field-description";
-  legacyHint.style.margin = "8px 0 10px";
-  legacyHint.textContent = isEn
-    ? "These DB fields are used when matching rules are empty. Prefer «Simple mode» in the rules block below."
-    : "Используются конфигуратором, если в «Правилах» нет перекрытия. Обычно достаточно блока «Простая настройка» ниже.";
-  legacyConfigDetails.appendChild(legacyHint);
-  const legacyGrid = document.createElement("div");
-  legacyGrid.className = "edit-grid";
-  legacyConfigDetails.appendChild(legacyGrid);
-
-  function addLegacyField(labelText, inputEl, hintText) {
-    const cell = document.createElement("div");
-    const lab = document.createElement("label");
-    lab.textContent = labelText;
-    cell.appendChild(lab);
-    cell.appendChild(inputEl);
-    if (hintText) {
-      const h = document.createElement("div");
-      h.className = "field-description";
-      h.style.marginTop = "4px";
-      h.textContent = hintText;
-      cell.appendChild(h);
-    }
-    legacyGrid.appendChild(cell);
-  }
-
-  const inpBuilt = document.createElement("input");
-  inpBuilt.type = "number";
-  inpBuilt.min = "0";
-  inpBuilt.step = "1";
-  inpBuilt.placeholder = "";
-  if (p.built_in_license_units != null) {
-    inpBuilt.value = String(p.built_in_license_units);
-  }
-  addLegacyField(
-    isEn ? "Built-in AP (licenses)" : "Встроенные AP (лицензии)",
-    inpBuilt,
-    isEn
-      ? "For Wi‑Fi controllers only. Empty means none."
-      : "Только для Wi‑Fi контроллеров. Пусто — нет."
-  );
-
-  const inpSpeeds = document.createElement("input");
-  inpSpeeds.type = "text";
-  inpSpeeds.placeholder = "[1, 10]";
-  inpSpeeds.value = p.module_speeds_json || "";
-  addLegacyField(
-    isEn ? "Allowed module speeds (JSON)" : "Допустимые скорости модулей (JSON)",
-    inpSpeeds,
-    isEn
-      ? "Fallback if rules do not set speeds. Example: [1, 10]."
-      : "Запасной вариант, если в «Правилах» скорости не заданы. Пример: [1, 10]."
-  );
-
-  const inpSlots = document.createElement("input");
-  inpSlots.type = "number";
-  inpSlots.min = "0";
-  inpSlots.step = "1";
-  inpSlots.placeholder = "";
-  if (p.max_module_slots != null) {
-    inpSlots.value = String(p.max_module_slots);
-  }
-  addLegacyField(
-    isEn ? "Max modules (total per product)" : "Макс. модулей (всего на продукт)",
-    inpSlots,
-    isEn
-      ? "Fallback slot limit for transceivers. Empty means no limit."
-      : "Запасной лимит слотов под модули. Пусто — без лимита."
-  );
-
-  grid.appendChild(legacyConfigDetails);
-
-  const rulesSplit = adminSplitProductRulesJson(p.rules_json);
   const preservedRulesRest = rulesSplit.rest.slice();
 
   const rulesBlock = document.createElement("div");
@@ -2703,9 +2647,16 @@ function buildAdminProductEditPanel(p, opts) {
   rulesBlockTitle.className = "field-label";
   rulesBlockTitle.style.marginBottom = "4px";
   rulesBlockTitle.textContent = isEn
-    ? "Advanced configurator rules"
-    : "Расширенные правила конфигуратора";
+    ? "Configurator settings"
+    : "Настройки конфигуратора";
   rulesBlock.appendChild(rulesBlockTitle);
+  const rulesBlockHint = document.createElement("div");
+  rulesBlockHint.className = "field-description";
+  rulesBlockHint.style.marginBottom = "8px";
+  rulesBlockHint.textContent = isEn
+    ? "Saved as rules_json. Values from legacy DB columns are shown here until you save."
+    : "Сохраняется в rules_json. Старые значения из колонок БД подставляются сюда до первого сохранения.";
+  rulesBlock.appendChild(rulesBlockHint);
 
   const modeRow = document.createElement("div");
   modeRow.className = "admin-rules-mode-row";
@@ -2938,50 +2889,9 @@ function buildAdminProductEditPanel(p, opts) {
     };
     const subVal = selSubgroup.value.trim();
     body.subgroup_id = subVal === "" ? null : parseInt(subVal, 10);
-    const bi = inpBuilt.value.trim();
-    if (bi === "") {
-      body.built_in_license_units = null;
-    } else {
-      const n = parseInt(bi, 10);
-      if (!Number.isFinite(n) || n < 0) {
-        setCatalogStatus(
-          "admin-products-status",
-          catT(
-            "Встроенные AP: неотрицательное целое или пусто.",
-            "Built-in AP: enter a non-negative integer or leave empty."
-          ),
-          "error"
-        );
-        isSavingProduct = false;
-        btnSave.textContent = saveDefaultLabel;
-        syncSaveEnabled();
-        return;
-      }
-      body.built_in_license_units = n;
-    }
-    const speeds = inpSpeeds.value.trim();
-    body.module_speeds_json = speeds === "" ? null : speeds;
-    const slots = inpSlots.value.trim();
-    if (slots === "") {
-      body.max_module_slots = null;
-    } else {
-      const m = parseInt(slots, 10);
-      if (!Number.isFinite(m) || m < 0) {
-        setCatalogStatus(
-          "admin-products-status",
-          catT(
-            "Макс. модулей: неотрицательное целое или пусто.",
-            "Max modules: enter a non-negative integer or leave empty."
-          ),
-          "error"
-        );
-        isSavingProduct = false;
-        btnSave.textContent = saveDefaultLabel;
-        syncSaveEnabled();
-        return;
-      }
-      body.max_module_slots = m;
-    }
+    body.built_in_license_units = null;
+    body.module_speeds_json = null;
+    body.max_module_slots = null;
     if (radJson.checked) {
       const rulesRaw = (taRules.value || "").trim();
       if (rulesRaw === "") {
