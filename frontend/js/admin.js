@@ -296,7 +296,7 @@ function renderAdminGroupsTable() {
     const tdActions = document.createElement("td");
     const addSubBtn = document.createElement("button");
     addSubBtn.type = "button";
-    addSubBtn.className = "ghost-btn danger";
+    addSubBtn.className = "ghost-btn";
     addSubBtn.textContent = catT("Добавить подгруппу", "Add subgroup");
     addSubBtn.addEventListener("click", () => {
       void addAdminSubgroup(group.id);
