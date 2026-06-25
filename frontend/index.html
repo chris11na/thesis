@@ -694,9 +694,15 @@
             </div>
           </details>
 
-          <details class="admin-fold" open>
+          <details class="admin-fold admin-fold--catalog" open>
             <summary class="admin-fold-summary" id="admin-fold-catalog">Каталог: оборудование</summary>
-            <div class="admin-fold-body">
+            <div class="admin-fold-body admin-catalog-fold-body">
+              <div class="admin-catalog-create-bar">
+                <button type="button" class="primary-btn" id="admin-add-product-btn">
+                  Создать новый продукт
+                </button>
+                <div id="admin-products-status" class="status-area"></div>
+              </div>
               <div class="catalog-toolbar admin-catalog-toolbar">
                 <div class="catalog-toolbar-search">
                 <input
@@ -745,7 +751,7 @@
                   </button>
                 </div>
               </div>
-              <div class="catalog-panel" id="admin-products-panel">
+              <div class="catalog-panel admin-catalog-panel" id="admin-products-panel">
                 <div
                   class="catalog-panel-loading-overlay"
                   id="admin-products-loading"
@@ -753,7 +759,7 @@
                 >
                   Загрузка…
                 </div>
-                <div class="admin-table-scroll admin-table-scroll--flat">
+                <div class="admin-table-scroll admin-catalog-table-scroll">
                 <table class="admin-table admin-table--catalog" id="admin-products-table">
                   <thead>
                     <tr>
@@ -772,17 +778,6 @@
                   <tbody id="admin-products-tbody"></tbody>
                 </table>
               </div>
-              </div>
-              <div class="admin-below-table">
-                <h4 class="admin-form-block-title admin-form-block-title--compact" id="add-product-title">
-                  Добавить продукт
-                </h4>
-                <div class="admin-inline" style="margin-top: 0">
-                  <button type="button" class="primary-btn" id="admin-add-product-btn">
-                    Открыть карточку создания
-                  </button>
-                </div>
-                <div id="admin-products-status" class="status-area"></div>
               </div>
             </div>
           </details>

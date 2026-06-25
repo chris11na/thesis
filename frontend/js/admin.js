@@ -10,6 +10,40 @@ function formatSpecParameterOptionLabel(sp) {
   return name || code || ("#" + sp.id);
 }
 
+/** @type {Record<number, string[]>} */
+let adminSpecValueOptionsByParamId = {};
+
+async function loadAdminSpecValueOptionsForEditor() {
+  adminSpecValueOptionsByParamId = {};
+  try {
+    const res = await apiFetch("/products/spec-filter-options", {
+      __globalLoading: false,
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !Array.isArray(data)) return;
+    for (const item of data) {
+      const sp = specParameters.find((x) => x.code === item.code);
+      if (!sp || !Array.isArray(item.values) || !item.values.length) continue;
+      adminSpecValueOptionsByParamId[sp.id] = item.values.slice();
+    }
+  } catch (_) {}
+}
+
+function navigateToAdminCatalogGroups() {
+  adminEditingProductId = null;
+  closeAdminProductDrawer();
+  const foldSummary = document.getElementById("admin-fold-groups");
+  const fold = foldSummary ? foldSummary.closest("details") : null;
+  if (fold) {
+    fold.open = true;
+    fold.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  const codeInput = document.getElementById("admin-new-group-code");
+  if (codeInput) {
+    window.setTimeout(() => codeInput.focus(), 300);
+  }
+}
+
 function closeAdminProductDrawer() {
   const overlay = elements.adminProductDrawerOverlay;
   const body = elements.adminProductDrawerBody;
@@ -24,17 +58,19 @@ function closeAdminProductDrawer() {
   }
 }
 
-function openAdminProductDrawer(p, opts) {
+async function openAdminProductDrawer(p, opts) {
   const overlay = elements.adminProductDrawerOverlay;
   const drawer = elements.adminProductDrawer;
   const body = elements.adminProductDrawerBody;
   const createMode = !!(opts && opts.createMode);
   if (!overlay || !drawer || !body) return;
   adminCreatingProduct = createMode;
-  body.innerHTML = "";
-  body.appendChild(buildAdminProductEditPanel(p, { createMode }));
   overlay.hidden = false;
   overlay.setAttribute("aria-hidden", "false");
+  body.innerHTML =
+    "<p class=\"field-description\">" +
+    (uiLang === "en" ? "Loading…" : "Загрузка…") +
+    "</p>";
   if (adminProductDrawerEscHandler) {
     document.removeEventListener("keydown", adminProductDrawerEscHandler);
   }
@@ -46,6 +82,10 @@ function openAdminProductDrawer(p, opts) {
     }
   };
   document.addEventListener("keydown", adminProductDrawerEscHandler);
+  await loadAdminSpecValueOptionsForEditor();
+  if (overlay.hidden) return;
+  body.innerHTML = "";
+  body.appendChild(buildAdminProductEditPanel(p, { createMode }));
   if (elements.adminProductDrawerClose) elements.adminProductDrawerClose.focus();
 }
 
@@ -2499,17 +2539,14 @@ function buildAdminProductEditPanel(p, opts) {
     ? "Technical parameters"
     : "Технические параметры";
   specValuesBlock.appendChild(specValuesLabel);
-  const specValuesHint = document.createElement("div");
-  specValuesHint.className = "field-description";
-  specValuesHint.style.marginBottom = "8px";
-  specValuesHint.textContent = isEn
-    ? "Choose a parameter and set its value. Parameter list is managed by admin."
-    : "Выберите параметр и задайте его значение. Список параметров настраивается администратором.";
-  specValuesBlock.appendChild(specValuesHint);
   const specValuesRows = document.createElement("div");
-  specValuesRows.style.display = "grid";
-  specValuesRows.style.gap = "8px";
+  specValuesRows.className = "admin-spec-value-rows";
   specValuesBlock.appendChild(specValuesRows);
+  const addSpecRowBtn = document.createElement("button");
+  addSpecRowBtn.type = "button";
+  addSpecRowBtn.className = "secondary-btn admin-spec-add-row-btn";
+  addSpecRowBtn.textContent = isEn ? "Add parameter" : "Добавить параметр";
+  specValuesBlock.appendChild(addSpecRowBtn);
   const fallbackLabel = document.createElement("label");
   fallbackLabel.style.marginTop = "10px";
   fallbackLabel.textContent = isEn
@@ -2524,24 +2561,63 @@ function buildAdminProductEditPanel(p, opts) {
     : "Необязательно: доп. текст, участвует в поиске по каталогу";
   fallbackSpecs.value = p.technical_specs || "";
   specValuesBlock.appendChild(fallbackSpecs);
-  const addSpecRowBtn = document.createElement("button");
-  addSpecRowBtn.type = "button";
-  addSpecRowBtn.className = "secondary-btn";
-  addSpecRowBtn.style.width = "fit-content";
-  addSpecRowBtn.textContent = isEn ? "Add parameter" : "Добавить параметр";
-  specValuesBlock.appendChild(addSpecRowBtn);
   grid.appendChild(specValuesBlock);
+
+  function specValueOptionsForParameter(parameterId) {
+    if (parameterId == null || parameterId === "") return null;
+    const pid = parseInt(parameterId, 10);
+    if (!Number.isFinite(pid)) return null;
+    const opts = adminSpecValueOptionsByParamId[pid];
+    return opts && opts.length ? opts : null;
+  }
+
+  function mountSpecValueControl(container, parameterId, initialValue) {
+    container.innerHTML = "";
+    const opts = specValueOptionsForParameter(parameterId);
+    let el;
+    if (opts && opts.length) {
+      el = document.createElement("select");
+      el.className = "catalog-native-select";
+      const emptyOpt = document.createElement("option");
+      emptyOpt.value = "";
+      emptyOpt.textContent = isEn ? "Select value" : "Выберите значение";
+      el.appendChild(emptyOpt);
+      for (const v of opts) {
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v;
+        el.appendChild(opt);
+      }
+      const current = initialValue != null ? String(initialValue).trim() : "";
+      if (current && !opts.includes(current)) {
+        const customOpt = document.createElement("option");
+        customOpt.value = current;
+        customOpt.textContent = current + (isEn ? " (current)" : " (текущее)");
+        el.appendChild(customOpt);
+      }
+      el.value = current;
+    } else {
+      el = document.createElement("input");
+      el.type = "text";
+      el.placeholder = isEn ? "Value" : "Значение";
+      el.value = initialValue != null ? String(initialValue) : "";
+    }
+    el.dataset.specValue = "1";
+    container.appendChild(el);
+    if (el.tagName === "SELECT") fitNativeSelectToContent(el);
+    return el;
+  }
 
   function collectSpecValuesFromEditor() {
     const rows = [];
     const used = new Set();
     const rowEls = specValuesRows.querySelectorAll("[data-spec-row='1']");
     for (const rowEl of rowEls) {
-      const sel = rowEl.querySelector("select");
-      const inp = rowEl.querySelector("input");
-      if (!sel || !inp) continue;
+      const sel = rowEl.querySelector("select[data-spec-param='1']");
+      const valEl = rowEl.querySelector("[data-spec-value='1']");
+      if (!sel || !valEl) continue;
       const pid = parseInt(sel.value, 10);
-      const value = (inp.value || "").trim();
+      const value = (valEl.value || "").trim();
       if (!Number.isFinite(pid) || !value) continue;
       if (used.has(pid)) continue;
       used.add(pid);
@@ -2553,11 +2629,10 @@ function buildAdminProductEditPanel(p, opts) {
   function addSpecRow(initialParameterId, initialValue) {
     const row = document.createElement("div");
     row.dataset.specRow = "1";
-    row.style.display = "grid";
-    row.style.gridTemplateColumns = "minmax(200px, 260px) minmax(220px, 1fr) auto";
-    row.style.gap = "8px";
+    row.className = "admin-spec-value-row";
     const sel = document.createElement("select");
     sel.className = "catalog-native-select";
+    sel.dataset.specParam = "1";
     const emptyOpt = document.createElement("option");
     emptyOpt.value = "";
     emptyOpt.textContent = isEn ? "Select parameter" : "Выберите параметр";
@@ -2569,17 +2644,19 @@ function buildAdminProductEditPanel(p, opts) {
       sel.appendChild(opt);
     });
     if (initialParameterId != null) sel.value = String(initialParameterId);
-    const inp = document.createElement("input");
-    inp.type = "text";
-    inp.placeholder = isEn ? "Value" : "Значение";
-    inp.value = initialValue || "";
+    const valueCell = document.createElement("div");
+    valueCell.className = "admin-spec-value-cell";
+    mountSpecValueControl(valueCell, sel.value, initialValue);
+    sel.addEventListener("change", () => {
+      mountSpecValueControl(valueCell, sel.value, "");
+    });
     const delBtn = document.createElement("button");
     delBtn.type = "button";
     delBtn.className = "danger-btn";
     delBtn.textContent = isEn ? "Delete" : "Удалить";
     delBtn.addEventListener("click", () => row.remove());
     row.appendChild(sel);
-    row.appendChild(inp);
+    row.appendChild(valueCell);
     row.appendChild(delBtn);
     specValuesRows.appendChild(row);
     fitNativeSelectToContent(sel);
@@ -2614,13 +2691,28 @@ function buildAdminProductEditPanel(p, opts) {
   if (p.subgroup_id != null) {
     selSubgroup.value = String(p.subgroup_id);
   }
-  addFieldStack(
-    isEn ? "Catalog subgroup" : "Подгруппа каталога",
-    selSubgroup,
-    isEn
-      ? "Where the product appears in the catalog. To create a new group or subgroup, use Admin → Catalog groups — not in this form."
-      : "В каком разделе каталога показывается товар. Новую группу или подгруппу создают в Admin → «Группы каталога», не здесь."
-  );
+  const addGroupOpt = document.createElement("option");
+  addGroupOpt.value = "__add_group__";
+  addGroupOpt.textContent = isEn ? "+ Add group…" : "+ Добавить группу…";
+  selSubgroup.appendChild(addGroupOpt);
+  let prevSubgroupValue = selSubgroup.value;
+  selSubgroup.addEventListener("change", () => {
+    if (selSubgroup.value !== "__add_group__") {
+      prevSubgroupValue = selSubgroup.value;
+      return;
+    }
+    selSubgroup.value = prevSubgroupValue;
+    void appConfirmDialog({
+      message: isEn
+        ? "Create a new catalog group or subgroup in Admin → Catalog groups. Unsaved changes in this product card will be lost."
+        : "Новую группу или подгруппу создайте в Admin → «Группы каталога». Несохранённые изменения в этой карточке будут потеряны.",
+      confirmLabel: isEn ? "Go to groups" : "Перейти",
+      cancelLabel: isEn ? "Stay" : "Остаться",
+    }).then((ok) => {
+      if (ok) navigateToAdminCatalogGroups();
+    });
+  });
+  addFieldStack(isEn ? "Catalog subgroup" : "Подгруппа каталога", selSubgroup);
 
   const inpCategory = document.createElement("input");
   inpCategory.type = "text";
@@ -2628,10 +2720,7 @@ function buildAdminProductEditPanel(p, opts) {
   inpCategory.value = p.product_category || "";
   addFieldStack(
     isEn ? "Equipment type code (optional)" : "Код типа оборудования (необязательно)",
-    inpCategory,
-    isEn
-      ? "From catalog import (type_code), not from the product name. Powers the «Equipment type» filter and service rules. Leave empty for manual products."
-      : "Берётся из импорта каталога (type_code), не из названия. Нужен для фильтра «Тип оборудования» и сервисной логики. Для ручных товаров можно оставить пустым."
+    inpCategory
   );
 
   const rulesSplit = adminHydrateRulesSplitFromProduct(
@@ -2639,6 +2728,18 @@ function buildAdminProductEditPanel(p, opts) {
     adminSplitProductRulesJson(p.rules_json)
   );
   const preservedRulesRest = rulesSplit.rest.slice();
+
+  for (const sv of p.technical_spec_values || []) {
+    const pid = sv.parameter_id;
+    const val = sv.value != null ? String(sv.value).trim() : "";
+    if (!pid || !val) continue;
+    if (!adminSpecValueOptionsByParamId[pid]) {
+      adminSpecValueOptionsByParamId[pid] = [];
+    }
+    if (!adminSpecValueOptionsByParamId[pid].includes(val)) {
+      adminSpecValueOptionsByParamId[pid].push(val);
+    }
+  }
 
   const rulesBlock = document.createElement("div");
   rulesBlock.className = "edit-grid-cell-wide";

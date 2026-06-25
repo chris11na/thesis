@@ -581,8 +581,8 @@ function applyUiLanguage(lang) {
   }
   if (elements.adminAddProductBtn) {
     elements.adminAddProductBtn.textContent = isEn
-      ? "Open create card"
-      : "Открыть карточку создания";
+      ? "Create new product"
+      : "Создать новый продукт";
   }
   if (elements.adminUsersCompanySelect) {
     fillAdminUsersCompanySelect();

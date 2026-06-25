@@ -1777,6 +1777,29 @@ select.admin-select {
   align-items: center;
 }
 
+.admin-spec-value-rows {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.admin-spec-value-row {
+  display: grid;
+  grid-template-columns: minmax(200px, 260px) minmax(220px, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-spec-value-cell select,
+.admin-spec-value-cell input {
+  width: 100%;
+}
+
+.admin-spec-add-row-btn {
+  width: fit-content;
+  margin-top: 8px;
+}
+
 .catalog-switch-filters select.catalog-native-select {
   flex: 0 1 auto;
 }
@@ -2229,4 +2252,56 @@ select.admin-select {
 .admin-catalog-toolbar.has-spec-filters .catalog-toolbar-clear {
   grid-column: 2;
   grid-row: 3;
+}
+
+.admin-catalog-fold-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: min(680px, calc(100vh - 200px));
+}
+
+.admin-catalog-create-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.admin-catalog-create-bar .status-area {
+  flex: 1 1 180px;
+  margin-top: 0;
+  min-height: 0;
+}
+
+.admin-catalog-fold-body .catalog-toolbar {
+  flex-shrink: 0;
+}
+
+.admin-catalog-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.admin-catalog-table-scroll {
+  flex: 1;
+  min-height: 160px;
+  max-height: none;
+  overflow: auto;
+  margin-top: 8px;
+}
+
+.admin-catalog-table-scroll .admin-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f8fafc;
+  box-shadow: 0 1px 0 #e5e7eb;
 }
