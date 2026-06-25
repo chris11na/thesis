@@ -981,3 +981,34 @@ function showToast(message, type = "success") {
   }, hideMs);
 }
 
+/** Size a native <select> so the closed label is not truncated. */
+function fitNativeSelectToContent(sel) {
+  if (!sel || !sel.options || !sel.options.length) return;
+  const probe = document.createElement("span");
+  probe.setAttribute("aria-hidden", "true");
+  probe.style.cssText =
+    "position:absolute;left:-9999px;top:0;visibility:hidden;white-space:nowrap;";
+  const cs = getComputedStyle(sel);
+  probe.style.font = cs.font;
+  probe.style.letterSpacing = cs.letterSpacing;
+  document.body.appendChild(probe);
+  let maxText = 0;
+  for (let i = 0; i < sel.options.length; i++) {
+    probe.textContent = sel.options[i].textContent || "";
+    maxText = Math.max(maxText, probe.offsetWidth);
+  }
+  document.body.removeChild(probe);
+  const padLeft = parseFloat(cs.paddingLeft) || 10;
+  const padRight = parseFloat(cs.paddingRight) || 30;
+  const border =
+    (parseFloat(cs.borderLeftWidth) || 0) +
+    (parseFloat(cs.borderRightWidth) || 0);
+  const width = Math.ceil(maxText + padLeft + padRight + border + 2);
+  sel.style.width = width + "px";
+  sel.style.maxWidth = "100%";
+}
+
+function fitNativeSelectsInContainer(container) {
+  if (!container) return;
+  container.querySelectorAll("select").forEach((sel) => fitNativeSelectToContent(sel));
+}

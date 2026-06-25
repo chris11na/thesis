@@ -1547,6 +1547,7 @@ function buildCatalogFilterControls(host, idPrefix, filterDefs, filterState) {
   const isEn = uiLang === "en";
   for (const def of filterDefs) {
     const sel = document.createElement("select");
+    sel.className = "catalog-native-select";
     sel.id = idPrefix + "-catalog-filter-" + def.code;
     sel.dataset.filterCode = def.code;
     sel.setAttribute("aria-label", isEn ? def.labelEn : def.labelRu);
@@ -1565,6 +1566,7 @@ function buildCatalogFilterControls(host, idPrefix, filterDefs, filterState) {
       applyProductCatalogQuery(true);
     });
     host.appendChild(sel);
+    fitNativeSelectToContent(sel);
   }
 }
 

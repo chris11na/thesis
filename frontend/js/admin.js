@@ -109,6 +109,7 @@ function populateAdminCatalogGroupSelect() {
     adminCatalogGroupFilter = "";
   }
   populateAdminCatalogSubgroupSelect();
+  fitNativeSelectsInContainer(elements.adminCatalogGroupSelect?.closest(".catalog-toolbar-filters--admin-nav"));
 }
 
 function populateAdminCatalogSubgroupSelect() {
@@ -148,6 +149,7 @@ function populateAdminCatalogSubgroupSelect() {
     sel.value = "";
     adminCatalogSubgroupFilter = "";
   }
+  fitNativeSelectToContent(sel);
 }
 
 function renderAdminGroupsTable() {
@@ -2447,6 +2449,7 @@ function buildAdminProductEditPanel(p, opts) {
     row.style.gridTemplateColumns = "minmax(200px, 260px) minmax(220px, 1fr) auto";
     row.style.gap = "8px";
     const sel = document.createElement("select");
+    sel.className = "catalog-native-select";
     const emptyOpt = document.createElement("option");
     emptyOpt.value = "";
     emptyOpt.textContent = isEn ? "Select parameter" : "Выберите параметр";
@@ -2471,6 +2474,7 @@ function buildAdminProductEditPanel(p, opts) {
     row.appendChild(inp);
     row.appendChild(delBtn);
     specValuesRows.appendChild(row);
+    fitNativeSelectToContent(sel);
   }
 
   const initialSpecValues = Array.isArray(p.technical_spec_values)

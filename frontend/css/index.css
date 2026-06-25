@@ -1281,8 +1281,9 @@ body.debug-ui-on .selected-items-count {
 
 select.admin-select {
   min-width: 140px;
-  max-width: 220px;
-  padding: 4px 8px;
+  max-width: 100%;
+  width: auto;
+  padding: 4px 32px 4px 8px;
   border-radius: 6px;
   border: 1px solid #d1d5db;
   font-size: 12px;
@@ -1716,15 +1717,42 @@ details.admin-fold[open] > .admin-fold-summary::before {
   align-items: center;
 }
 
+.catalog-native-select,
+select.admin-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  background-size: 12px 12px;
+  padding-right: 32px;
+  padding-left: 10px;
+  cursor: pointer;
+}
+
 .catalog-toolbar-filters select,
 .catalog-toolbar-filters input[type="search"] {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  padding: 8px 10px;
+  padding-top: 8px;
+  padding-bottom: 8px;
   border-radius: 8px;
   border: 1px solid #d1d5db;
   font-size: 13px;
+}
+
+.catalog-toolbar-filters select.catalog-native-select,
+.catalog-toolbar-filters--admin-nav select.catalog-native-select {
+  width: auto;
+  min-width: 10rem;
+  max-width: 100%;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 10px;
+  padding-right: 32px;
 }
 
 .catalog-toolbar-filters--users {
@@ -1736,7 +1764,14 @@ details.admin-fold[open] > .admin-fold-summary::before {
 }
 
 .catalog-switch-filters {
-  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.catalog-switch-filters select.catalog-native-select {
+  flex: 0 1 auto;
 }
 
 .catalog-toolbar-clear {
@@ -1809,6 +1844,12 @@ details.admin-fold[open] > .admin-fold-summary::before {
   padding: 6px 10px;
   border-radius: 8px;
   border: 1px solid #d1d5db;
+}
+
+.admin-product-edit-panel [data-spec-row="1"] select.catalog-native-select {
+  width: auto;
+  min-width: min(100%, 16rem);
+  max-width: 100%;
 }
 
 .admin-product-edit-panel textarea {
